@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using AnimatronicsControlCenter.Core.Interfaces;
 using Microsoft.Windows.ApplicationModel.Resources;
@@ -10,6 +11,8 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly ResourceManager _resourceManager;
         private readonly ResourceContext _resourceContext;
         private readonly ResourceMap _resourceMap;
+
+        public event EventHandler? LanguageChanged;
 
         public LocalizationService()
         {
@@ -35,20 +38,32 @@ namespace AnimatronicsControlCenter.Infrastructure
                     // Ignore error if PrimaryLanguageOverride cannot be set (e.g. invalid state)
                 }
                 _resourceContext.QualifierValues["Language"] = value.Name;
+                LanguageChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
         public string GetString(string key)
         {
+            ResourceCandidate? candidate = null;
+            
+            // Try exact key first
             try
             {
-                var candidate = _resourceMap.GetValue(key, _resourceContext);
-                return candidate?.ValueAsString ?? key;
+                candidate = _resourceMap.GetValue(key, _resourceContext);
             }
-            catch
+            catch { }
+
+            // If not found and key contains dot, try replacing dot with slash (for x:Uid style keys)
+            if (candidate == null && key.Contains('.'))
             {
-                return key;
+                try
+                {
+                    candidate = _resourceMap.GetValue(key.Replace('.', '/'), _resourceContext);
+                }
+                catch { }
             }
+
+            return candidate?.ValueAsString ?? key;
         }
 
         public void SetLanguage(string languageCode)

@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.UI.Helpers;
+using AnimatronicsControlCenter; // For App and MainWindow
 using System.IO.Ports;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -16,8 +18,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ISerialService _serialService;
         private readonly ILocalizationService _localizationService;
 
+        public LocalizedStrings Strings { get; }
+
         [ObservableProperty]
-        private string[] availablePorts;
+        private string[] availablePorts = System.Array.Empty<string>();
 
         [ObservableProperty]
         private string selectedPort;
@@ -56,11 +60,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private LanguageOption selectedLanguage;
 
+        private bool _isInitialized;
+
         public SettingsViewModel(ISettingsService settingsService, ISerialService serialService, ILocalizationService localizationService)
         {
             _settingsService = settingsService;
             _serialService = serialService;
             _localizationService = localizationService;
+            Strings = new LocalizedStrings(_localizationService);
             
             _settingsService.Load();
             SelectedPort = _settingsService.LastComPort;
@@ -75,16 +82,28 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                              ?? Languages.First();
             
             IsConnectionActive = _serialService.IsConnected;
+            _isInitialized = true;
         }
 
         partial void OnSelectedLanguageChanged(LanguageOption value)
         {
+            if (!_isInitialized) return;
+
             if (value != null)
             {
                 _localizationService.SetLanguage(value.Code);
+                
+                _settingsService.Language = value.Code;
+                _settingsService.Save();
+
                 // Refresh localized strings
                 OnPropertyChanged(nameof(ConnectButtonText));
                 OnPropertyChanged(nameof(ConnectionStatusText));
+
+                if (App.Current.m_window is MainWindow mainWindow)
+                {
+                    mainWindow.UpdateLanguage();
+                }
             }
         }
 

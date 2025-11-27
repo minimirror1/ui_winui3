@@ -11,24 +11,24 @@
 
     <ScrollViewer>
         <StackPanel Spacing="8" Padding="20" MaxWidth="800" HorizontalAlignment="Left">
-            <TextBlock x:Uid="Settings_Title" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,12"/>
+            <TextBlock Text="{x:Bind ViewModel.Strings.Get('Settings_Title.Text', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,12"/>
 
             <!-- Connection Group -->
-            <tk:SettingsExpander x:Uid="Connection_Header" IsExpanded="True">
+            <tk:SettingsExpander Header="{x:Bind ViewModel.Strings.Get('Connection_Header.Header', ViewModel.Strings.Code), Mode=OneWay}" IsExpanded="True">
                 <tk:SettingsExpander.HeaderIcon>
                     <FontIcon Glyph="&#xE701;"/>
                 </tk:SettingsExpander.HeaderIcon>
                 
                 <tk:SettingsExpander.Items>
                     <!-- COM Port -->
-                    <tk:SettingsCard x:Uid="Port_Header">
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('Port_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <ComboBox ItemsSource="{x:Bind ViewModel.AvailablePorts}" 
                                       SelectedItem="{x:Bind ViewModel.SelectedPort, Mode=TwoWay}" 
                                       MinWidth="120"/>
                             <Button Command="{x:Bind ViewModel.RefreshPortsCommand}" Style="{StaticResource DateTimePickerFlyoutButtonStyle}">
                                 <ToolTipService.ToolTip>
-                                    <ToolTip x:Uid="Refresh_Tooltip"/>
+                                    <ToolTip Content="{x:Bind ViewModel.Strings.Get('Refresh_Tooltip.Content', ViewModel.Strings.Code), Mode=OneWay}"/>
                                 </ToolTipService.ToolTip>
                                 <FontIcon Glyph="&#xE72C;" FontSize="14"/>
                             </Button>
@@ -36,7 +36,7 @@
                     </tk:SettingsCard>
 
                     <!-- Baud Rate -->
-                    <tk:SettingsCard x:Uid="BaudRate_Header">
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('BaudRate_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                         <ComboBox ItemsSource="{x:Bind ViewModel.AvailableBaudRates}" 
                                   SelectedItem="{x:Bind ViewModel.BaudRate, Mode=TwoWay}" 
                                   MinWidth="120"/>
@@ -68,18 +68,18 @@
             </tk:SettingsExpander>
 
             <!-- Virtual Mode -->
-            <tk:SettingsCard x:Uid="VirtualMode_Header">
+            <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('VirtualMode_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                 <tk:SettingsCard.HeaderIcon>
                     <FontIcon Glyph="&#xE964;"/>
                 </tk:SettingsCard.HeaderIcon>
                 <tk:SettingsCard.Description>
-                    <TextBlock x:Uid="VirtualMode_Desc" Style="{StaticResource CaptionTextBlockStyle}"/>
+                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('VirtualMode_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
                 </tk:SettingsCard.Description>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsVirtualModeEnabled, Mode=TwoWay}"/>
             </tk:SettingsCard>
 
             <!-- Language -->
-            <tk:SettingsCard x:Uid="Language_Header">
+            <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('Language_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                 <tk:SettingsCard.HeaderIcon>
                     <FontIcon Glyph="&#xE774;"/>
                 </tk:SettingsCard.HeaderIcon>

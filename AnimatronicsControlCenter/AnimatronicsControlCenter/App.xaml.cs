@@ -22,6 +22,12 @@ namespace AnimatronicsControlCenter
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
+            var settingsService = Services.GetRequiredService<ISettingsService>();
+            settingsService.Load();
+            
+            var localizationService = Services.GetRequiredService<ILocalizationService>();
+            localizationService.SetLanguage(settingsService.Language);
+            
             m_window = Services.GetRequiredService<MainWindow>();
             m_window.Activate();
         }

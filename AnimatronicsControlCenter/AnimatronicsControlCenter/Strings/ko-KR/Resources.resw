@@ -94,4 +94,19 @@
   <data name="Language_Header.Header" xml:space="preserve">
     <value>언어</value>
   </data>
+  <data name="App_Title" xml:space="preserve">
+    <value>애니메트로닉스 제어 센터</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>대시보드</value>
+  </data>
+  <data name="Dashboard_Scan.Label" xml:space="preserve">
+    <value>장치 검색</value>
+  </data>
+  <data name="Dashboard_Devices.Text" xml:space="preserve">
+    <value>장치 목록</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>설정</value>
+  </data>
 </root>

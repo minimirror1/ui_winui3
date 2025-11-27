@@ -14,9 +14,9 @@
         </Grid.RowDefinitions>
 
         <CommandBar DefaultLabelPosition="Right" Background="Transparent" IsOpen="False">
-            <AppBarButton Icon="Refresh" Label="Scan Devices" Command="{x:Bind ViewModel.ScanCommand}"/>
+            <AppBarButton x:Uid="Dashboard_Scan" Icon="Refresh" Command="{x:Bind ViewModel.ScanCommand}"/>
             <CommandBar.Content>
-                <TextBlock Text="Devices" Style="{StaticResource TitleTextBlockStyle}" Margin="12,14,0,0"/>
+                <TextBlock x:Uid="Dashboard_Devices" Style="{StaticResource TitleTextBlockStyle}" Margin="12,14,0,0"/>
             </CommandBar.Content>
         </CommandBar>
 
