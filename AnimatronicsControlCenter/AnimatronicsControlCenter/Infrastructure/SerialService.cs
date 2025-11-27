@@ -86,11 +86,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 // In virtual mode, we don't "send" and forget, we process.
                 // But this method signature is void/Task.
                 // So we just simulate the send.
-                // The actual processing usually happens in a read loop or immediately for request/response.
-                // For this architecture, we might need to simulate a response coming back?
-                // But SendCommandAsync is one-way usually, unless we have an event for data received.
-                // However, ScanDevicesAsync (and PingDeviceAsync) waits for response.
-                // Let's assume SendCommandAsync is just for fire-and-forget or part of a request-response flow managed by the caller.
+                _virtualDeviceManager.ProcessCommand(json);
                 await Task.CompletedTask;
                 return;
             }
@@ -107,6 +103,51 @@ namespace AnimatronicsControlCenter.Infrastructure
             {
                 _writeLock.Release();
             }
+        }
+
+        public async Task<string?> SendQueryAsync(int deviceId, string command, object? payload = null)
+        {
+            if (!IsConnected) return null;
+
+            var message = new { id = deviceId, cmd = command, payload };
+            var json = JsonSerializer.Serialize(message);
+
+            if (_settingsService.IsVirtualModeEnabled)
+            {
+                await Task.Delay(20);
+                return _virtualDeviceManager.ProcessCommand(json);
+            }
+
+            await _writeLock.WaitAsync();
+            try
+            {
+                if (_serialPort?.IsOpen == true)
+                {
+                    _serialPort.DiscardInBuffer();
+                    _serialPort.WriteLine(json);
+                    
+                    // Wait for response (simplified)
+                    int retries = 5;
+                    while (retries > 0)
+                    {
+                        await Task.Delay(100);
+                        if (_serialPort.BytesToRead > 0)
+                        {
+                            return _serialPort.ReadLine();
+                        }
+                        retries--;
+                    }
+                }
+            }
+            catch
+            {
+                // handle error
+            }
+            finally
+            {
+                _writeLock.Release();
+            }
+            return null;
         }
 
         public async Task<Device?> PingDeviceAsync(int deviceId)
