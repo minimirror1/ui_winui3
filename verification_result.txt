@@ -1,2 +1,0 @@
-GetFiles Response: OK
-GetFile Content Match: true

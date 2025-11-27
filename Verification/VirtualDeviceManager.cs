@@ -11,7 +11,6 @@ namespace AnimatronicsControlCenter.Infrastructure
     {
         // Store file systems per device ID
         private readonly Dictionary<int, Dictionary<string, string>> _deviceFileSystems;
-        private readonly object _lock = new object();
 
         public VirtualDeviceManager()
         {
@@ -38,8 +37,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                 { "Media/MT_6.CSV", "Time,Pos\n0,10\n100,20" },
                 { "Media/MT_ALL.CSV", "Time,Pos\n0,10\n100,20" },
 
-                { "Midi/motor/placeholder.txt", "" }, // Placeholder for empty folder structure
-                { "Midi/page/placeholder.txt", "" },  // Placeholder for empty folder structure
+                { "Midi/motor/placeholder.txt", "" },
+                { "Midi/page/placeholder.txt", "" },
 
                 { "Setting/DI_ID.TXT", $"DeviceID={deviceId}" },
                 { "Setting/MT_AT.TXT", "Value=100" },
@@ -68,45 +67,40 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         public string ProcessCommand(string jsonCommand)
         {
-            lock (_lock)
+            try
             {
-                try
-                {
-                    var node = JsonNode.Parse(jsonCommand);
-                    if (node == null) return ErrorResponse("Invalid JSON");
+                var node = JsonNode.Parse(jsonCommand);
+                if (node == null) return ErrorResponse("Invalid JSON");
 
-                    int deviceId = node["id"]?.GetValue<int>() ?? 0;
-                    string cmd = node["cmd"]?.ToString() ?? "";
-                    var payload = node["payload"];
+                int deviceId = node["id"]?.GetValue<int>() ?? 0;
+                string cmd = node["cmd"]?.ToString() ?? "";
+                var payload = node["payload"];
 
-                    return cmd switch
-                    {
-                        "ping" => SuccessResponse(new { message = "pong" }),
-                        "move" => HandleMove(deviceId, payload),
-                        "motion_ctrl" => HandleMotionCtrl(deviceId, payload),
-                        "get_files" => HandleGetFiles(deviceId),
-                        "get_file" => HandleGetFile(deviceId, payload),
-                        "save_file" => HandleSaveFile(deviceId, payload),
-                        "verify_file" => HandleVerifyFile(deviceId, payload),
-                        _ => ErrorResponse($"Unknown command: {cmd}")
-                    };
-                }
-                catch (Exception ex)
+                return cmd switch
                 {
-                    return ErrorResponse(ex.Message);
-                }
+                    "ping" => SuccessResponse(new { message = "pong" }),
+                    "move" => HandleMove(deviceId, payload),
+                    "motion_ctrl" => HandleMotionCtrl(deviceId, payload),
+                    "get_files" => HandleGetFiles(deviceId),
+                    "get_file" => HandleGetFile(deviceId, payload),
+                    "save_file" => HandleSaveFile(deviceId, payload),
+                    "verify_file" => HandleVerifyFile(deviceId, payload),
+                    _ => ErrorResponse($"Unknown command: {cmd}")
+                };
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex.Message);
             }
         }
 
         private string HandleMove(int deviceId, JsonNode? payload)
         {
-            // Simulate motor movement
             return SuccessResponse(new { status = "moved", deviceId });
         }
 
         private string HandleMotionCtrl(int deviceId, JsonNode? payload)
         {
-            // Simulate motion control
             string action = payload?["action"]?.ToString() ?? "unknown";
             return SuccessResponse(new { status = "executed", action, deviceId });
         }
@@ -153,8 +147,6 @@ namespace AnimatronicsControlCenter.Infrastructure
 
             if (fileSystem.TryGetValue(path, out var storedContent))
             {
-                // Simple string comparison. In reality, might normalize line endings.
-                // For this simulation, we'll strip \r to be safe if mixing environments
                 string normalizedStored = storedContent.Replace("\r\n", "\n").Replace("\r", "\n");
                 string normalizedCheck = contentToCheck.Replace("\r\n", "\n").Replace("\r", "\n");
                 
@@ -190,7 +182,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                         var fileItem = new FileSystemItem
                         {
                             Name = part,
-                            Path = fullPath, // Use the full relative path as ID
+                            Path = fullPath,
                             IsDirectory = false,
                             Size = size
                         };
@@ -208,7 +200,6 @@ namespace AnimatronicsControlCenter.Infrastructure
                     }
                     else
                     {
-                        // It's a directory
                         if (!dirs.ContainsKey(currentPath))
                         {
                             var newDir = new FileSystemItem
@@ -216,7 +207,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                                 Name = part,
                                 Path = currentPath,
                                 IsDirectory = true,
-                                Size = 0 // Folder size calculation skipped for simplicity
+                                Size = 0
                             };
                             dirs[currentPath] = newDir;
 
@@ -260,3 +251,4 @@ namespace AnimatronicsControlCenter.Infrastructure
         }
     }
 }
+
