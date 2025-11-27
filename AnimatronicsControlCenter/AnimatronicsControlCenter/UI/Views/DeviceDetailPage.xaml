@@ -7,123 +7,189 @@
     xmlns:models="using:AnimatronicsControlCenter.Core.Models"
     mc:Ignorable="d">
 
-    <Grid Padding="20">
+    <Grid Padding="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Spacing="20">
-            <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Id, FallbackValue='No Device Selected', Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}"/>
-            <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='Unknown', Mode=OneWay}" VerticalAlignment="Center"/>
-        </StackPanel>
+        <!-- Device Header -->
+        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE966;" FontFamily="Segoe MDL2 Assets" FontSize="24"/>
+                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Id, FallbackValue='Device #0', Mode=OneWay}" 
+                           Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Status:" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
+                <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8,4">
+                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='Unknown', Mode=OneWay}" 
+                               Style="{StaticResource CaptionTextBlockStyle}"/>
+                </Border>
+            </StackPanel>
+        </Grid>
 
         <Pivot Grid.Row="1">
-            <PivotItem Header="Overview">
-                <Grid RowSpacing="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+            <PivotItem Header="Overview" Margin="0,12,0,0">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="400" MaxWidth="500"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Left Column: Controls & Info -->
+                    <StackPanel Spacing="24">
+                        <!-- Motion Control Card -->
+                        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20" RowSpacing="16">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                    <!-- Motion Control Panel -->
-                    <Grid Grid.Row="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="15" CornerRadius="8" RowSpacing="10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Motion Control" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionState, Mode=OneWay}" 
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
 
-                        <!-- Status Area -->
-                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                             <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionState, Mode=OneWay}" 
-                                       Style="{StaticResource SubtitleTextBlockStyle}" 
-                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                        </StackPanel>
+                            <!-- Progress -->
+                            <Grid Grid.Row="1" RowSpacing="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <Grid>
+                                    <TextBlock Text="{x:Bind ViewModel.FormatTime(ViewModel.SelectedDevice.MotionCurrentTime), Mode=OneWay}" 
+                                               HorizontalAlignment="Left" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.FormatTime(ViewModel.SelectedDevice.MotionTotalTime), Mode=OneWay}" 
+                                               HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                </Grid>
 
-                        <!-- Progress Area -->
-                        <Grid Grid.Row="1" ColumnSpacing="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Text="{x:Bind ViewModel.FormatTime(ViewModel.SelectedDevice.MotionCurrentTime), Mode=OneWay}" 
-                                       VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"/>
-                                       
-                            <Slider Grid.Column="1" 
-                                    Value="{x:Bind ViewModel.SelectedDevice.MotionCurrentTime.TotalSeconds, Mode=OneWay}"
-                                    Maximum="{x:Bind ViewModel.SelectedDevice.MotionTotalTime.TotalSeconds, Mode=OneWay}"
-                                    PointerCaptureLost="MotionSlider_PointerCaptureLost"
-                                    VerticalAlignment="Center"/>
-                                    
-                            <TextBlock Grid.Column="2" 
-                                       Text="{x:Bind ViewModel.FormatTime(ViewModel.SelectedDevice.MotionTotalTime), Mode=OneWay}" 
-                                       VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                <Slider Grid.Row="1" 
+                                        Value="{x:Bind ViewModel.SelectedDevice.MotionCurrentTime.TotalSeconds, Mode=OneWay}"
+                                        Maximum="{x:Bind ViewModel.SelectedDevice.MotionTotalTime.TotalSeconds, Mode=OneWay}"
+                                        PointerCaptureLost="MotionSlider_PointerCaptureLost"/>
+                            </Grid>
+
+                            <!-- Controls -->
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
+                                <Button Command="{x:Bind ViewModel.StopMotionCommand}" Padding="12" CornerRadius="20" ToolTipService.ToolTip="Stop">
+                                    <FontIcon Glyph="&#xE71A;" FontFamily="Segoe MDL2 Assets"/>
+                                </Button>
+                                <Button Command="{x:Bind ViewModel.PlayMotionCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16" CornerRadius="30" ToolTipService.ToolTip="Play">
+                                    <FontIcon Glyph="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                                </Button>
+                                <Button Command="{x:Bind ViewModel.PauseMotionCommand}" Padding="12" CornerRadius="20" ToolTipService.ToolTip="Pause">
+                                    <FontIcon Glyph="&#xE769;" FontFamily="Segoe MDL2 Assets"/>
+                                </Button>
+                            </StackPanel>
                         </Grid>
 
-                        <!-- Control Area -->
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center">
-                             <AppBarButton Icon="Stop" Label="Stop" Command="{x:Bind ViewModel.StopMotionCommand}"/>
-                             <AppBarButton Icon="Play" Label="Play" Command="{x:Bind ViewModel.PlayMotionCommand}" Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
-                             <AppBarButton Icon="Pause" Label="Pause" Command="{x:Bind ViewModel.PauseMotionCommand}"/>
-                        </StackPanel>
-                    </Grid>
+                        <!-- File Info Card -->
+                        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20" RowSpacing="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Text="File Information" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            
+                            <Grid Grid.Row="1" ColumnSpacing="16" RowSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                    <!-- Motion Info Panel -->
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="10" CornerRadius="4">
-                        <StackPanel>
-                            <TextBlock Text="Total Time" Style="{StaticResource CaptionTextBlockStyle}"/>
-                            <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionTotalTime, Mode=OneWay}"/>
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock Text="Data Count" Style="{StaticResource CaptionTextBlockStyle}"/>
-                            <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionDataCount, Mode=OneWay}"/>
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock Text="Created At" Style="{StaticResource CaptionTextBlockStyle}"/>
-                            <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionCreatedAt, Mode=OneWay}"/>
-                        </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Total Duration" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionTotalTime, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Data Points" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionDataCount, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                                    <TextBlock Text="Created At" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionCreatedAt, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
                     </StackPanel>
 
-                    <!-- Motor List -->
-                    <ScrollViewer Grid.Row="2">
-                        <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedDevice.Motors, Mode=OneWay}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" HorizontalAlignment="Stretch"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
+                    <!-- Right Column: Motors -->
+                    <Grid Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+                            <TextBlock Text="Motors" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="10" Padding="8,0" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Motors.Count, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            </Border>
+                        </StackPanel>
+
+                        <GridView Grid.Row="1" ItemsSource="{x:Bind ViewModel.SelectedDevice.Motors, Mode=OneWay}" SelectionMode="None">
+                            <GridView.ItemTemplate>
                                 <DataTemplate x:DataType="models:MotorState">
-                                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Margin="5" Padding="10" CornerRadius="4" Width="250">
+                                    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="4" Padding="12" Width="200" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <TextBlock Text="{x:Bind DisplayId}" FontWeight="Bold"/>
-                                        <TextBlock Grid.Column="1" Text="{x:Bind Type}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                        
-                                        <TextBlock Grid.Row="1" Text="{x:Bind Status}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" Margin="0,5,0,0"/>
-                                        
-                                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,10,0,0">
-                                            <TextBlock Text="Position"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon Glyph="&#xE966;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                                <TextBlock Text="{x:Bind DisplayId}" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{x:Bind Status}" FontSize="12" 
+                                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"/>
+                                        </Grid>
+
+                                        <TextBlock Grid.Row="1" Text="{x:Bind Type}" FontSize="12" 
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="0,4,0,8"/>
+
+                                        <StackPanel Grid.Row="2">
+                                            <Grid Margin="0,0,0,4">
+                                                <TextBlock Text="Position" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                                <TextBlock Text="{x:Bind Position, Mode=OneWay}" FontSize="10" HorizontalAlignment="Right"/>
+                                            </Grid>
                                             <Slider Value="{x:Bind Position, Mode=TwoWay}" Minimum="0" Maximum="180" 
-                                                    PointerCaptureLost="Slider_PointerCaptureLost"/>
+                                                    PointerCaptureLost="Slider_PointerCaptureLost"
+                                                    Height="32"/>
                                         </StackPanel>
                                     </Grid>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                            </GridView.ItemTemplate>
+                            <GridView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4"/>
+                                </ItemsPanelTemplate>
+                            </GridView.ItemsPanel>
+                        </GridView>
+                    </Grid>
                 </Grid>
             </PivotItem>
             
