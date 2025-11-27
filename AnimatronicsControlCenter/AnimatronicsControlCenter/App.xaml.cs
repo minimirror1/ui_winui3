@@ -39,6 +39,7 @@ namespace AnimatronicsControlCenter
             // Core Services
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<ILocalizationService, LocalizationService>();
 
             // ViewModels
             services.AddSingleton<DashboardViewModel>();
