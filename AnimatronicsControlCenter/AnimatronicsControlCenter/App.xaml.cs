@@ -44,6 +44,7 @@ namespace AnimatronicsControlCenter
             services.AddTransient<DashboardViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<DeviceDetailViewModel>();
+            services.AddTransient<ScanDialogViewModel>();
             
             return services.BuildServiceProvider();
         }

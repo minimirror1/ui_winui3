@@ -5,6 +5,7 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         string LastComPort { get; set; }
         int LastBaudRate { get; set; }
         string Theme { get; set; }
+        bool IsVirtualModeEnabled { get; set; }
         void Save();
         void Load();
     }

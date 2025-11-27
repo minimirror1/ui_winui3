@@ -13,11 +13,35 @@ namespace AnimatronicsControlCenter.Infrastructure
     {
         private SerialPort? _serialPort;
         private readonly SemaphoreSlim _writeLock = new(1, 1);
+        private readonly ISettingsService _settingsService;
+        private readonly VirtualDeviceManager _virtualDeviceManager;
+        private bool _isVirtualConnected;
 
-        public bool IsConnected => _serialPort?.IsOpen ?? false;
+        public SerialService(ISettingsService settingsService)
+        {
+            _settingsService = settingsService;
+            _virtualDeviceManager = new VirtualDeviceManager();
+        }
+
+        public bool IsConnected
+        {
+            get
+            {
+                if (_settingsService.IsVirtualModeEnabled)
+                    return _isVirtualConnected;
+                return _serialPort?.IsOpen ?? false;
+            }
+        }
 
         public async Task ConnectAsync(string portName, int baudRate)
         {
+            if (_settingsService.IsVirtualModeEnabled)
+            {
+                _isVirtualConnected = true;
+                await Task.CompletedTask;
+                return;
+            }
+
             if (_serialPort != null && _serialPort.IsOpen)
                 Disconnect();
 
@@ -26,12 +50,22 @@ namespace AnimatronicsControlCenter.Infrastructure
                 ReadTimeout = 500,
                 WriteTimeout = 500
             };
-            _serialPort.Open();
+            try 
+            {
+                _serialPort.Open();
+            }
+            catch (Exception)
+            {
+                // Handle open failure if needed
+                throw;
+            }
             await Task.CompletedTask;
         }
 
         public void Disconnect()
         {
+            _isVirtualConnected = false;
+
             if (_serialPort?.IsOpen == true)
             {
                 _serialPort.Close();
@@ -47,6 +81,20 @@ namespace AnimatronicsControlCenter.Infrastructure
             var message = new { id = deviceId, cmd = command, payload };
             var json = JsonSerializer.Serialize(message);
             
+            if (_settingsService.IsVirtualModeEnabled)
+            {
+                // In virtual mode, we don't "send" and forget, we process.
+                // But this method signature is void/Task.
+                // So we just simulate the send.
+                // The actual processing usually happens in a read loop or immediately for request/response.
+                // For this architecture, we might need to simulate a response coming back?
+                // But SendCommandAsync is one-way usually, unless we have an event for data received.
+                // However, ScanDevicesAsync (and PingDeviceAsync) waits for response.
+                // Let's assume SendCommandAsync is just for fire-and-forget or part of a request-response flow managed by the caller.
+                await Task.CompletedTask;
+                return;
+            }
+
             await _writeLock.WaitAsync();
             try
             {
@@ -61,6 +109,57 @@ namespace AnimatronicsControlCenter.Infrastructure
             }
         }
 
+        public async Task<Device?> PingDeviceAsync(int deviceId)
+        {
+            if (!IsConnected) return null;
+
+            if (_settingsService.IsVirtualModeEnabled)
+            {
+                await Task.Delay(20); // Simulate latency
+                var cmd = new { id = deviceId, cmd = "ping" };
+                var jsonCmd = JsonSerializer.Serialize(cmd);
+                var responseJson = _virtualDeviceManager.ProcessCommand(jsonCmd);
+                
+                if (!string.IsNullOrEmpty(responseJson))
+                {
+                     // Parse response to check validity?
+                     // Assuming presence of response means device is there.
+                     return new Device(deviceId) { IsConnected = true, StatusMessage = "Online (Virtual)" };
+                }
+                return null;
+            }
+
+            // Real device logic
+            try
+            {
+                // Clear buffers first
+                if (_serialPort != null)
+                {
+                     _serialPort.DiscardInBuffer();
+                     _serialPort.DiscardOutBuffer();
+                }
+
+                await SendCommandAsync(deviceId, "ping");
+                
+                await Task.Delay(50); 
+                
+                if (_serialPort != null && _serialPort.IsOpen && _serialPort.BytesToRead > 0)
+                {
+                    var response = _serialPort.ReadLine();
+                    if (!string.IsNullOrWhiteSpace(response))
+                    {
+                        // Ideally parse the JSON response here
+                        return new Device(deviceId) { IsConnected = true, StatusMessage = "Online" };
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore timeouts
+            }
+            return null;
+        }
+
         public async Task<IEnumerable<Device>> ScanDevicesAsync(int startId, int endId)
         {
             var foundDevices = new List<Device>();
@@ -71,24 +170,10 @@ namespace AnimatronicsControlCenter.Infrastructure
             {
                 for (int id = startId; id <= endId; id++)
                 {
-                    try
+                    var device = await PingDeviceAsync(id);
+                    if (device != null)
                     {
-                        await SendCommandAsync(id, "ping");
-                        
-                        await Task.Delay(50); 
-                        
-                        if (_serialPort != null && _serialPort.IsOpen && _serialPort.BytesToRead > 0)
-                        {
-                            var response = _serialPort.ReadLine();
-                            if (!string.IsNullOrWhiteSpace(response))
-                            {
-                                foundDevices.Add(new Device(id) { IsConnected = true, StatusMessage = "Online" });
-                            }
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // Ignore timeouts
+                        foundDevices.Add(device);
                     }
                 }
                 return foundDevices;
@@ -96,4 +181,3 @@ namespace AnimatronicsControlCenter.Infrastructure
         }
     }
 }
-

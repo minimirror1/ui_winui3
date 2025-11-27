@@ -8,10 +8,12 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyComPort = "ComPort";
         private const string KeyBaudRate = "BaudRate";
         private const string KeyTheme = "Theme";
+        private const string KeyIsVirtualModeEnabled = "IsVirtualModeEnabled";
 
         public string LastComPort { get; set; } = "COM1";
         public int LastBaudRate { get; set; } = 9600;
         public string Theme { get; set; } = "Default";
+        public bool IsVirtualModeEnabled { get; set; } = false;
 
         public void Save()
         {
@@ -21,6 +23,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 localSettings.Values[KeyComPort] = LastComPort;
                 localSettings.Values[KeyBaudRate] = LastBaudRate;
                 localSettings.Values[KeyTheme] = Theme;
+                localSettings.Values[KeyIsVirtualModeEnabled] = IsVirtualModeEnabled;
             }
             catch { /* Ignore if ApplicationData is not available (e.g. unpackaged) */ }
         }
@@ -33,6 +36,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 if (localSettings.Values.TryGetValue(KeyComPort, out var port)) LastComPort = (string)port;
                 if (localSettings.Values.TryGetValue(KeyBaudRate, out var rate)) LastBaudRate = (int)rate;
                 if (localSettings.Values.TryGetValue(KeyTheme, out var theme)) Theme = (string)theme;
+                if (localSettings.Values.TryGetValue(KeyIsVirtualModeEnabled, out var isVirtual)) IsVirtualModeEnabled = (bool)isVirtual;
             }
             catch { /* Ignore if ApplicationData is not available (e.g. unpackaged) */ }
         }

@@ -13,6 +13,8 @@
         
         <NumberBox Header="Baud Rate" Value="{x:Bind ViewModel.BaudRate, Mode=TwoWay}" SpinButtonPlacementMode="Inline" MinWidth="200"/>
         
+        <ToggleSwitch Header="Enable Virtual Mode" IsOn="{x:Bind ViewModel.IsVirtualModeEnabled, Mode=TwoWay}"/>
+
         <Button Content="Connect / Save" Command="{x:Bind ViewModel.ConnectCommand}"/>
     </StackPanel>
 </Page>

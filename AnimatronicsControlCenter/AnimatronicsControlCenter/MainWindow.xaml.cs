@@ -40,7 +40,6 @@ namespace AnimatronicsControlCenter
                 Type? pageType = item.Tag.ToString() switch
                 {
                     "DashboardPage" => typeof(DashboardPage),
-                    "SettingsPage" => typeof(SettingsPage),
                     _ => null
                 };
 

@@ -1,10 +1,13 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.UI.Views;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
@@ -29,12 +32,21 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             if (IsScanning) return;
             IsScanning = true;
-            Devices.Clear();
-
+            
             try
             {
-                var devices = await _serialService.ScanDevicesAsync(1, 10);
-                foreach (var device in devices)
+                var dialog = new ScanDialog();
+                if (App.Current.m_window?.Content is FrameworkElement element)
+                {
+                    dialog.XamlRoot = element.XamlRoot;
+                }
+                
+                await dialog.ShowAsync();
+                
+                var found = dialog.ViewModel.FoundDevices;
+                
+                Devices.Clear();
+                foreach (var device in found)
                 {
                     Devices.Add(device);
                 }
@@ -46,4 +58,3 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
     }
 }
-
