@@ -87,6 +87,14 @@ namespace AnimatronicsControlCenter.UI.Views
             }
         }
 
+        private void MotionSlider_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is Slider slider)
+            {
+                ViewModel.SeekMotionCommand.Execute(slider.Value);
+            }
+        }
+
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
         {
             if (args.InvokedItem is TreeViewNode node && node.Content is FileSystemItem item)

@@ -35,6 +35,9 @@ namespace AnimatronicsControlCenter.Core.Models
         [ObservableProperty]
         private MotionState motionState;
 
+        [ObservableProperty]
+        private TimeSpan motionCurrentTime;
+
         public ObservableCollection<MotorState> Motors { get; } = new();
 
         public Device(int id)
@@ -43,6 +46,8 @@ namespace AnimatronicsControlCenter.Core.Models
             IsConnected = false;
             StatusMessage = "Unknown";
             MotionState = MotionState.Idle;
+            MotionCurrentTime = TimeSpan.Zero;
+            MotionTotalTime = TimeSpan.FromMinutes(2.5); // Mock total time
             
             // Mock motors for testing
             // Using ID logic x-y. Let's make Group 1, Sub 1 and Group 1, Sub 2 etc.

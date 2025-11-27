@@ -28,13 +28,49 @@
                     </Grid.RowDefinitions>
 
                     <!-- Motion Control Panel -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="10" CornerRadius="4">
-                        <TextBlock Text="Motion Control:" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                        <AppBarButton Icon="Play" Label="Play" Command="{x:Bind ViewModel.PlayMotionCommand}"/>
-                        <AppBarButton Icon="Pause" Label="Pause" Command="{x:Bind ViewModel.PauseMotionCommand}"/>
-                        <AppBarButton Icon="Stop" Label="Stop" Command="{x:Bind ViewModel.StopMotionCommand}"/>
-                        <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionState, Mode=OneWay}" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    </StackPanel>
+                    <Grid Grid.Row="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="15" CornerRadius="8" RowSpacing="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Status Area -->
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                             <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionState, Mode=OneWay}" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}" 
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+
+                        <!-- Progress Area -->
+                        <Grid Grid.Row="1" ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Text="{x:Bind ViewModel.FormatTime(ViewModel.SelectedDevice.MotionCurrentTime), Mode=OneWay}" 
+                                       VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                       
+                            <Slider Grid.Column="1" 
+                                    Value="{x:Bind ViewModel.SelectedDevice.MotionCurrentTime.TotalSeconds, Mode=OneWay}"
+                                    Maximum="{x:Bind ViewModel.SelectedDevice.MotionTotalTime.TotalSeconds, Mode=OneWay}"
+                                    PointerCaptureLost="MotionSlider_PointerCaptureLost"
+                                    VerticalAlignment="Center"/>
+                                    
+                            <TextBlock Grid.Column="2" 
+                                       Text="{x:Bind ViewModel.FormatTime(ViewModel.SelectedDevice.MotionTotalTime), Mode=OneWay}" 
+                                       VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"/>
+                        </Grid>
+
+                        <!-- Control Area -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center">
+                             <AppBarButton Icon="Stop" Label="Stop" Command="{x:Bind ViewModel.StopMotionCommand}"/>
+                             <AppBarButton Icon="Play" Label="Play" Command="{x:Bind ViewModel.PlayMotionCommand}" Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
+                             <AppBarButton Icon="Pause" Label="Pause" Command="{x:Bind ViewModel.PauseMotionCommand}"/>
+                        </StackPanel>
+                    </Grid>
 
                     <!-- Motion Info Panel -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="10" CornerRadius="4">

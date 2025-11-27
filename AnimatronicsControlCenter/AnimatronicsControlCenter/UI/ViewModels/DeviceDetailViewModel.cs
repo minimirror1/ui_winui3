@@ -98,6 +98,20 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
 
         [RelayCommand]
+        private async Task SeekMotionAsync(double seconds)
+        {
+            if (SelectedDevice == null) return;
+            var time = TimeSpan.FromSeconds(seconds);
+            SelectedDevice.MotionCurrentTime = time;
+            await _serialService.SendCommandAsync(SelectedDevice.Id, "motion_ctrl", new { action = "seek", time = time.TotalSeconds });
+        }
+
+        public string FormatTime(TimeSpan time)
+        {
+            return time.ToString(@"hh\:mm\:ss");
+        }
+
+        [RelayCommand]
         private async Task RefreshFilesAsync()
         {
             if (SelectedDevice == null) return;
