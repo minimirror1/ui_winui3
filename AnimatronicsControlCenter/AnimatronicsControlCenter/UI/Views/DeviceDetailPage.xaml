@@ -1,0 +1,41 @@
+<Page
+    x:Class="AnimatronicsControlCenter.UI.Views.DeviceDetailPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:AnimatronicsControlCenter.Core.Models"
+    mc:Ignorable="d">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Id, FallbackValue='No Device Selected'}" Style="{StaticResource TitleTextBlockStyle}"/>
+
+        <Pivot Grid.Row="1">
+            <PivotItem Header="Overview">
+                <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedDevice.Motors, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:MotorState">
+                            <StackPanel Margin="0,10">
+                                <TextBlock Text="{x:Bind Id}"/>
+                                <Slider Value="{x:Bind Position, Mode=TwoWay}" Minimum="0" Maximum="180" Width="300"
+                                        PointerCaptureLost="Slider_PointerCaptureLost"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </PivotItem>
+            <PivotItem Header="Files">
+                <TextBlock Text="File Management Placeholder"/>
+            </PivotItem>
+            <PivotItem Header="Terminal">
+                <TextBlock Text="Terminal Placeholder"/>
+            </PivotItem>
+        </Pivot>
+    </Grid>
+</Page>
+

@@ -1,0 +1,19 @@
+<Page
+    x:Class="AnimatronicsControlCenter.UI.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="20" Padding="20">
+        <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}"/>
+        
+        <ComboBox Header="COM Port" ItemsSource="{x:Bind ViewModel.AvailablePorts}" SelectedItem="{x:Bind ViewModel.SelectedPort, Mode=TwoWay}" MinWidth="200"/>
+        
+        <NumberBox Header="Baud Rate" Value="{x:Bind ViewModel.BaudRate, Mode=TwoWay}" SpinButtonPlacementMode="Inline" MinWidth="200"/>
+        
+        <Button Content="Connect / Save" Command="{x:Bind ViewModel.ConnectCommand}"/>
+    </StackPanel>
+</Page>
+
