@@ -106,8 +106,18 @@
                         <CommandBar DefaultLabelPosition="Right">
                             <AppBarButton Icon="Refresh" Label="Refresh" Command="{x:Bind ViewModel.RefreshFilesCommand}"/>
                         </CommandBar>
-                        <!-- TreeView populated in code-behind -->
-                        <TreeView x:Name="FileTreeView" Grid.Row="1" ItemInvoked="FileTreeView_ItemInvoked"/>
+                        <TreeView x:Name="FileTreeView" Grid.Row="1" ItemInvoked="FileTreeView_ItemInvoked" ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}">
+                            <TreeView.ItemTemplate>
+                                <DataTemplate x:DataType="models:FileSystemItem">
+                                    <TreeViewItem ItemsSource="{x:Bind Children}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="{x:Bind Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                            <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </TreeViewItem>
+                                </DataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
                     </Grid>
 
                     <Grid Grid.Column="1" RowSpacing="10">

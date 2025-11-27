@@ -34,7 +34,7 @@ namespace AnimatronicsControlCenter.UI.Views
         {
             if (e.PropertyName == nameof(ViewModel.Files))
             {
-                UpdateFileTree();
+                // UpdateFileTree(); // No longer needed as we bind ItemsSource
             }
             else if (e.PropertyName == nameof(ViewModel.IsVerificationDialogOpen))
             {

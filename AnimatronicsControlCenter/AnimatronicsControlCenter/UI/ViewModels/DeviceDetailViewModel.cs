@@ -119,13 +119,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                                 PropertyNameCaseInsensitive = true
                             });
 
-                            Files.Clear();
                             if (items != null)
                             {
-                                foreach (var item in items)
-                                {
-                                    Files.Add(item);
-                                }
+                                Files = new ObservableCollection<FileSystemItem>(items);
+                            }
+                            else
+                            {
+                                Files = new ObservableCollection<FileSystemItem>();
                             }
                         }
                     }
