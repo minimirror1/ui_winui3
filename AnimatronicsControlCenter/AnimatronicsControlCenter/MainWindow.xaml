@@ -13,10 +13,17 @@
         </Grid.RowDefinitions>
         
         <Grid x:Name="AppTitleBar" Height="32" VerticalAlignment="Top">
-             <TextBlock Text="Animatronics Control Center" 
-                       VerticalAlignment="Center" 
-                       Margin="48,0,0,0"
-                       Style="{StaticResource CaptionTextBlockStyle}"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                <Button x:Name="BackButton" 
+                        Style="{StaticResource NavigationBackButtonNormalStyle}"
+                        Click="BackButton_Click"
+                        Visibility="Collapsed"
+                        VerticalAlignment="Center"/>
+                <TextBlock Text="Animatronics Control Center" 
+                           VerticalAlignment="Center" 
+                           Margin="12,0,0,0"
+                           Style="{StaticResource CaptionTextBlockStyle}"/>
+            </StackPanel>
         </Grid>
 
         <NavigationView x:Name="NavView" 

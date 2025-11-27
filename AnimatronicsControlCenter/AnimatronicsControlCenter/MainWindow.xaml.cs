@@ -17,6 +17,31 @@ namespace AnimatronicsControlCenter
             this.SystemBackdrop = new MicaBackdrop();
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(AppTitleBar);
+            
+            ContentFrame.Navigated += ContentFrame_Navigated;
+        }
+
+        private void ContentFrame_Navigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            BackButton.Visibility = ContentFrame.CanGoBack ? Visibility.Visible : Visibility.Collapsed;
+
+            if (ContentFrame.SourcePageType == typeof(SettingsPage))
+            {
+                NavView.SelectedItem = (NavigationViewItem)NavView.SettingsItem;
+            }
+            else if (ContentFrame.SourcePageType == typeof(DashboardPage))
+            {
+                NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>()
+                    .FirstOrDefault(i => i.Tag?.ToString() == "DashboardPage");
+            }
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ContentFrame.CanGoBack)
+            {
+                ContentFrame.GoBack();
+            }
         }
 
         private void NavView_Loaded(object sender, RoutedEventArgs e)
