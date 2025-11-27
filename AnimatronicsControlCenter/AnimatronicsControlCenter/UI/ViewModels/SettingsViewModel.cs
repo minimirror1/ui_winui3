@@ -53,8 +53,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public List<LanguageOption> Languages { get; } = new()
         {
-            new LanguageOption("en-US", "English"),
-            new LanguageOption("ko-KR", "한국어")
+            new LanguageOption("ko-KR", "한국어"),
+            new LanguageOption("en-US", "English")
         };
 
         [ObservableProperty]
@@ -78,7 +78,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             
             var currentCode = _localizationService.CurrentCulture.Name;
             SelectedLanguage = Languages.FirstOrDefault(l => l.Code.Equals(currentCode, System.StringComparison.OrdinalIgnoreCase)) 
-                             ?? Languages.FirstOrDefault(l => l.Code == "en-US") 
+                             ?? Languages.FirstOrDefault(l => l.Code == "ko-KR") 
                              ?? Languages.First();
             
             IsConnectionActive = _serialService.IsConnected;

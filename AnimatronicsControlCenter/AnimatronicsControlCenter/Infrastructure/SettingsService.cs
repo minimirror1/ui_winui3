@@ -12,10 +12,10 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyLanguage = "Language";
 
         public string LastComPort { get; set; } = "COM1";
-        public int LastBaudRate { get; set; } = 9600;
+        public int LastBaudRate { get; set; } = 115200;
         public string Theme { get; set; } = "Default";
         public bool IsVirtualModeEnabled { get; set; } = false;
-        public string Language { get; set; } = "en-US";
+        public string Language { get; set; } = "ko-KR";
 
         public void Save()
         {
