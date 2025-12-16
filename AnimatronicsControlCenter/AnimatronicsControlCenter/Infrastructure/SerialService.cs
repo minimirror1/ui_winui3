@@ -11,6 +11,9 @@ namespace AnimatronicsControlCenter.Infrastructure
 {
     public class SerialService : ISerialService
     {
+        private const byte HostId = 0;
+        private const byte BroadcastId = 255;
+
         private SerialPort? _serialPort;
         private readonly SemaphoreSlim _writeLock = new(1, 1);
         private readonly ISettingsService _settingsService;
@@ -78,7 +81,9 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             if (!IsConnected) return;
 
-            var message = new { id = deviceId, cmd = command, payload };
+            // Firmware expects addressed packets: src_id/tar_id/cmd/payload (u8 IDs) + newline framing.
+            byte tarId = checked((byte)deviceId);
+            var message = new { src_id = HostId, tar_id = tarId, cmd = command, payload };
             var json = JsonSerializer.Serialize(message);
             
             if (_settingsService.IsVirtualModeEnabled)
@@ -109,7 +114,9 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             if (!IsConnected) return null;
 
-            var message = new { id = deviceId, cmd = command, payload };
+            // Firmware expects addressed packets: src_id/tar_id/cmd/payload (u8 IDs) + newline framing.
+            byte tarId = checked((byte)deviceId);
+            var message = new { src_id = HostId, tar_id = tarId, cmd = command, payload };
             var json = JsonSerializer.Serialize(message);
 
             if (_settingsService.IsVirtualModeEnabled)
@@ -157,7 +164,8 @@ namespace AnimatronicsControlCenter.Infrastructure
             if (_settingsService.IsVirtualModeEnabled)
             {
                 await Task.Delay(20); // Simulate latency
-                var cmd = new { id = deviceId, cmd = "ping" };
+                byte tarId = checked((byte)deviceId);
+                var cmd = new { src_id = HostId, tar_id = tarId, cmd = "ping" };
                 var jsonCmd = JsonSerializer.Serialize(cmd);
                 var responseJson = _virtualDeviceManager.ProcessCommand(jsonCmd);
                 

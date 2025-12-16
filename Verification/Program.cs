@@ -28,7 +28,8 @@ namespace Verification
                 // 2. Modify Device 1
                 var saveCmd = new
                 {
-                    id = 1,
+                    src_id = 0,
+                    tar_id = 1,
                     cmd = "save_file",
                     payload = new { path = testFile, content = newValue }
                 };
@@ -65,7 +66,8 @@ namespace Verification
         {
             var cmd = new
             {
-                id = deviceId,
+                src_id = 0,
+                tar_id = deviceId,
                 cmd = "get_file",
                 payload = new { path }
             };
@@ -73,7 +75,7 @@ namespace Verification
             string response = manager.ProcessCommand(json);
             
             var node = JsonNode.Parse(response);
-            if (node["status"]?.ToString() == "ok")
+            if (node != null && node["status"]?.ToString() == "ok")
             {
                 return node["payload"]?["content"]?.ToString() ?? "";
             }

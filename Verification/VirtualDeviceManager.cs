@@ -9,6 +9,8 @@ namespace AnimatronicsControlCenter.Infrastructure
 {
     public class VirtualDeviceManager
     {
+        private const byte BroadcastId = 255;
+
         // Store file systems per device ID
         private readonly Dictionary<int, Dictionary<string, string>> _deviceFileSystems;
 
@@ -70,75 +72,83 @@ namespace AnimatronicsControlCenter.Infrastructure
             try
             {
                 var node = JsonNode.Parse(jsonCommand);
-                if (node == null) return ErrorResponse("Invalid JSON");
+                if (node == null) return ErrorResponse(0, 0, "error", "Invalid JSON");
 
-                int deviceId = node["id"]?.GetValue<int>() ?? 0;
+                // Firmware-style addressing: { src_id, tar_id, cmd, payload }
+                // Keep a backward-compatibility fallback to legacy { id, ... } to avoid breaking older tools.
+                int srcId = node["src_id"]?.GetValue<int>() ?? 0;
+                int tarId = node["tar_id"]?.GetValue<int>() ?? (node["id"]?.GetValue<int>() ?? 0);
+
+                // Broadcast means "do not respond" (mirrors firmware collision-avoidance behavior).
+                if (tarId == BroadcastId) return string.Empty;
+
+                int deviceId = tarId;
                 string cmd = node["cmd"]?.ToString() ?? "";
                 var payload = node["payload"];
 
                 return cmd switch
                 {
-                    "ping" => SuccessResponse(new { message = "pong" }),
-                    "move" => HandleMove(deviceId, payload),
-                    "motion_ctrl" => HandleMotionCtrl(deviceId, payload),
-                    "get_files" => HandleGetFiles(deviceId),
-                    "get_file" => HandleGetFile(deviceId, payload),
-                    "save_file" => HandleSaveFile(deviceId, payload),
-                    "verify_file" => HandleVerifyFile(deviceId, payload),
-                    _ => ErrorResponse($"Unknown command: {cmd}")
+                    "ping" => SuccessResponse(deviceId, srcId, "pong", new { message = "pong" }),
+                    "move" => HandleMove(deviceId, srcId, payload),
+                    "motion_ctrl" => HandleMotionCtrl(deviceId, srcId, payload),
+                    "get_files" => HandleGetFiles(deviceId, srcId),
+                    "get_file" => HandleGetFile(deviceId, srcId, payload),
+                    "save_file" => HandleSaveFile(deviceId, srcId, payload),
+                    "verify_file" => HandleVerifyFile(deviceId, srcId, payload),
+                    _ => ErrorResponse(deviceId, srcId, "error", $"Unknown command: {cmd}")
                 };
             }
             catch (Exception ex)
             {
-                return ErrorResponse(ex.Message);
+                return ErrorResponse(0, 0, "error", ex.Message);
             }
         }
 
-        private string HandleMove(int deviceId, JsonNode? payload)
+        private string HandleMove(int deviceId, int srcId, JsonNode? payload)
         {
-            return SuccessResponse(new { status = "moved", deviceId });
+            return SuccessResponse(deviceId, srcId, "move", new { status = "moved", deviceId });
         }
 
-        private string HandleMotionCtrl(int deviceId, JsonNode? payload)
+        private string HandleMotionCtrl(int deviceId, int srcId, JsonNode? payload)
         {
             string action = payload?["action"]?.ToString() ?? "unknown";
-            return SuccessResponse(new { status = "executed", action, deviceId });
+            return SuccessResponse(deviceId, srcId, "motion_ctrl", new { status = "executed", action, deviceId });
         }
 
-        private string HandleGetFiles(int deviceId)
+        private string HandleGetFiles(int deviceId, int srcId)
         {
             var fileSystem = GetFileSystem(deviceId);
             var rootItems = BuildFileSystemTree(fileSystem);
-            return SuccessResponse(rootItems);
+            return SuccessResponse(deviceId, srcId, "get_files", rootItems);
         }
 
-        private string HandleGetFile(int deviceId, JsonNode? payload)
+        private string HandleGetFile(int deviceId, int srcId, JsonNode? payload)
         {
             string path = payload?["path"]?.ToString() ?? "";
             var fileSystem = GetFileSystem(deviceId);
 
             if (fileSystem.TryGetValue(path, out var content))
             {
-                return SuccessResponse(new { path, content });
+                return SuccessResponse(deviceId, srcId, "get_file", new { path, content });
             }
-            return ErrorResponse("File not found");
+            return ErrorResponse(deviceId, srcId, "error", "File not found");
         }
 
-        private string HandleSaveFile(int deviceId, JsonNode? payload)
+        private string HandleSaveFile(int deviceId, int srcId, JsonNode? payload)
         {
             string path = payload?["path"]?.ToString() ?? "";
             string content = payload?["content"]?.ToString() ?? "";
 
-            if (string.IsNullOrEmpty(path)) return ErrorResponse("Invalid path");
+            if (string.IsNullOrEmpty(path)) return ErrorResponse(deviceId, srcId, "error", "Invalid path");
 
             var fileSystem = GetFileSystem(deviceId);
             
             // Update or create file
             fileSystem[path] = content;
-            return SuccessResponse(new { status = "saved", path });
+            return SuccessResponse(deviceId, srcId, "save_file", new { status = "saved", path });
         }
 
-        private string HandleVerifyFile(int deviceId, JsonNode? payload)
+        private string HandleVerifyFile(int deviceId, int srcId, JsonNode? payload)
         {
             string path = payload?["path"]?.ToString() ?? "";
             string contentToCheck = payload?["content"]?.ToString() ?? "";
@@ -150,10 +160,10 @@ namespace AnimatronicsControlCenter.Infrastructure
                 string normalizedStored = storedContent.Replace("\r\n", "\n").Replace("\r", "\n");
                 string normalizedCheck = contentToCheck.Replace("\r\n", "\n").Replace("\r", "\n");
                 
-                return SuccessResponse(new { match = normalizedStored == normalizedCheck });
+                return SuccessResponse(deviceId, srcId, "verify_file", new { match = normalizedStored == normalizedCheck });
             }
             
-            return ErrorResponse("File not found");
+            return ErrorResponse(deviceId, srcId, "error", "File not found");
         }
 
         private List<FileSystemItem> BuildFileSystemTree(Dictionary<string, string> fileSystem)
@@ -230,20 +240,26 @@ namespace AnimatronicsControlCenter.Infrastructure
             return rootItems;
         }
 
-        private string SuccessResponse(object payload)
+        private string SuccessResponse(int deviceId, int requestSrcId, string cmd, object payload)
         {
             var response = new
             {
+                src_id = deviceId,
+                tar_id = requestSrcId,
+                cmd,
                 status = "ok",
                 payload
             };
             return JsonSerializer.Serialize(response);
         }
 
-        private string ErrorResponse(string message)
+        private string ErrorResponse(int deviceId, int requestSrcId, string cmd, string message)
         {
             var response = new
             {
+                src_id = deviceId,
+                tar_id = requestSrcId,
+                cmd,
                 status = "error",
                 message
             };
