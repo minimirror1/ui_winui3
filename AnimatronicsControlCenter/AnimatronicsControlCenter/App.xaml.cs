@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Infrastructure;
+using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter.UI.ViewModels;
 using AnimatronicsControlCenter.UI.Views;
 
@@ -41,9 +42,11 @@ namespace AnimatronicsControlCenter
             services.AddTransient<DashboardPage>();
             services.AddTransient<SettingsPage>();
             services.AddTransient<DeviceDetailPage>();
+            services.AddTransient<SerialMonitorWindow>();
             
             // Core Services
             services.AddSingleton<ISerialService, SerialService>();
+            services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
 
@@ -52,6 +55,10 @@ namespace AnimatronicsControlCenter
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<DeviceDetailViewModel>();
             services.AddTransient<ScanDialogViewModel>();
+            services.AddTransient<SerialMonitorViewModel>();
+
+            // Window Hosts
+            services.AddSingleton<SerialMonitorWindowHost>();
             
             return services.BuildServiceProvider();
         }

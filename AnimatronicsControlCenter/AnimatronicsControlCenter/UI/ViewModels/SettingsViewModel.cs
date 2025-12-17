@@ -17,6 +17,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ISettingsService _settingsService;
         private readonly ISerialService _serialService;
         private readonly ILocalizationService _localizationService;
+        private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
 
         public LocalizedStrings Strings { get; }
 
@@ -62,11 +63,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private bool _isInitialized;
 
-        public SettingsViewModel(ISettingsService settingsService, ISerialService serialService, ILocalizationService localizationService)
+        public SettingsViewModel(
+            ISettingsService settingsService,
+            ISerialService serialService,
+            ILocalizationService localizationService,
+            SerialMonitorWindowHost serialMonitorWindowHost)
         {
             _settingsService = settingsService;
             _serialService = serialService;
             _localizationService = localizationService;
+            _serialMonitorWindowHost = serialMonitorWindowHost;
             Strings = new LocalizedStrings(_localizationService);
             
             _settingsService.Load();
@@ -161,6 +167,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 IsConnectionActive = false;
                 // Ideally show error message
             }
+        }
+
+        [RelayCommand]
+        private void OpenSerialMonitor()
+        {
+            _serialMonitorWindowHost.Show();
         }
     }
 }

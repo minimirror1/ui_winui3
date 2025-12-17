@@ -109,4 +109,70 @@
   <data name="Nav_Settings" xml:space="preserve">
     <value>설정</value>
   </data>
+  <data name="SerialMonitor_Title" xml:space="preserve">
+    <value>시리얼 모니터</value>
+  </data>
+  <data name="SerialMonitor_Header.Header" xml:space="preserve">
+    <value>시리얼 모니터</value>
+  </data>
+  <data name="SerialMonitor_Desc.Text" xml:space="preserve">
+    <value>시리얼 송수신 데이터와 패킷을 모니터링합니다</value>
+  </data>
+  <data name="SerialMonitor_OpenButton" xml:space="preserve">
+    <value>열기</value>
+  </data>
+  <data name="SerialMonitor_Clear" xml:space="preserve">
+    <value>지우기</value>
+  </data>
+  <data name="SerialMonitor_Pause" xml:space="preserve">
+    <value>일시정지</value>
+  </data>
+  <data name="SerialMonitor_Resume" xml:space="preserve">
+    <value>재개</value>
+  </data>
+  <data name="SerialMonitor_Filter" xml:space="preserve">
+    <value>필터</value>
+  </data>
+  <data name="SerialMonitor_Filter_All" xml:space="preserve">
+    <value>전체</value>
+  </data>
+  <data name="SerialMonitor_Filter_Tx" xml:space="preserve">
+    <value>송신</value>
+  </data>
+  <data name="SerialMonitor_Filter_Rx" xml:space="preserve">
+    <value>수신</value>
+  </data>
+  <data name="SerialMonitor_AutoScroll_On" xml:space="preserve">
+    <value>자동 스크롤 켬</value>
+  </data>
+  <data name="SerialMonitor_AutoScroll_Off" xml:space="preserve">
+    <value>자동 스크롤 끔</value>
+  </data>
+  <data name="SerialMonitor_Search" xml:space="preserve">
+    <value>검색</value>
+  </data>
+  <data name="SerialMonitor_Prev" xml:space="preserve">
+    <value>이전</value>
+  </data>
+  <data name="SerialMonitor_Next" xml:space="preserve">
+    <value>다음</value>
+  </data>
+  <data name="SerialMonitor_CopySelected" xml:space="preserve">
+    <value>선택 복사</value>
+  </data>
+  <data name="SerialMonitor_CopyAll" xml:space="preserve">
+    <value>전체 복사</value>
+  </data>
+  <data name="SerialMonitor_Save" xml:space="preserve">
+    <value>저장</value>
+  </data>
+  <data name="SerialMonitor_Tab_Serial" xml:space="preserve">
+    <value>시리얼</value>
+  </data>
+  <data name="SerialMonitor_Tab_Packets" xml:space="preserve">
+    <value>패킷</value>
+  </data>
+  <data name="SerialMonitor_ParseErrors" xml:space="preserve">
+    <value>파싱 오류:</value>
+  </data>
 </root>

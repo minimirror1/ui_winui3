@@ -89,6 +89,20 @@
                           MinWidth="150"/>
             </tk:SettingsCard>
 
+            <!-- Serial Monitor -->
+            <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                <tk:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8D2;"/>
+                </tk:SettingsCard.HeaderIcon>
+                <tk:SettingsCard.Description>
+                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"/>
+                </tk:SettingsCard.Description>
+                <Button Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_OpenButton', ViewModel.Strings.Code), Mode=OneWay}"
+                        Command="{x:Bind ViewModel.OpenSerialMonitorCommand}"
+                        Style="{StaticResource AccentButtonStyle}"/>
+            </tk:SettingsCard>
+
         </StackPanel>
     </ScrollViewer>
     

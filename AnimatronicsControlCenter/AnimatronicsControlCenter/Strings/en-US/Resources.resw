@@ -109,4 +109,70 @@
   <data name="Nav_Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="SerialMonitor_Title" xml:space="preserve">
+    <value>Serial Monitor</value>
+  </data>
+  <data name="SerialMonitor_Header.Header" xml:space="preserve">
+    <value>Serial Monitor</value>
+  </data>
+  <data name="SerialMonitor_Desc.Text" xml:space="preserve">
+    <value>Monitor serial TX/RX data and packets</value>
+  </data>
+  <data name="SerialMonitor_OpenButton" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="SerialMonitor_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="SerialMonitor_Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="SerialMonitor_Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="SerialMonitor_Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="SerialMonitor_Filter_All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="SerialMonitor_Filter_Tx" xml:space="preserve">
+    <value>Tx</value>
+  </data>
+  <data name="SerialMonitor_Filter_Rx" xml:space="preserve">
+    <value>Rx</value>
+  </data>
+  <data name="SerialMonitor_AutoScroll_On" xml:space="preserve">
+    <value>Auto-scroll On</value>
+  </data>
+  <data name="SerialMonitor_AutoScroll_Off" xml:space="preserve">
+    <value>Auto-scroll Off</value>
+  </data>
+  <data name="SerialMonitor_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="SerialMonitor_Prev" xml:space="preserve">
+    <value>Prev</value>
+  </data>
+  <data name="SerialMonitor_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="SerialMonitor_CopySelected" xml:space="preserve">
+    <value>Copy selected</value>
+  </data>
+  <data name="SerialMonitor_CopyAll" xml:space="preserve">
+    <value>Copy all</value>
+  </data>
+  <data name="SerialMonitor_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SerialMonitor_Tab_Serial" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="SerialMonitor_Tab_Packets" xml:space="preserve">
+    <value>Packets</value>
+  </data>
+  <data name="SerialMonitor_ParseErrors" xml:space="preserve">
+    <value>Parse errors:</value>
+  </data>
 </root>

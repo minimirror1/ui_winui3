@@ -17,12 +17,14 @@ namespace AnimatronicsControlCenter.Infrastructure
         private SerialPort? _serialPort;
         private readonly SemaphoreSlim _writeLock = new(1, 1);
         private readonly ISettingsService _settingsService;
+        private readonly ISerialTrafficTap _trafficTap;
         private readonly VirtualDeviceManager _virtualDeviceManager;
         private bool _isVirtualConnected;
 
-        public SerialService(ISettingsService settingsService)
+        public SerialService(ISettingsService settingsService, ISerialTrafficTap trafficTap)
         {
             _settingsService = settingsService;
+            _trafficTap = trafficTap;
             _virtualDeviceManager = new VirtualDeviceManager();
         }
 
@@ -85,6 +87,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             byte tarId = checked((byte)deviceId);
             var message = new { src_id = HostId, tar_id = tarId, cmd = command, payload };
             var json = JsonSerializer.Serialize(message);
+            _trafficTap.RecordTx(json + "\\n");
             
             if (_settingsService.IsVirtualModeEnabled)
             {
@@ -118,11 +121,17 @@ namespace AnimatronicsControlCenter.Infrastructure
             byte tarId = checked((byte)deviceId);
             var message = new { src_id = HostId, tar_id = tarId, cmd = command, payload };
             var json = JsonSerializer.Serialize(message);
+            _trafficTap.RecordTx(json + "\\n");
 
             if (_settingsService.IsVirtualModeEnabled)
             {
                 await Task.Delay(20);
-                return _virtualDeviceManager.ProcessCommand(json);
+                var response = _virtualDeviceManager.ProcessCommand(json);
+                if (!string.IsNullOrEmpty(response))
+                {
+                    _trafficTap.RecordRx(response + "\\n");
+                }
+                return response;
             }
 
             await _writeLock.WaitAsync();
@@ -140,7 +149,12 @@ namespace AnimatronicsControlCenter.Infrastructure
                         await Task.Delay(100);
                         if (_serialPort.BytesToRead > 0)
                         {
-                            return _serialPort.ReadLine();
+                            var response = _serialPort.ReadLine();
+                            if (!string.IsNullOrWhiteSpace(response))
+                            {
+                                _trafficTap.RecordRx(response + "\\n");
+                            }
+                            return response;
                         }
                         retries--;
                     }
@@ -167,10 +181,12 @@ namespace AnimatronicsControlCenter.Infrastructure
                 byte tarId = checked((byte)deviceId);
                 var cmd = new { src_id = HostId, tar_id = tarId, cmd = "ping" };
                 var jsonCmd = JsonSerializer.Serialize(cmd);
+                _trafficTap.RecordTx(jsonCmd + "\\n");
                 var responseJson = _virtualDeviceManager.ProcessCommand(jsonCmd);
                 
                 if (!string.IsNullOrEmpty(responseJson))
                 {
+                     _trafficTap.RecordRx(responseJson + "\\n");
                      // Parse response to check validity?
                      // Assuming presence of response means device is there.
                      return new Device(deviceId) { IsConnected = true, StatusMessage = "Online (Virtual)" };
@@ -197,6 +213,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                     var response = _serialPort.ReadLine();
                     if (!string.IsNullOrWhiteSpace(response))
                     {
+                        _trafficTap.RecordRx(response + "\\n");
                         // Ideally parse the JSON response here
                         return new Device(deviceId) { IsConnected = true, StatusMessage = "Online" };
                     }

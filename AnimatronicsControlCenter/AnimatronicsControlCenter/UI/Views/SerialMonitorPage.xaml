@@ -1,0 +1,154 @@
+<Page
+    x:Class="AnimatronicsControlCenter.UI.Views.SerialMonitorPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cv="using:AnimatronicsControlCenter.UI.Converters"
+    mc:Ignorable="d">
+
+    <Grid Padding="12" RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="{x:Bind ViewModel.PauseButtonText, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.TogglePauseCommand}"/>
+
+            <Button Grid.Column="1"
+                    Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Clear', ViewModel.Strings.Code), Mode=OneWay}"
+                    Command="{x:Bind ViewModel.ClearCommand}"/>
+
+            <TextBlock Grid.Column="2"
+                       VerticalAlignment="Center"
+                       Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_Filter', ViewModel.Strings.Code), Mode=OneWay}"/>
+
+            <ComboBox Grid.Column="3"
+                      Width="120"
+                      SelectedIndex="{x:Bind ViewModel.FilterIndex, Mode=TwoWay}">
+                <ComboBoxItem Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Filter_All', ViewModel.Strings.Code), Mode=OneWay}"
+                              Tag="All"/>
+                <ComboBoxItem Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Filter_Tx', ViewModel.Strings.Code), Mode=OneWay}"
+                              Tag="Tx"/>
+                <ComboBoxItem Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Filter_Rx', ViewModel.Strings.Code), Mode=OneWay}"
+                              Tag="Rx"/>
+            </ComboBox>
+
+            <ToggleSwitch Grid.Column="4"
+                          IsOn="{x:Bind ViewModel.IsAutoScrollEnabled, Mode=TwoWay}"
+                          OnContent="{x:Bind ViewModel.Strings.Get('SerialMonitor_AutoScroll_On', ViewModel.Strings.Code), Mode=OneWay}"
+                          OffContent="{x:Bind ViewModel.Strings.Get('SerialMonitor_AutoScroll_Off', ViewModel.Strings.Code), Mode=OneWay}"/>
+
+            <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <TextBox Width="240"
+                         PlaceholderText="{x:Bind ViewModel.Strings.Get('SerialMonitor_Search', ViewModel.Strings.Code), Mode=OneWay}"
+                         Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Prev', ViewModel.Strings.Code), Mode=OneWay}"
+                        Command="{x:Bind ViewModel.FindPreviousCommand}"/>
+                <Button Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Next', ViewModel.Strings.Code), Mode=OneWay}"
+                        Command="{x:Bind ViewModel.FindNextCommand}"/>
+            </StackPanel>
+
+            <Button Grid.Column="6"
+                    Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_CopySelected', ViewModel.Strings.Code), Mode=OneWay}"
+                    Command="{x:Bind ViewModel.CopySelectedCommand}"
+                    CommandParameter="{x:Bind SerialList.SelectedItems}"/>
+
+            <Button Grid.Column="7"
+                    Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_CopyAll', ViewModel.Strings.Code), Mode=OneWay}"
+                    Command="{x:Bind ViewModel.CopyAllCommand}"/>
+
+            <Button Grid.Column="8"
+                    Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Save', ViewModel.Strings.Code), Mode=OneWay}"
+                    Click="SaveButton_Click"/>
+        </Grid>
+
+        <Pivot Grid.Row="1">
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Tab_Serial', ViewModel.Strings.Code), Mode=OneWay}">
+                <Grid>
+                    <ListView x:Name="SerialList"
+                              ItemsSource="{x:Bind ViewModel.Entries, Mode=OneWay}"
+                              SelectedItem="{x:Bind ViewModel.SelectedEntry, Mode=TwoWay}"
+                              SelectionMode="Extended">
+                        <ListView.Resources>
+                            <cv:SerialDirectionToBrushConverter x:Key="SerialDirectionToBrushConverter"/>
+                        </ListView.Resources>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:SerialTrafficEntry" xmlns:models="using:AnimatronicsControlCenter.Core.Models">
+                                <TextBlock Text="{x:Bind DisplayLine}"
+                                           FontFamily="Consolas"
+                                           Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                           TextWrapping="NoWrap"/>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </PivotItem>
+
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Tab_Packets', ViewModel.Strings.Code), Mode=OneWay}">
+                <Grid ColumnSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_ParseErrors', ViewModel.Strings.Code), Mode=OneWay}"/>
+                        <TextBlock Text="{x:Bind ViewModel.ParseErrorCount, Mode=OneWay}"/>
+                    </StackPanel>
+
+                    <ListView Grid.Row="1"
+                              Grid.Column="0"
+                              ItemsSource="{x:Bind ViewModel.Packets, Mode=OneWay}"
+                              SelectedItem="{x:Bind ViewModel.SelectedPacket, Mode=TwoWay}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PacketItem" xmlns:vm="using:AnimatronicsControlCenter.UI.ViewModels">
+                                <TextBlock Text="{x:Bind Summary}"
+                                           FontFamily="Consolas"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Grid Grid.Row="1" Grid.Column="1" RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="{Binding SelectedPacket.ParseError, TargetNullValue=''}"/>
+                        <TextBox Grid.Row="1"
+                                 Text="{Binding SelectedPacket.PrettyJson, TargetNullValue=''}"
+                                 FontFamily="Consolas"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                    </Grid>
+                </Grid>
+            </PivotItem>
+        </Pivot>
+    </Grid>
+</Page>
+
