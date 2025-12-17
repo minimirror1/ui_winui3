@@ -18,17 +18,6 @@ namespace AnimatronicsControlCenter.UI.Views
             ViewModel = App.Current.Services.GetRequiredService<SerialMonitorViewModel>();
             DataContext = ViewModel;
 
-            ViewModel.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName == nameof(ViewModel.SelectedEntry))
-                {
-                    if (ViewModel.SelectedEntry != null)
-                    {
-                        SerialList.ScrollIntoView(ViewModel.SelectedEntry);
-                    }
-                }
-            };
-
             ViewModel.Entries.CollectionChanged += Entries_CollectionChanged;
         }
 
@@ -36,9 +25,21 @@ namespace AnimatronicsControlCenter.UI.Views
         {
             if (!ViewModel.IsAutoScrollEnabled) return;
             if (ViewModel.IsPaused) return;
-            if (ViewModel.Entries.Count == 0) return;
 
-            SerialList.ScrollIntoView(ViewModel.Entries[^1]);
+            // ItemsRepeater doesn't support ScrollIntoView; scroll the viewer to bottom.
+            SerialScroll.ChangeView(null, SerialScroll.ScrollableHeight, null);
+        }
+
+        private void FilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is not ComboBox comboBox) return;
+
+            // Only update filter when the user actually changes selection.
+            // This avoids TwoWay SelectedIndex pushing transient values and triggering list rebuild flicker.
+            var idx = comboBox.SelectedIndex;
+            if (idx < 0 || idx > 2) return;
+
+            ViewModel.Filter = (SerialTrafficFilter)idx;
         }
 
         private async void SaveButton_Click(object sender, RoutedEventArgs e)

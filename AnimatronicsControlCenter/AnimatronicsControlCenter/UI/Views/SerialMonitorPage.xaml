@@ -41,7 +41,8 @@
 
             <ComboBox Grid.Column="3"
                       Width="120"
-                      SelectedIndex="{x:Bind ViewModel.FilterIndex, Mode=TwoWay}">
+                      SelectedIndex="{x:Bind ViewModel.FilterIndex, Mode=OneWay}"
+                      SelectionChanged="FilterCombo_SelectionChanged">
                 <ComboBoxItem Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Filter_All', ViewModel.Strings.Code), Mode=OneWay}"
                               Tag="All"/>
                 <ComboBoxItem Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Filter_Tx', ViewModel.Strings.Code), Mode=OneWay}"
@@ -67,8 +68,7 @@
 
             <Button Grid.Column="6"
                     Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_CopySelected', ViewModel.Strings.Code), Mode=OneWay}"
-                    Command="{x:Bind ViewModel.CopySelectedCommand}"
-                    CommandParameter="{x:Bind SerialList.SelectedItems}"/>
+                    Visibility="Collapsed"/>
 
             <Button Grid.Column="7"
                     Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_CopyAll', ViewModel.Strings.Code), Mode=OneWay}"
@@ -82,22 +82,27 @@
         <Pivot Grid.Row="1">
             <PivotItem Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Tab_Serial', ViewModel.Strings.Code), Mode=OneWay}">
                 <Grid>
-                    <ListView x:Name="SerialList"
-                              ItemsSource="{x:Bind ViewModel.Entries, Mode=OneWay}"
-                              SelectedItem="{x:Bind ViewModel.SelectedEntry, Mode=TwoWay}"
-                              SelectionMode="Extended">
-                        <ListView.Resources>
+                    <ScrollViewer x:Name="SerialScroll"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer.Resources>
                             <cv:SerialDirectionToBrushConverter x:Key="SerialDirectionToBrushConverter"/>
-                        </ListView.Resources>
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:SerialTrafficEntry" xmlns:models="using:AnimatronicsControlCenter.Core.Models">
-                                <TextBlock Text="{x:Bind DisplayLine}"
-                                           FontFamily="Consolas"
-                                           Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
-                                           TextWrapping="NoWrap"/>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                        </ScrollViewer.Resources>
+
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Entries, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Vertical"/>
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="models:SerialTrafficEntry" xmlns:models="using:AnimatronicsControlCenter.Core.Models">
+                                    <TextBlock Text="{x:Bind DisplayLine}"
+                                               FontFamily="Consolas"
+                                               Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                               TextWrapping="NoWrap"/>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
                 </Grid>
             </PivotItem>
 

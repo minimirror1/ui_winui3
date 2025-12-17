@@ -144,15 +144,23 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         partial void OnFilterChanged(SerialTrafficFilter value)
         {
-            FilterIndex = (int)value;
+            if (FilterIndex != (int)value)
+            {
+                FilterIndex = (int)value;
+            }
             RebuildVisible();
         }
 
         partial void OnFilterIndexChanged(int value)
         {
-            if (value < 0) value = 0;
-            if (value > 2) value = 2;
-            Filter = (SerialTrafficFilter)value;
+            // WinUI ComboBox can transiently report -1 (no selection) during template/binding updates.
+            // Treat it as "ignore" to avoid clearing/rebuilding lists (flicker) on every new item.
+            if (value < 0) return;
+            if (value > 2) return;
+
+            var next = (SerialTrafficFilter)value;
+            if (Filter == next) return;
+            Filter = next;
         }
 
         private void FlushPendingToUi(bool force = false)
@@ -270,18 +278,46 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private void TrimIfNeeded()
         {
-            if (_allEntries.Count <= DefaultMaxLines) return;
+            // IMPORTANT:
+            // When we are at capacity, trimming must NOT clear/rebuild visible collections,
+            // otherwise the packet list will flicker on every incoming packet.
+            while (_allEntries.Count > DefaultMaxLines)
+            {
+                var removedEntry = _allEntries[0];
+                _allEntries.RemoveAt(0);
 
-            var keep = _allEntries.Skip(Math.Max(0, _allEntries.Count - DefaultMaxLines)).ToList();
-            _allEntries.Clear();
-            _allEntries.AddRange(keep);
+                // Remove from visible entries if present (depends on current filter).
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    if (Equals(Entries[i], removedEntry))
+                    {
+                        Entries.RemoveAt(i);
+                        break;
+                    }
+                }
 
-            var keepPackets = _allPackets.Skip(Math.Max(0, _allPackets.Count - DefaultMaxLines)).ToList();
-            _allPackets.Clear();
-            _allPackets.AddRange(keepPackets);
+                // Remove associated packet (if any) from all/visible packet lists.
+                int allPacketIndex = _allPackets.FindIndex(p => Equals(p.Traffic, removedEntry));
+                if (allPacketIndex >= 0)
+                {
+                    var removedPacket = _allPackets[allPacketIndex];
+                    _allPackets.RemoveAt(allPacketIndex);
 
-            // Visible collections may now contain items that were trimmed; rebuild.
-            RebuildVisible();
+                    if (removedPacket.ParseError != null && ParseErrorCount > 0)
+                    {
+                        ParseErrorCount--;
+                    }
+
+                    for (int i = 0; i < Packets.Count; i++)
+                    {
+                        if (Equals(Packets[i].Traffic, removedEntry))
+                        {
+                            Packets.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         [RelayCommand]
