@@ -13,6 +13,8 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         // Store file systems per device ID
         private readonly Dictionary<int, Dictionary<string, string>> _deviceFileSystems;
+        private readonly Dictionary<int, List<MotorState>> _deviceMotors = new();
+        private readonly Dictionary<int, int> _deviceMotorTick = new();
         private readonly object _lock = new object();
 
         public VirtualDeviceManager()
@@ -68,6 +70,22 @@ namespace AnimatronicsControlCenter.Infrastructure
             return _deviceFileSystems[deviceId];
         }
 
+        private List<MotorState> GetMotors(int deviceId)
+        {
+            if (!_deviceMotors.TryGetValue(deviceId, out var motors))
+            {
+                motors = new List<MotorState>
+                {
+                    new MotorState { Id = 1, GroupId = 1, SubId = 1, Position = 90, Type = "Servo", Status = "Normal", Velocity = 0.5 },
+                    new MotorState { Id = 2, GroupId = 1, SubId = 2, Position = 45, Type = "DC", Status = "Error", Velocity = 1.0 },
+                    new MotorState { Id = 3, GroupId = 2, SubId = 1, Position = 0, Type = "Stepper", Status = "Normal", Velocity = 0.2 },
+                };
+                _deviceMotors[deviceId] = motors;
+                _deviceMotorTick[deviceId] = 0;
+            }
+            return motors;
+        }
+
         public string ProcessCommand(string jsonCommand)
         {
             lock (_lock)
@@ -94,6 +112,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                         "ping" => SuccessResponse(deviceId, srcId, "pong", new { message = "pong" }),
                         "move" => HandleMove(deviceId, srcId, payload),
                         "motion_ctrl" => HandleMotionCtrl(deviceId, srcId, payload),
+                        "get_motors" => HandleGetMotors(deviceId, srcId),
+                        "get_motor_state" => HandleGetMotorState(deviceId, srcId),
                         "get_files" => HandleGetFiles(deviceId, srcId),
                         "get_file" => HandleGetFile(deviceId, srcId, payload),
                         "save_file" => HandleSaveFile(deviceId, srcId, payload),
@@ -110,8 +130,21 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         private string HandleMove(int deviceId, int srcId, JsonNode? payload)
         {
-            // Simulate motor movement
-            return SuccessResponse(deviceId, srcId, "move", new { status = "moved", deviceId });
+            // Simulate motor movement + update internal motor state.
+            int motorId = payload?["motorId"]?.GetValue<int>() ?? 0;
+            double pos = payload?["pos"]?.GetValue<double>() ?? double.NaN;
+
+            if (motorId > 0 && !double.IsNaN(pos))
+            {
+                var motors = GetMotors(deviceId);
+                var motor = motors.FirstOrDefault(m => m.Id == motorId);
+                if (motor != null)
+                {
+                    motor.Position = pos;
+                }
+            }
+
+            return SuccessResponse(deviceId, srcId, "move", new { status = "moved", deviceId, motorId });
         }
 
         private string HandleMotionCtrl(int deviceId, int srcId, JsonNode? payload)
@@ -119,6 +152,52 @@ namespace AnimatronicsControlCenter.Infrastructure
             // Simulate motion control
             string action = payload?["action"]?.ToString() ?? "unknown";
             return SuccessResponse(deviceId, srcId, "motion_ctrl", new { status = "executed", action, deviceId });
+        }
+
+        private string HandleGetMotors(int deviceId, int srcId)
+        {
+            var motors = GetMotors(deviceId);
+            var list = motors.Select(m => new
+            {
+                id = m.Id,
+                groupId = m.GroupId,
+                subId = m.SubId,
+                type = m.Type,
+                status = m.Status,
+                position = m.Position,
+                velocity = m.Velocity
+            }).ToList();
+
+            return SuccessResponse(deviceId, srcId, "get_motors", new { motors = list });
+        }
+
+        private string HandleGetMotorState(int deviceId, int srcId)
+        {
+            var motors = GetMotors(deviceId);
+
+            // Deterministic movement + deterministic partial/full responses.
+            int tick = _deviceMotorTick.TryGetValue(deviceId, out var t) ? t + 1 : 1;
+            _deviceMotorTick[deviceId] = tick;
+
+            foreach (var m in motors)
+            {
+                m.Position = (m.Position + (tick % 5)) % 180;
+            }
+
+            IEnumerable<MotorState> subset = tick % 2 == 0
+                ? motors // full
+                : motors.Where(m => m.Id == 1 || m.Id == 3); // partial
+
+            var list = subset.Select(m => new
+            {
+                id = m.Id,
+                position = m.Position,
+                velocity = m.Velocity,
+                status = m.Status
+                // intentionally partial: omit group/sub/type sometimes
+            }).ToList();
+
+            return SuccessResponse(deviceId, srcId, "get_motor_state", new { motors = list });
         }
 
         private string HandleGetFiles(int deviceId, int srcId)

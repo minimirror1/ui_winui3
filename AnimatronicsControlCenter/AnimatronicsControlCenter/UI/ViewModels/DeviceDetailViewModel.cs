@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Motors;
 using AnimatronicsControlCenter.Core.Models;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
@@ -9,12 +10,19 @@ using System.Collections.Generic;
 using System;
 using System.Text.Json.Nodes;
 using System.Linq;
+using Microsoft.UI.Dispatching;
+using System.Threading;
 
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
     public partial class DeviceDetailViewModel : ObservableObject
     {
         private readonly ISerialService _serialService;
+        private readonly DispatcherQueue _dispatcherQueue;
+
+        private bool _isMotorsPollingAllowed;
+        private CancellationTokenSource? _motorsPollingCts;
+        private Task? _motorsPollingTask;
 
         [ObservableProperty]
         private Device? selectedDevice;
@@ -37,9 +45,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private bool isVerificationDialogOpen;
 
+        public ObservableCollection<int> MotorPollingIntervals { get; } = new() { 250, 500, 1000, 2000, 5000 };
+
+        [ObservableProperty]
+        private bool isMotorPollingEnabled;
+
+        [ObservableProperty]
+        private int motorPollingIntervalMs = 1000;
+
         public DeviceDetailViewModel(ISerialService serialService)
         {
             _serialService = serialService;
+            _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         }
 
         partial void OnSelectedDeviceChanged(Device? value)
@@ -48,7 +65,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 // Refresh data when device is selected
                 _ = RefreshFilesAsync();
-                // Also could refresh motion info here
+                _ = LoadMotorsAsync();
+                EnsureMotorsPollingState();
+            }
+            else
+            {
+                StopMotorsPolling();
             }
         }
 
@@ -71,6 +93,155 @@ namespace AnimatronicsControlCenter.UI.ViewModels
              {
                  await _serialService.SendCommandAsync(SelectedDevice.Id, "move", new { motorId = motor.Id, pos = motor.Position });
              }
+        }
+
+        public void SetMotorsPollingAllowed(bool allowed)
+        {
+            _isMotorsPollingAllowed = allowed;
+            EnsureMotorsPollingState();
+        }
+
+        public void StopMotorsPolling()
+        {
+            try
+            {
+                _motorsPollingCts?.Cancel();
+            }
+            catch
+            {
+                // ignore
+            }
+            finally
+            {
+                _motorsPollingCts?.Dispose();
+                _motorsPollingCts = null;
+                _motorsPollingTask = null;
+            }
+        }
+
+        partial void OnIsMotorPollingEnabledChanged(bool value)
+        {
+            EnsureMotorsPollingState();
+        }
+
+        partial void OnMotorPollingIntervalMsChanged(int value)
+        {
+            if (value < 100)
+            {
+                MotorPollingIntervalMs = 100;
+                return;
+            }
+            EnsureMotorsPollingState(restartIfRunning: true);
+        }
+
+        private void EnsureMotorsPollingState(bool restartIfRunning = false)
+        {
+            if (SelectedDevice == null || !IsMotorPollingEnabled || !_isMotorsPollingAllowed)
+            {
+                StopMotorsPolling();
+                return;
+            }
+
+            if (_motorsPollingTask != null && !_motorsPollingTask.IsCompleted)
+            {
+                if (!restartIfRunning) return;
+                StopMotorsPolling();
+            }
+
+            _motorsPollingCts = new CancellationTokenSource();
+            var token = _motorsPollingCts.Token;
+            _motorsPollingTask = RunMotorsPollingLoopAsync(token);
+        }
+
+        private async Task RunMotorsPollingLoopAsync(CancellationToken token)
+        {
+            // Immediate refresh, then periodic.
+            await RefreshMotorsOnceAsync(token);
+
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(MotorPollingIntervalMs));
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                await RefreshMotorsOnceAsync(token);
+            }
+        }
+
+        [RelayCommand]
+        private async Task RefreshMotorsAsync()
+        {
+            await RefreshMotorsOnceAsync(CancellationToken.None);
+        }
+
+        private async Task LoadMotorsAsync()
+        {
+            if (SelectedDevice == null) return;
+
+            var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_motors");
+            if (string.IsNullOrWhiteSpace(response)) return;
+
+            var patches = TryParseMotorPatches(response);
+            if (patches == null) return;
+
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                if (SelectedDevice == null) return;
+                MotorStateMerger.Apply(SelectedDevice.Motors, patches);
+            });
+        }
+
+        private async Task RefreshMotorsOnceAsync(CancellationToken token)
+        {
+            if (SelectedDevice == null) return;
+            token.ThrowIfCancellationRequested();
+
+            var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_motor_state");
+            if (string.IsNullOrWhiteSpace(response)) return;
+
+            var patches = TryParseMotorPatches(response);
+            if (patches == null) return;
+
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                if (SelectedDevice == null) return;
+                MotorStateMerger.Apply(SelectedDevice.Motors, patches);
+            });
+        }
+
+        private static List<MotorStatePatch>? TryParseMotorPatches(string responseJson)
+        {
+            try
+            {
+                var json = JsonNode.Parse(responseJson);
+                if (json == null) return null;
+                if (json["status"]?.ToString() != "ok") return null;
+
+                var motorsNode = json["payload"]?["motors"] as JsonArray;
+                if (motorsNode == null) return null;
+
+                List<MotorStatePatch> patches = new();
+                foreach (var node in motorsNode)
+                {
+                    if (node is not JsonObject m) continue;
+                    int id = m["id"]?.GetValue<int>() ?? 0;
+                    if (id <= 0) continue;
+
+                    patches.Add(new MotorStatePatch
+                    {
+                        Id = id,
+                        GroupId = m["groupId"]?.GetValue<int?>(),
+                        SubId = m["subId"]?.GetValue<int?>(),
+                        Type = m["type"]?.GetValue<string?>(),
+                        Status = m["status"]?.GetValue<string?>(),
+                        Position = m["position"]?.GetValue<double?>(),
+                        Velocity = m["velocity"]?.GetValue<double?>()
+                    });
+                }
+
+                return patches;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         [RelayCommand]

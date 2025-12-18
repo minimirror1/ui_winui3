@@ -28,6 +28,15 @@ namespace AnimatronicsControlCenter.UI.Views
             {
                 ViewModel.SelectedDevice = device;
             }
+
+            // Default pivot is Overview.
+            ViewModel.SetMotorsPollingAllowed(true);
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            ViewModel.StopMotorsPolling();
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -106,6 +115,13 @@ namespace AnimatronicsControlCenter.UI.Views
                  // Depending on how TreeView is populated, InvokedItem might be the content directly
                  ViewModel.SelectedFile = fileItem;
             }
+        }
+
+        private void MainPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Only poll in Overview.
+            var isOverview = MainPivot.SelectedIndex == 0;
+            ViewModel.SetMotorsPollingAllowed(isOverview);
         }
     }
 }
