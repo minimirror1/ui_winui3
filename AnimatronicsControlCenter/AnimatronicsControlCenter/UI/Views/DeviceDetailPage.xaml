@@ -151,6 +151,7 @@
                                 </Border>
                             </StackPanel>
 
+                            <!-- Polling controls -->
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                 <ToggleSwitch Header="Polling" IsOn="{x:Bind ViewModel.IsMotorPollingEnabled, Mode=TwoWay}" />
 
@@ -278,3 +279,4 @@
         </ContentDialog>
     </Grid>
 </Page>
+

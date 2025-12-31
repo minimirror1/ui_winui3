@@ -45,11 +45,14 @@ namespace AnimatronicsControlCenter.Core.Models
             Id = id;
             IsConnected = false;
             StatusMessage = "Unknown";
+
+            // Default motion values (can be replaced by device data later)
             MotionState = MotionState.Idle;
             MotionCurrentTime = TimeSpan.Zero;
-            MotionTotalTime = TimeSpan.Zero;
+            MotionTotalTime = TimeSpan.FromMinutes(2.5);
             MotionDataCount = 0;
             MotionCreatedAt = default;
         }
     }
 }
+

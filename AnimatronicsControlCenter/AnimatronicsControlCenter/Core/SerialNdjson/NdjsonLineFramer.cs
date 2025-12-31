@@ -57,11 +57,6 @@ namespace AnimatronicsControlCenter.Core.SerialNdjson
                     {
                         lines.Add(Encoding.UTF8.GetString(_buffer.GetRange(0, count).ToArray()));
                     }
-                    else
-                    {
-                        // Empty line - emit empty string? NDJSON typically doesn't use it, skip.
-                        // Keep behavior conservative.
-                    }
 
                     _buffer.Clear();
                     continue;

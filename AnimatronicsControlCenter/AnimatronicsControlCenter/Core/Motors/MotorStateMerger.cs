@@ -24,22 +24,14 @@ namespace AnimatronicsControlCenter.Core.Motors
                     target.Add(motor);
                 }
 
-                ApplyToMotor(motor, patch);
+                if (patch.GroupId.HasValue) motor.GroupId = patch.GroupId.Value;
+                if (patch.SubId.HasValue) motor.SubId = patch.SubId.Value;
+                if (patch.Type != null) motor.Type = patch.Type;
+                if (patch.Status != null) motor.Status = patch.Status;
+                if (patch.Position.HasValue) motor.Position = patch.Position.Value;
+                if (patch.Velocity.HasValue) motor.Velocity = patch.Velocity.Value;
             }
-        }
-
-        private static void ApplyToMotor(MotorState motor, MotorStatePatch patch)
-        {
-            if (patch.GroupId.HasValue) motor.GroupId = patch.GroupId.Value;
-            if (patch.SubId.HasValue) motor.SubId = patch.SubId.Value;
-
-            if (patch.Type != null) motor.Type = patch.Type;
-            if (patch.Status != null) motor.Status = patch.Status;
-
-            if (patch.Position.HasValue) motor.Position = patch.Position.Value;
-            if (patch.Velocity.HasValue) motor.Velocity = patch.Velocity.Value;
         }
     }
 }
-
 

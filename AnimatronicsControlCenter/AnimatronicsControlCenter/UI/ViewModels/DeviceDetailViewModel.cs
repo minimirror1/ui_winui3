@@ -3,15 +3,15 @@ using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Motors;
 using AnimatronicsControlCenter.Core.Models;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
-using System.Text.Json;
-using System.Collections.Generic;
-using System;
-using System.Text.Json.Nodes;
-using System.Linq;
 using Microsoft.UI.Dispatching;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
@@ -63,7 +63,6 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             if (value != null)
             {
-                // Refresh data when device is selected
                 _ = RefreshFilesAsync();
                 _ = LoadMotorsAsync();
                 EnsureMotorsPollingState();
@@ -155,7 +154,6 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private async Task RunMotorsPollingLoopAsync(CancellationToken token)
         {
-            // Immediate refresh, then periodic.
             await RefreshMotorsOnceAsync(token);
 
             using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(MotorPollingIntervalMs));
@@ -304,14 +302,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                                 PropertyNameCaseInsensitive = true
                             });
 
-                            if (items != null)
-                            {
-                                Files = new ObservableCollection<FileSystemItem>(items);
-                            }
-                            else
-                            {
-                                Files = new ObservableCollection<FileSystemItem>();
-                            }
+                            Files = items != null
+                                ? new ObservableCollection<FileSystemItem>(items)
+                                : new ObservableCollection<FileSystemItem>();
                         }
                     }
                 }
@@ -349,7 +342,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private async Task SaveFileAsync()
         {
             if (SelectedDevice == null || SelectedFile == null) return;
-            
+
             await _serialService.SendCommandAsync(SelectedDevice.Id, "save_file", new { path = SelectedFile.Path, content = FileContent });
         }
 
@@ -361,16 +354,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "verify_file", new { path = SelectedFile.Path, content = FileContent });
             if (!string.IsNullOrEmpty(response))
             {
-                 var json = JsonNode.Parse(response);
-                 if (json != null && json["status"]?.ToString() == "ok")
-                 {
-                     bool match = json["payload"]?["match"]?.GetValue<bool>() ?? false;
-                     VerificationResult = match ? "Content Matches Device" : "Content Mismatch";
-                     IsVerificationDialogOpen = true;
-                 }
+                var json = JsonNode.Parse(response);
+                if (json != null && json["status"]?.ToString() == "ok")
+                {
+                    bool match = json["payload"]?["match"]?.GetValue<bool>() ?? false;
+                    VerificationResult = match ? "Content Matches Device" : "Content Mismatch";
+                    IsVerificationDialogOpen = true;
+                }
             }
         }
-        
+
         [RelayCommand]
         private void CloseVerificationDialog()
         {
@@ -378,3 +371,4 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
     }
 }
+

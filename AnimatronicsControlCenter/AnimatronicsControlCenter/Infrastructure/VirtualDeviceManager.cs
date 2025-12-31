@@ -15,7 +15,6 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly Dictionary<int, Dictionary<string, string>> _deviceFileSystems;
         private readonly Dictionary<int, List<MotorState>> _deviceMotors = new();
         private readonly Dictionary<int, int> _deviceMotorTick = new();
-        private readonly object _lock = new object();
 
         public VirtualDeviceManager()
         {
@@ -42,8 +41,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                 { "Media/MT_6.CSV", "Time,Pos\n0,10\n100,20" },
                 { "Media/MT_ALL.CSV", "Time,Pos\n0,10\n100,20" },
 
-                { "Midi/motor/placeholder.txt", "" }, // Placeholder for empty folder structure
-                { "Midi/page/placeholder.txt", "" },  // Placeholder for empty folder structure
+                { "Midi/motor/placeholder.txt", "" },
+                { "Midi/page/placeholder.txt", "" },
 
                 { "Setting/DI_ID.TXT", $"DeviceID={deviceId}" },
                 { "Setting/MT_AT.TXT", "Value=100" },
@@ -78,8 +77,9 @@ namespace AnimatronicsControlCenter.Infrastructure
                 {
                     new MotorState { Id = 1, GroupId = 1, SubId = 1, Position = 90, Type = "Servo", Status = "Normal", Velocity = 0.5 },
                     new MotorState { Id = 2, GroupId = 1, SubId = 2, Position = 45, Type = "DC", Status = "Error", Velocity = 1.0 },
-                    new MotorState { Id = 3, GroupId = 2, SubId = 1, Position = 0, Type = "Stepper", Status = "Normal", Velocity = 0.2 },
+                    new MotorState { Id = 3, GroupId = 2, SubId = 1, Position = 0, Type = "Stepper", Status = "Normal", Velocity = 0.2 }
                 };
+
                 _deviceMotors[deviceId] = motors;
                 _deviceMotorTick[deviceId] = 0;
             }
@@ -88,43 +88,40 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         public string ProcessCommand(string jsonCommand)
         {
-            lock (_lock)
+            try
             {
-                try
+                var node = JsonNode.Parse(jsonCommand);
+                if (node == null) return ErrorResponse(0, 0, "error", "Invalid JSON");
+
+                // Firmware-style addressing: { src_id, tar_id, cmd, payload }
+                // Keep a backward-compatibility fallback to legacy { id, ... } to avoid breaking older tools.
+                int srcId = node["src_id"]?.GetValue<int>() ?? 0;
+                int tarId = node["tar_id"]?.GetValue<int>() ?? (node["id"]?.GetValue<int>() ?? 0);
+
+                // Broadcast means "do not respond" (mirrors firmware collision-avoidance behavior).
+                if (tarId == BroadcastId) return string.Empty;
+
+                int deviceId = tarId;
+                string cmd = node["cmd"]?.ToString() ?? "";
+                var payload = node["payload"];
+
+                return cmd switch
                 {
-                    var node = JsonNode.Parse(jsonCommand);
-                    if (node == null) return ErrorResponse(0, 0, "error", "Invalid JSON");
-
-                    // Firmware-style addressing: { src_id, tar_id, cmd, payload }
-                    // Keep a backward-compatibility fallback to legacy { id, ... } to avoid breaking older tools.
-                    int srcId = node["src_id"]?.GetValue<int>() ?? 0;
-                    int tarId = node["tar_id"]?.GetValue<int>() ?? (node["id"]?.GetValue<int>() ?? 0);
-
-                    // Broadcast means "do not respond" (mirrors firmware collision-avoidance behavior).
-                    if (tarId == BroadcastId) return string.Empty;
-
-                    int deviceId = tarId;
-                    string cmd = node["cmd"]?.ToString() ?? "";
-                    var payload = node["payload"];
-
-                    return cmd switch
-                    {
-                        "ping" => SuccessResponse(deviceId, srcId, "pong", new { message = "pong" }),
-                        "move" => HandleMove(deviceId, srcId, payload),
-                        "motion_ctrl" => HandleMotionCtrl(deviceId, srcId, payload),
-                        "get_motors" => HandleGetMotors(deviceId, srcId),
-                        "get_motor_state" => HandleGetMotorState(deviceId, srcId),
-                        "get_files" => HandleGetFiles(deviceId, srcId),
-                        "get_file" => HandleGetFile(deviceId, srcId, payload),
-                        "save_file" => HandleSaveFile(deviceId, srcId, payload),
-                        "verify_file" => HandleVerifyFile(deviceId, srcId, payload),
-                        _ => ErrorResponse(deviceId, srcId, "error", $"Unknown command: {cmd}")
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return ErrorResponse(0, 0, "error", ex.Message);
-                }
+                    "ping" => SuccessResponse(deviceId, srcId, "pong", new { message = "pong" }),
+                    "move" => HandleMove(deviceId, srcId, payload),
+                    "motion_ctrl" => HandleMotionCtrl(deviceId, srcId, payload),
+                    "get_motors" => HandleGetMotors(deviceId, srcId),
+                    "get_motor_state" => HandleGetMotorState(deviceId, srcId),
+                    "get_files" => HandleGetFiles(deviceId, srcId),
+                    "get_file" => HandleGetFile(deviceId, srcId, payload),
+                    "save_file" => HandleSaveFile(deviceId, srcId, payload),
+                    "verify_file" => HandleVerifyFile(deviceId, srcId, payload),
+                    _ => ErrorResponse(deviceId, srcId, "error", $"Unknown command: {cmd}")
+                };
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(0, 0, "error", ex.Message);
             }
         }
 
@@ -149,7 +146,6 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         private string HandleMotionCtrl(int deviceId, int srcId, JsonNode? payload)
         {
-            // Simulate motion control
             string action = payload?["action"]?.ToString() ?? "unknown";
             return SuccessResponse(deviceId, srcId, "motion_ctrl", new { status = "executed", action, deviceId });
         }
@@ -194,7 +190,6 @@ namespace AnimatronicsControlCenter.Infrastructure
                 position = m.Position,
                 velocity = m.Velocity,
                 status = m.Status
-                // intentionally partial: omit group/sub/type sometimes
             }).ToList();
 
             return SuccessResponse(deviceId, srcId, "get_motor_state", new { motors = list });
@@ -242,8 +237,6 @@ namespace AnimatronicsControlCenter.Infrastructure
 
             if (fileSystem.TryGetValue(path, out var storedContent))
             {
-                // Simple string comparison. In reality, might normalize line endings.
-                // For this simulation, we'll strip \r to be safe if mixing environments
                 string normalizedStored = storedContent.Replace("\r\n", "\n").Replace("\r", "\n");
                 string normalizedCheck = contentToCheck.Replace("\r\n", "\n").Replace("\r", "\n");
                 
@@ -279,7 +272,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                         var fileItem = new FileSystemItem
                         {
                             Name = part,
-                            Path = fullPath, // Use the full relative path as ID
+                            Path = fullPath,
                             IsDirectory = false,
                             Size = size
                         };
@@ -297,7 +290,6 @@ namespace AnimatronicsControlCenter.Infrastructure
                     }
                     else
                     {
-                        // It's a directory
                         if (!dirs.ContainsKey(currentPath))
                         {
                             var newDir = new FileSystemItem
@@ -305,7 +297,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                                 Name = part,
                                 Path = currentPath,
                                 IsDirectory = true,
-                                Size = 0 // Folder size calculation skipped for simplicity
+                                Size = 0
                             };
                             dirs[currentPath] = newDir;
 

@@ -17,4 +17,3 @@ namespace AnimatronicsControlCenter.Core.Motors
     }
 }
 
-
