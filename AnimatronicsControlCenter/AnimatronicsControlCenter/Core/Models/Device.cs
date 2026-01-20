@@ -38,6 +38,9 @@ namespace AnimatronicsControlCenter.Core.Models
         [ObservableProperty]
         private TimeSpan motionCurrentTime;
 
+        [ObservableProperty]
+        private ulong address64;
+
         public ObservableCollection<MotorState> Motors { get; } = new();
 
         public Device(int id)

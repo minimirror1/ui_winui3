@@ -1,31 +1,41 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO.Ports;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Link;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Transport;
 
 namespace AnimatronicsControlCenter.Infrastructure
 {
-    public class SerialService : ISerialService
+    public class SerialService : ISerialService, IDisposable
     {
         private const byte HostId = 0;
         private const byte BroadcastId = 255;
 
-        private SerialPort? _serialPort;
-        private readonly SemaphoreSlim _writeLock = new(1, 1);
         private readonly ISettingsService _settingsService;
         private readonly ISerialTrafficTap _trafficTap;
         private readonly VirtualDeviceManager _virtualDeviceManager;
+        private readonly XBeeService _xbeeService;
         private bool _isVirtualConnected;
 
-        public SerialService(ISettingsService settingsService, ISerialTrafficTap trafficTap)
+        // Response matching for SendQueryAsync and PingDeviceAsync
+        private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingResponses = new();
+
+        public SerialService(ISettingsService settingsService, ISerialTrafficTap trafficTap, XBeeService xbeeService)
         {
             _settingsService = settingsService;
             _trafficTap = trafficTap;
             _virtualDeviceManager = new VirtualDeviceManager();
+            _xbeeService = xbeeService;
+
+            // Subscribe to XBeeService message received events
+            _xbeeService.OnMessageReceived += HandleMessageReceived;
         }
 
         public bool IsConnected
@@ -34,7 +44,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             {
                 if (_settingsService.IsVirtualModeEnabled)
                     return _isVirtualConnected;
-                return _serialPort?.IsOpen ?? false;
+                return _xbeeService.IsConnected;
             }
         }
 
@@ -47,36 +57,24 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return;
             }
 
-            if (_serialPort != null && _serialPort.IsOpen)
+            if (_xbeeService.IsConnected)
                 Disconnect();
 
-            _serialPort = new SerialPort(portName, baudRate)
+            var success = await _xbeeService.ConnectAsync(portName, baudRate);
+            if (!success)
             {
-                ReadTimeout = 500,
-                WriteTimeout = 500
-            };
-            try 
-            {
-                _serialPort.Open();
+                throw new InvalidOperationException($"Failed to connect to XBee device on {portName}");
             }
-            catch (Exception)
-            {
-                // Handle open failure if needed
-                throw;
-            }
-            await Task.CompletedTask;
         }
 
         public void Disconnect()
         {
             _isVirtualConnected = false;
 
-            if (_serialPort?.IsOpen == true)
+            if (_xbeeService.IsConnected)
             {
-                _serialPort.Close();
+                _xbeeService.Disconnect();
             }
-            _serialPort?.Dispose();
-            _serialPort = null;
         }
 
         public async Task SendCommandAsync(int deviceId, string command, object? payload = null)
@@ -99,18 +97,12 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return;
             }
 
-            await _writeLock.WaitAsync();
-            try
-            {
-                if (_serialPort?.IsOpen == true)
-                {
-                    _serialPort.WriteLine(json);
-                }
-            }
-            finally
-            {
-                _writeLock.Release();
-            }
+            // Convert JSON to UTF-8 bytes and send via Fragment Protocol
+            var jsonBytes = Encoding.UTF8.GetBytes(json);
+            var broadcastAddress = ApiConstants.BroadcastAddress64;
+            
+            using var cts = new CancellationTokenSource(FragmentProtocol.SessionTimeoutMs);
+            await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, cts.Token);
         }
 
         public async Task<string?> SendQueryAsync(int deviceId, string command, object? payload = null)
@@ -134,41 +126,45 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return response;
             }
 
-            await _writeLock.WaitAsync();
+            // Create response key for matching
+            var responseKey = $"{deviceId}:{command}";
+            var tcs = new TaskCompletionSource<string>();
+            _pendingResponses[responseKey] = tcs;
+
             try
             {
-                if (_serialPort?.IsOpen == true)
+                // Convert JSON to UTF-8 bytes and send via Fragment Protocol
+                var jsonBytes = Encoding.UTF8.GetBytes(json);
+                var broadcastAddress = ApiConstants.BroadcastAddress64;
+                
+                using var sendCts = new CancellationTokenSource(FragmentProtocol.SessionTimeoutMs);
+                var sendSuccess = await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, sendCts.Token);
+                
+                if (!sendSuccess)
                 {
-                    _serialPort.DiscardInBuffer();
-                    _serialPort.WriteLine(json);
-                    
-                    // Wait for response (simplified)
-                    int retries = 5;
-                    while (retries > 0)
-                    {
-                        await Task.Delay(100);
-                        if (_serialPort.BytesToRead > 0)
-                        {
-                            var response = _serialPort.ReadLine();
-                            if (!string.IsNullOrWhiteSpace(response))
-                            {
-                                _trafficTap.RecordRx(response + "\\n");
-                            }
-                            return response;
-                        }
-                        retries--;
-                    }
+                    _pendingResponses.TryRemove(responseKey, out _);
+                    return null;
+                }
+
+                // Wait for response with timeout
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                timeoutCts.Token.Register(() => tcs.TrySetCanceled());
+                
+                try
+                {
+                    var response = await tcs.Task.WaitAsync(timeoutCts.Token);
+                    return response;
+                }
+                catch (OperationCanceledException)
+                {
+                    return null;
                 }
             }
             catch
             {
-                // handle error
+                _pendingResponses.TryRemove(responseKey, out _);
+                return null;
             }
-            finally
-            {
-                _writeLock.Release();
-            }
-            return null;
         }
 
         public async Task<Device?> PingDeviceAsync(int deviceId)
@@ -194,27 +190,16 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return null;
             }
 
-            // Real device logic
+            // Real device logic - use SendQueryAsync to wait for response
             try
             {
-                // Clear buffers first
-                if (_serialPort != null)
+                var response = await SendQueryAsync(deviceId, "ping");
+                if (!string.IsNullOrWhiteSpace(response))
                 {
-                     _serialPort.DiscardInBuffer();
-                     _serialPort.DiscardOutBuffer();
-                }
-
-                await SendCommandAsync(deviceId, "ping");
-                
-                await Task.Delay(50); 
-                
-                if (_serialPort != null && _serialPort.IsOpen && _serialPort.BytesToRead > 0)
-                {
-                    var response = _serialPort.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(response))
+                    // Parse response to check validity
+                    var json = JsonNode.Parse(response);
+                    if (json != null && json["status"]?.ToString() == "ok")
                     {
-                        _trafficTap.RecordRx(response + "\\n");
-                        // Ideally parse the JSON response here
                         return new Device(deviceId) { IsConnected = true, StatusMessage = "Online" };
                     }
                 }
@@ -244,6 +229,62 @@ namespace AnimatronicsControlCenter.Infrastructure
                 }
                 return foundDevices;
             });
+        }
+
+        /// <summary>
+        /// Handle messages received from XBeeService
+        /// Matches responses to pending queries by parsing JSON and checking src_id and cmd
+        /// Note: Some commands may have different response cmd (e.g., "ping" -> "pong")
+        /// </summary>
+        private void HandleMessageReceived(byte[] data, ulong sourceAddress)
+        {
+            try
+            {
+                // Convert bytes to JSON string
+                var json = Encoding.UTF8.GetString(data);
+                _trafficTap.RecordRx(json + "\\n");
+
+                // Parse JSON to extract src_id and cmd
+                var jsonNode = JsonNode.Parse(json);
+                if (jsonNode == null) return;
+
+                var srcId = jsonNode["src_id"]?.GetValue<int>();
+                var cmd = jsonNode["cmd"]?.GetValue<string>();
+                
+                if (!srcId.HasValue || string.IsNullOrEmpty(cmd)) return;
+
+                // Try to match with pending responses
+                // Format: "{deviceId}:{command}"
+                // First try exact match
+                var responseKey = $"{srcId.Value}:{cmd}";
+                
+                if (_pendingResponses.TryRemove(responseKey, out var tcs))
+                {
+                    tcs.TrySetResult(json);
+                    return;
+                }
+
+                // Handle special cases where response cmd differs from request cmd
+                // e.g., "ping" request might have "pong" response
+                if (cmd == "pong")
+                {
+                    responseKey = $"{srcId.Value}:ping";
+                    if (_pendingResponses.TryRemove(responseKey, out tcs))
+                    {
+                        tcs.TrySetResult(json);
+                        return;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore parsing errors
+            }
+        }
+
+        public void Dispose()
+        {
+            _xbeeService.OnMessageReceived -= HandleMessageReceived;
         }
     }
 }

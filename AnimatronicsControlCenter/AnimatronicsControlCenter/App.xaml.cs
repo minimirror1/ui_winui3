@@ -45,6 +45,8 @@ namespace AnimatronicsControlCenter
             services.AddTransient<SerialMonitorWindow>();
             
             // Core Services
+            // XBeeService must be registered before SerialService since SerialService depends on it
+            services.AddSingleton<XBeeService>();
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
             services.AddSingleton<ISettingsService, SettingsService>();

@@ -1,12 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter; // For App and MainWindow
 using System.IO.Ports;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.UI.Dispatching;
 
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
@@ -18,6 +20,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ISerialService _serialService;
         private readonly ILocalizationService _localizationService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
+        private readonly XBeeService _xbeeService;
 
         public LocalizedStrings Strings { get; }
 
@@ -52,6 +55,26 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _localizationService.GetString("Status_Connected") : 
             _localizationService.GetString("Status_Disconnected");
 
+        // XBee Connection Properties
+        [ObservableProperty]
+        private string selectedXBeePort = string.Empty;
+
+        [ObservableProperty]
+        private int xBeeBaudRate = 115200;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(XBeeConnectButtonText))]
+        [NotifyPropertyChangedFor(nameof(XBeeConnectionStatusText))]
+        private bool isXBeeConnected;
+
+        public string XBeeConnectButtonText => IsXBeeConnected ? 
+            _localizationService.GetString("Disconnect_Button") : 
+            _localizationService.GetString("Connect_Text");
+
+        public string XBeeConnectionStatusText => IsXBeeConnected ? 
+            $"{_localizationService.GetString("Status_Connected")} (0x{_xbeeService.Address64:X16})" : 
+            _localizationService.GetString("Status_Disconnected");
+
         public List<LanguageOption> Languages { get; } = new()
         {
             new LanguageOption("ko-KR", "한국어"),
@@ -67,13 +90,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             ISettingsService settingsService,
             ISerialService serialService,
             ILocalizationService localizationService,
-            SerialMonitorWindowHost serialMonitorWindowHost)
+            SerialMonitorWindowHost serialMonitorWindowHost,
+            XBeeService xbeeService)
         {
             _settingsService = settingsService;
             _serialService = serialService;
             _localizationService = localizationService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
+            _xbeeService = xbeeService;
             Strings = new LocalizedStrings(_localizationService);
+            
+            // Set dispatcher for UI callbacks
+            _xbeeService.SetDispatcherQueue(DispatcherQueue.GetForCurrentThread());
             
             _settingsService.Load();
             SelectedPort = _settingsService.LastComPort;
@@ -88,6 +116,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                              ?? Languages.First();
             
             IsConnectionActive = _serialService.IsConnected;
+            IsXBeeConnected = _xbeeService.IsConnected;
             _isInitialized = true;
         }
 
@@ -173,6 +202,29 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private void OpenSerialMonitor()
         {
             _serialMonitorWindowHost.Show();
+        }
+
+        [RelayCommand]
+        private async Task XBeeConnectAsync()
+        {
+            if (IsXBeeConnected)
+            {
+                _xbeeService.Disconnect();
+                IsXBeeConnected = false;
+                return;
+            }
+
+            if (string.IsNullOrEmpty(SelectedXBeePort)) return;
+
+            try
+            {
+                var success = await _xbeeService.ConnectAsync(SelectedXBeePort, XBeeBaudRate);
+                IsXBeeConnected = success;
+            }
+            catch
+            {
+                IsXBeeConnected = false;
+            }
         }
     }
 }

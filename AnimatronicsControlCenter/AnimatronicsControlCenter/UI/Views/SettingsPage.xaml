@@ -78,6 +78,60 @@
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsVirtualModeEnabled, Mode=TwoWay}"/>
             </tk:SettingsCard>
 
+            <!-- XBee DigiMesh Connection -->
+            <tk:SettingsExpander Header="XBee DigiMesh" IsExpanded="False">
+                <tk:SettingsExpander.HeaderIcon>
+                    <FontIcon Glyph="&#xEC05;"/>
+                </tk:SettingsExpander.HeaderIcon>
+                <tk:SettingsExpander.Description>
+                    <TextBlock Text="XBee DigiMesh wireless connection for STM32 devices" Style="{StaticResource CaptionTextBlockStyle}"/>
+                </tk:SettingsExpander.Description>
+
+                <tk:SettingsExpander.Items>
+                    <!-- XBee COM Port -->
+                    <tk:SettingsCard Header="XBee Port">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ComboBox ItemsSource="{x:Bind ViewModel.AvailablePorts}" 
+                                      SelectedItem="{x:Bind ViewModel.SelectedXBeePort, Mode=TwoWay}" 
+                                      MinWidth="120"/>
+                            <Button Command="{x:Bind ViewModel.RefreshPortsCommand}" Style="{StaticResource DateTimePickerFlyoutButtonStyle}">
+                                <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                            </Button>
+                        </StackPanel>
+                    </tk:SettingsCard>
+
+                    <!-- XBee Baud Rate -->
+                    <tk:SettingsCard Header="Baud Rate">
+                        <ComboBox ItemsSource="{x:Bind ViewModel.AvailableBaudRates}" 
+                                  SelectedItem="{x:Bind ViewModel.XBeeBaudRate, Mode=TwoWay}" 
+                                  MinWidth="120"/>
+                    </tk:SettingsCard>
+
+                    <!-- XBee Connect Button -->
+                    <tk:SettingsCard IsClickEnabled="False">
+                        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" 
+                                    CornerRadius="4" 
+                                    Padding="8,4" 
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="{x:Bind ViewModel.IsXBeeConnected, Mode=OneWay, Converter={StaticResource ConnectionIconConverter}}" 
+                                              FontSize="12"
+                                              Foreground="{x:Bind ViewModel.IsXBeeConnected, Mode=OneWay, Converter={StaticResource ConnectionColorConverter}}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.XBeeConnectionStatusText, Mode=OneWay}" 
+                                               Style="{StaticResource CaptionTextBlockStyle}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <Button Content="{x:Bind ViewModel.XBeeConnectButtonText, Mode=OneWay}" 
+                                    Command="{x:Bind ViewModel.XBeeConnectCommand}" 
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    MinWidth="100"/>
+                        </StackPanel>
+                    </tk:SettingsCard>
+                </tk:SettingsExpander.Items>
+            </tk:SettingsExpander>
+
             <!-- Language -->
             <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('Language_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                 <tk:SettingsCard.HeaderIcon>
