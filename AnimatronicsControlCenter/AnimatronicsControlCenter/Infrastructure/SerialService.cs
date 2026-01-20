@@ -147,7 +147,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 }
 
                 // Wait for response with timeout
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
                 timeoutCts.Token.Register(() => tcs.TrySetCanceled());
                 
                 try
