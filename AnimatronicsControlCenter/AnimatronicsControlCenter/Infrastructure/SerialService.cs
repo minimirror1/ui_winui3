@@ -147,16 +147,24 @@ namespace AnimatronicsControlCenter.Infrastructure
                 }
 
                 // Wait for response with timeout
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-                timeoutCts.Token.Register(() => tcs.TrySetCanceled());
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // Increased timeout for get_files
+                timeoutCts.Token.Register(() =>
+                {
+                    // Remove from pending responses on timeout
+                    _pendingResponses.TryRemove(responseKey, out _);
+                    tcs.TrySetCanceled();
+                });
                 
                 try
                 {
                     var response = await tcs.Task.WaitAsync(timeoutCts.Token);
+                    // Successfully received response, remove from pending
+                    _pendingResponses.TryRemove(responseKey, out _);
                     return response;
                 }
                 catch (OperationCanceledException)
                 {
+                    // Timeout occurred, already removed from _pendingResponses in Register callback
                     return null;
                 }
             }
@@ -260,7 +268,11 @@ namespace AnimatronicsControlCenter.Infrastructure
                 
                 if (_pendingResponses.TryRemove(responseKey, out var tcs))
                 {
-                    tcs.TrySetResult(json);
+                    // Check if task is already completed/cancelled before setting result
+                    if (!tcs.Task.IsCompleted)
+                    {
+                        tcs.TrySetResult(json);
+                    }
                     return;
                 }
 
@@ -271,7 +283,10 @@ namespace AnimatronicsControlCenter.Infrastructure
                     responseKey = $"{srcId.Value}:ping";
                     if (_pendingResponses.TryRemove(responseKey, out tcs))
                     {
-                        tcs.TrySetResult(json);
+                        if (!tcs.Task.IsCompleted)
+                        {
+                            tcs.TrySetResult(json);
+                        }
                         return;
                     }
                 }

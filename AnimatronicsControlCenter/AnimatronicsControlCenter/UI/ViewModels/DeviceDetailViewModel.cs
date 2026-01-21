@@ -291,23 +291,100 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_files");
                 if (!string.IsNullOrEmpty(response))
                 {
-                    var json = JsonNode.Parse(response);
-                    if (json != null && json["status"]?.ToString() == "ok")
+                    try
                     {
-                        var payload = json["payload"];
-                        if (payload != null)
+                        var json = JsonNode.Parse(response);
+                        if (json != null && json["status"]?.ToString() == "ok")
                         {
-                            var items = JsonSerializer.Deserialize<List<FileSystemItem>>(payload.ToString(), new JsonSerializerOptions
+                            var payload = json["payload"];
+                            if (payload != null)
                             {
-                                PropertyNameCaseInsensitive = true
-                            });
+                                List<FileSystemItem>? items = null;
+                                
+                                // Handle payload as JsonArray
+                                if (payload is JsonArray jsonArray)
+                                {
+                                    items = new List<FileSystemItem>();
+                                    foreach (var itemNode in jsonArray)
+                                    {
+                                        if (itemNode != null)
+                                        {
+                                            try
+                                            {
+                                                var itemJson = itemNode.ToString();
+                                                var item = JsonSerializer.Deserialize<FileSystemItem>(itemJson, new JsonSerializerOptions
+                                                {
+                                                    PropertyNameCaseInsensitive = true
+                                                });
+                                                if (item != null)
+                                                {
+                                                    items.Add(item);
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                // Skip invalid items
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    // Fallback to string deserialization
+                                    try
+                                    {
+                                        items = JsonSerializer.Deserialize<List<FileSystemItem>>(payload.ToString(), new JsonSerializerOptions
+                                        {
+                                            PropertyNameCaseInsensitive = true
+                                        });
+                                    }
+                                    catch
+                                    {
+                                        items = null;
+                                    }
+                                }
 
-                            Files = items != null
-                                ? new ObservableCollection<FileSystemItem>(items)
-                                : new ObservableCollection<FileSystemItem>();
+                                if (items != null && items.Count > 0)
+                                {
+                                    // Convert flat list to tree structure
+                                    var rootItems = BuildFileTree(items);
+                                    
+                                    // Update UI on dispatcher thread
+                                    _dispatcherQueue.TryEnqueue(() =>
+                                    {
+                                        Files = new ObservableCollection<FileSystemItem>(rootItems);
+                                    });
+                                }
+                                else
+                                {
+                                    _dispatcherQueue.TryEnqueue(() =>
+                                    {
+                                        Files = new ObservableCollection<FileSystemItem>();
+                                    });
+                                }
+                            }
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        // Log or handle JSON parsing error
+                        System.Diagnostics.Debug.WriteLine($"Error parsing get_files response: {ex.Message}");
+                        _dispatcherQueue.TryEnqueue(() =>
+                        {
+                            Files = new ObservableCollection<FileSystemItem>();
+                        });
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle general error
+                System.Diagnostics.Debug.WriteLine($"Error in RefreshFilesAsync: {ex.Message}");
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    Files = new ObservableCollection<FileSystemItem>();
+                });
             }
             finally
             {
@@ -368,6 +445,65 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private void CloseVerificationDialog()
         {
             IsVerificationDialogOpen = false;
+        }
+
+        /// <summary>
+        /// Converts a flat list of file system items into a tree structure based on parentIndex
+        /// </summary>
+        private static List<FileSystemItem> BuildFileTree(List<FileSystemItem> flatList)
+        {
+            if (flatList == null || flatList.Count == 0)
+                return new List<FileSystemItem>();
+
+            // Create a dictionary for quick lookup by index
+            var itemsByIndex = new Dictionary<int, FileSystemItem>();
+            for (int i = 0; i < flatList.Count; i++)
+            {
+                itemsByIndex[i] = flatList[i];
+            }
+
+            // Build parent-child relationships
+            var rootItems = new List<FileSystemItem>();
+            
+            for (int i = 0; i < flatList.Count; i++)
+            {
+                var item = flatList[i];
+                
+                // Clear children collection to avoid duplicates if method is called multiple times
+                item.Children.Clear();
+                
+                // Debug: Log item info
+                System.Diagnostics.Debug.WriteLine($"Item[{i}]: Name={item.Name}, ParentIndex={item.ParentIndex}, Depth={item.Depth}");
+                
+                if (item.ParentIndex == -1)
+                {
+                    // Root level item
+                    rootItems.Add(item);
+                }
+                else if (item.ParentIndex >= 0 && item.ParentIndex < flatList.Count)
+                {
+                    // Child item - find parent and add to its children
+                    if (itemsByIndex.TryGetValue(item.ParentIndex, out var parent))
+                    {
+                        parent.Children.Add(item);
+                    }
+                    else
+                    {
+                        // Parent not found - treat as root item
+                        System.Diagnostics.Debug.WriteLine($"Warning: Parent index {item.ParentIndex} not found for item {item.Name}, treating as root");
+                        rootItems.Add(item);
+                    }
+                }
+                else
+                {
+                    // Invalid parent index - treat as root item
+                    System.Diagnostics.Debug.WriteLine($"Warning: Invalid parent index {item.ParentIndex} for item {item.Name}, treating as root");
+                    rootItems.Add(item);
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"BuildFileTree: {rootItems.Count} root items created from {flatList.Count} total items");
+            return rootItems;
         }
     }
 }
