@@ -7,6 +7,7 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         string Theme { get; set; }
         bool IsVirtualModeEnabled { get; set; }
         string Language { get; set; }
+        double ResponseTimeoutSeconds { get; set; }
         void Save();
         void Load();
     }

@@ -136,27 +136,44 @@ namespace AnimatronicsControlCenter.Infrastructure
                 // Convert JSON to UTF-8 bytes and send via Fragment Protocol
                 var jsonBytes = Encoding.UTF8.GetBytes(json);
                 var broadcastAddress = ApiConstants.BroadcastAddress64;
-                
+
                 using var sendCts = new CancellationTokenSource(FragmentProtocol.SessionTimeoutMs);
                 var sendSuccess = await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, sendCts.Token);
-                
+
                 if (!sendSuccess)
                 {
                     _pendingResponses.TryRemove(responseKey, out _);
                     return null;
                 }
 
-                // Wait for response with timeout
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // Increased timeout for get_files
-                timeoutCts.Token.Register(() =>
+                // Sliding timeout implementation
+                var timeout = TimeSpan.FromSeconds(_settingsService.ResponseTimeoutSeconds);
+                using var timeoutCts = new CancellationTokenSource(timeout);
+
+                // Reset timeout on fragment activity (sliding timeout)
+                void ResetTimeout()
                 {
-                    // Remove from pending responses on timeout
-                    _pendingResponses.TryRemove(responseKey, out _);
-                    tcs.TrySetCanceled();
-                });
-                
+                    try
+                    {
+                        timeoutCts.CancelAfter(timeout);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // CancellationTokenSource already disposed, ignore
+                    }
+                }
+
+                _xbeeService.OnFragmentActivity += ResetTimeout;
+
                 try
                 {
+                    timeoutCts.Token.Register(() =>
+                    {
+                        // Remove from pending responses on timeout
+                        _pendingResponses.TryRemove(responseKey, out _);
+                        tcs.TrySetCanceled();
+                    });
+
                     var response = await tcs.Task.WaitAsync(timeoutCts.Token);
                     // Successfully received response, remove from pending
                     _pendingResponses.TryRemove(responseKey, out _);
@@ -166,6 +183,10 @@ namespace AnimatronicsControlCenter.Infrastructure
                 {
                     // Timeout occurred, already removed from _pendingResponses in Register callback
                     return null;
+                }
+                finally
+                {
+                    _xbeeService.OnFragmentActivity -= ResetTimeout;
                 }
             }
             catch

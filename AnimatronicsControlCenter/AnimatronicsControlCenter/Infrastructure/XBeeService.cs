@@ -39,6 +39,11 @@ public class XBeeService : IDisposable
     public event Action<byte[], ulong>? OnMessageReceived;
 
     /// <summary>
+    /// Event raised when fragment is received (for sliding timeout)
+    /// </summary>
+    public event Action? OnFragmentActivity;
+
+    /// <summary>
     /// Event raised for log messages
     /// </summary>
     public event Action<string>? OnLog;
@@ -81,6 +86,12 @@ public class XBeeService : IDisposable
 
         // Connect complete message to user callback
         _receiver.OnMessageReceived += HandleCompleteMessage;
+
+        // Forward fragment progress for sliding timeout
+        _receiver.OnFragmentProgress += (msgId, fragIdx, fragCnt) =>
+        {
+            OnFragmentActivity?.Invoke();
+        };
     }
 
     /// <summary>

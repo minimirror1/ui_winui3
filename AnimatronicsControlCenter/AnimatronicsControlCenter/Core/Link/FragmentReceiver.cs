@@ -23,6 +23,12 @@ public class FragmentReceiver : IDisposable
     public event Action<ushort, ushort[]>? OnNackSent;
 
     /// <summary>
+    /// Event raised when any fragment is received (for sliding timeout)
+    /// Parameters: (msgId, fragIdx, fragCnt)
+    /// </summary>
+    public event Action<ushort, ushort, ushort>? OnFragmentProgress;
+
+    /// <summary>
     /// Event for logging
     /// </summary>
     public event Action<string>? OnLog;
@@ -134,6 +140,9 @@ public class FragmentReceiver : IDisposable
             _sessionManager.UpdateRxActivity(header.MsgId);
 
             OnLog?.Invoke($"RX msg_id={header.MsgId}: fragment {header.FragIdx + 1}/{header.FragCnt}");
+
+            // Notify fragment progress for sliding timeout
+            OnFragmentProgress?.Invoke(header.MsgId, header.FragIdx, header.FragCnt);
         }
 
         // Check if complete

@@ -84,6 +84,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private LanguageOption selectedLanguage;
 
+        [ObservableProperty]
+        private double responseTimeoutSeconds;
+
         private bool _isInitialized;
 
         public SettingsViewModel(
@@ -107,7 +110,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             SelectedPort = _settingsService.LastComPort;
             BaudRate = _settingsService.LastBaudRate == 0 ? 115200 : _settingsService.LastBaudRate;
             IsVirtualModeEnabled = _settingsService.IsVirtualModeEnabled;
-            
+            ResponseTimeoutSeconds = _settingsService.ResponseTimeoutSeconds;
+
             RefreshPorts();
             
             var currentCode = _localizationService.CurrentCulture.Name;
@@ -150,7 +154,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
              {
                  _ = ConnectAsync();
              }
-             else 
+             else
              {
                  if (IsConnectionActive)
                  {
@@ -158,6 +162,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     IsConnectionActive = false;
                  }
              }
+        }
+
+        partial void OnResponseTimeoutSecondsChanged(double value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.ResponseTimeoutSeconds = value;
+            _settingsService.Save();
         }
 
         [RelayCommand]
