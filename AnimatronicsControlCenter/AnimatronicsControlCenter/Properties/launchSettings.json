@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "AnimatronicsControlCenter (Package)": {
+      "commandName": "MsixPackage"
+    }
+  }
+}
