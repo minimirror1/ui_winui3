@@ -17,6 +17,22 @@ namespace AnimatronicsControlCenter.Infrastructure
     {
         private const byte HostId = 0;
         private const byte BroadcastId = 255;
+        private const int ShortSessionTimeoutMs = 2000;
+
+        // Commands used for scan/health checks: fail fast when target device is absent.
+        private static readonly HashSet<string> ShortTimeoutCommands = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "ping"
+        };
+
+        // Commands that can include large payloads and legitimately need longer transfer time.
+        private static readonly HashSet<string> LongTimeoutCommands = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "save_file",
+            "get_file",
+            "verify_file",
+            "get_files"
+        };
 
         private readonly ISettingsService _settingsService;
         private readonly ISerialTrafficTap _trafficTap;
@@ -100,8 +116,8 @@ namespace AnimatronicsControlCenter.Infrastructure
             // Convert JSON to UTF-8 bytes and send via Fragment Protocol
             var jsonBytes = Encoding.UTF8.GetBytes(json);
             var broadcastAddress = ApiConstants.BroadcastAddress64;
-            
-            using var cts = new CancellationTokenSource(FragmentProtocol.SessionTimeoutMs);
+
+            using var cts = new CancellationTokenSource(GetSessionTimeoutMs(command));
             await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, cts.Token);
         }
 
@@ -137,7 +153,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 var jsonBytes = Encoding.UTF8.GetBytes(json);
                 var broadcastAddress = ApiConstants.BroadcastAddress64;
 
-                using var sendCts = new CancellationTokenSource(FragmentProtocol.SessionTimeoutMs);
+                using var sendCts = new CancellationTokenSource(GetSessionTimeoutMs(command));
                 var sendSuccess = await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, sendCts.Token);
 
                 if (!sendSuccess)
@@ -321,6 +337,21 @@ namespace AnimatronicsControlCenter.Infrastructure
         public void Dispose()
         {
             _xbeeService.OnMessageReceived -= HandleMessageReceived;
+        }
+
+        private static int GetSessionTimeoutMs(string command)
+        {
+            if (ShortTimeoutCommands.Contains(command))
+            {
+                return ShortSessionTimeoutMs;
+            }
+
+            if (LongTimeoutCommands.Contains(command))
+            {
+                return FragmentProtocol.SessionTimeoutMs;
+            }
+
+            return FragmentProtocol.SessionTimeoutMs;
         }
     }
 }
