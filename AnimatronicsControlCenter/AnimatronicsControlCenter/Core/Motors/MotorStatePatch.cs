@@ -14,6 +14,10 @@ namespace AnimatronicsControlCenter.Core.Motors
 
         public double? Position { get; init; }
         public double? Velocity { get; init; }
+        public double? MinAngle { get; init; }
+        public double? MaxAngle { get; init; }
+        public double? MinRaw { get; init; }
+        public double? MaxRaw { get; init; }
     }
 }
 

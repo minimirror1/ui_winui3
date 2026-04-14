@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AnimatronicsControlCenter\Core\Models\MotorState.cs" Link="Core\Models\MotorState.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStatePatch.cs" Link="Core\Motors\MotorStatePatch.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStateMerger.cs" Link="Core\Motors\MotorStateMerger.cs" />
+  </ItemGroup>
+</Project>

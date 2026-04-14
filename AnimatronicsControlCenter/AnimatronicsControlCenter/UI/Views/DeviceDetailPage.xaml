@@ -195,9 +195,9 @@
                                         <StackPanel Grid.Row="2">
                                             <Grid Margin="0,0,0,4">
                                                 <TextBlock Text="Position" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                                <TextBlock Text="{x:Bind Position, Mode=OneWay}" FontSize="10" HorizontalAlignment="Right"/>
+                                                <TextBlock Text="{x:Bind PositionDisplay, Mode=OneWay}" FontSize="10" HorizontalAlignment="Right"/>
                                             </Grid>
-                                            <Slider Value="{x:Bind Position, Mode=TwoWay}" Minimum="0" Maximum="180" 
+                                            <Slider Value="{x:Bind AnglePosition, Mode=TwoWay}" Minimum="{x:Bind MinAngle, Mode=OneWay}" Maximum="{x:Bind MaxAngle, Mode=OneWay}" 
                                                     PointerCaptureLost="Slider_PointerCaptureLost"
                                                     Height="32"/>
                                         </StackPanel>
@@ -279,4 +279,3 @@
         </ContentDialog>
     </Grid>
 </Page>
-

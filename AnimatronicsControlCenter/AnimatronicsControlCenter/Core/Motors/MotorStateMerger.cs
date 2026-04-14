@@ -30,6 +30,10 @@ namespace AnimatronicsControlCenter.Core.Motors
                 if (patch.Status != null) motor.Status = patch.Status;
                 if (patch.Position.HasValue) motor.Position = patch.Position.Value;
                 if (patch.Velocity.HasValue) motor.Velocity = patch.Velocity.Value;
+                if (patch.MinAngle.HasValue) motor.MinAngle = patch.MinAngle.Value;
+                if (patch.MaxAngle.HasValue) motor.MaxAngle = patch.MaxAngle.Value;
+                if (patch.MinRaw.HasValue) motor.MinRaw = patch.MinRaw.Value;
+                if (patch.MaxRaw.HasValue) motor.MaxRaw = patch.MaxRaw.Value;
             }
         }
     }

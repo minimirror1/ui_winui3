@@ -230,7 +230,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                         Type = m["type"]?.GetValue<string?>(),
                         Status = m["status"]?.GetValue<string?>(),
                         Position = m["position"]?.GetValue<double?>(),
-                        Velocity = m["velocity"]?.GetValue<double?>()
+                        Velocity = m["velocity"]?.GetValue<double?>(),
+                        MinAngle = m["minAngle"]?.GetValue<double?>(),
+                        MaxAngle = m["maxAngle"]?.GetValue<double?>(),
+                        MinRaw = m["minRaw"]?.GetValue<double?>(),
+                        MaxRaw = m["maxRaw"]?.GetValue<double?>()
                     });
                 }
 
@@ -507,4 +511,3 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
     }
 }
-
