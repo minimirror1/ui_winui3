@@ -3,13 +3,12 @@ using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Motors;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Protocol;
 using Microsoft.UI.Dispatching;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -76,23 +75,28 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         partial void OnSelectedFileChanged(FileSystemItem? value)
         {
             if (value != null && !value.IsDirectory)
-            {
                 _ = LoadFileContentAsync(value.Path);
-            }
             else
-            {
                 FileContent = string.Empty;
-            }
         }
+
+        // ── 모터 이동 ─────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task MoveMotorAsync(MotorState motor)
         {
-             if (SelectedDevice != null && motor != null)
-             {
-                 await _serialService.SendCommandAsync(SelectedDevice.Id, "move", new { motorId = motor.Id, pos = motor.Position });
-             }
+            if (SelectedDevice == null || motor == null) return;
+
+            var packet = BinarySerializer.EncodeMove(
+                BinaryProtocolConst.HostId,
+                (byte)SelectedDevice.Id,
+                (byte)motor.Id,
+                motor.Position);
+
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
         }
+
+        // ── 모터 폴링 ─────────────────────────────────────────────────
 
         public void SetMotorsPollingAllowed(bool allowed)
         {
@@ -102,14 +106,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public void StopMotorsPolling()
         {
-            try
-            {
-                _motorsPollingCts?.Cancel();
-            }
-            catch
-            {
-                // ignore
-            }
+            try { _motorsPollingCts?.Cancel(); }
+            catch { }
             finally
             {
                 _motorsPollingCts?.Dispose();
@@ -148,19 +146,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
 
             _motorsPollingCts = new CancellationTokenSource();
-            var token = _motorsPollingCts.Token;
-            _motorsPollingTask = RunMotorsPollingLoopAsync(token);
+            _motorsPollingTask = RunMotorsPollingLoopAsync(_motorsPollingCts.Token);
         }
 
         private async Task RunMotorsPollingLoopAsync(CancellationToken token)
         {
             await RefreshMotorsOnceAsync(token);
-
             using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(MotorPollingIntervalMs));
             while (await timer.WaitForNextTickAsync(token))
-            {
                 await RefreshMotorsOnceAsync(token);
-            }
         }
 
         [RelayCommand]
@@ -169,15 +163,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             await RefreshMotorsOnceAsync(CancellationToken.None);
         }
 
+        // ── GET_MOTORS ────────────────────────────────────────────────
+
         private async Task LoadMotorsAsync()
         {
             if (SelectedDevice == null) return;
 
-            var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_motors");
-            if (string.IsNullOrWhiteSpace(response)) return;
+            var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetMotors);
+            if (responseBytes == null) return;
+            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
+            if (!BinaryDeserializer.IsOk(hdr)) return;
 
-            var patches = TryParseMotorPatches(response);
-            if (patches == null) return;
+            // async 메서드에서 ReadOnlySpan 불가 → byte[] 슬라이스 사용
+            int start    = BinaryProtocolConst.ResponseHeaderSize;
+            var payload  = responseBytes[start..(start + hdr.PayloadLen)];
+            var patches  = BinaryDeserializer.ParseGetMotorsResponse(payload);
+            if (patches.Count == 0) return;
 
             _dispatcherQueue.TryEnqueue(() =>
             {
@@ -185,17 +186,23 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 MotorStateMerger.Apply(SelectedDevice.Motors, patches);
             });
         }
+
+        // ── GET_MOTOR_STATE ───────────────────────────────────────────
 
         private async Task RefreshMotorsOnceAsync(CancellationToken token)
         {
             if (SelectedDevice == null) return;
             token.ThrowIfCancellationRequested();
 
-            var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_motor_state");
-            if (string.IsNullOrWhiteSpace(response)) return;
+            var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetMotorState);
+            if (responseBytes == null) return;
+            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
+            if (!BinaryDeserializer.IsOk(hdr)) return;
 
-            var patches = TryParseMotorPatches(response);
-            if (patches == null) return;
+            int start   = BinaryProtocolConst.ResponseHeaderSize;
+            var payload = responseBytes[start..(start + hdr.PayloadLen)];
+            var patches = BinaryDeserializer.ParseMotorStateResponse(payload);
+            if (patches.Count == 0) return;
 
             _dispatcherQueue.TryEnqueue(() =>
             {
@@ -204,53 +211,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             });
         }
 
-        private static List<MotorStatePatch>? TryParseMotorPatches(string responseJson)
-        {
-            try
-            {
-                var json = JsonNode.Parse(responseJson);
-                if (json == null) return null;
-                if (json["status"]?.ToString() != "ok") return null;
-
-                var motorsNode = json["payload"]?["motors"] as JsonArray;
-                if (motorsNode == null) return null;
-
-                List<MotorStatePatch> patches = new();
-                foreach (var node in motorsNode)
-                {
-                    if (node is not JsonObject m) continue;
-                    int id = m["id"]?.GetValue<int>() ?? 0;
-                    if (id <= 0) continue;
-
-                    patches.Add(new MotorStatePatch
-                    {
-                        Id = id,
-                        GroupId = m["groupId"]?.GetValue<int?>(),
-                        SubId = m["subId"]?.GetValue<int?>(),
-                        Type = m["type"]?.GetValue<string?>(),
-                        Status = m["status"]?.GetValue<string?>(),
-                        Position = m["position"]?.GetValue<double?>(),
-                        Velocity = m["velocity"]?.GetValue<double?>(),
-                        MinAngle = m["minAngle"]?.GetValue<double?>(),
-                        MaxAngle = m["maxAngle"]?.GetValue<double?>(),
-                        MinRaw = m["minRaw"]?.GetValue<double?>(),
-                        MaxRaw = m["maxRaw"]?.GetValue<double?>()
-                    });
-                }
-
-                return patches;
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        // ── 모션 제어 ─────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task PlayMotionAsync()
         {
             if (SelectedDevice == null) return;
-            await _serialService.SendCommandAsync(SelectedDevice.Id, "motion_ctrl", new { action = "play" });
+            var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Play);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
             SelectedDevice.MotionState = MotionState.Playing;
         }
 
@@ -258,7 +226,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private async Task StopMotionAsync()
         {
             if (SelectedDevice == null) return;
-            await _serialService.SendCommandAsync(SelectedDevice.Id, "motion_ctrl", new { action = "stop" });
+            var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Stop);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
             SelectedDevice.MotionState = MotionState.Stopped;
         }
 
@@ -266,7 +235,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private async Task PauseMotionAsync()
         {
             if (SelectedDevice == null) return;
-            await _serialService.SendCommandAsync(SelectedDevice.Id, "motion_ctrl", new { action = "pause" });
+            var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Pause);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
             SelectedDevice.MotionState = MotionState.Paused;
         }
 
@@ -276,125 +246,48 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (SelectedDevice == null) return;
             var time = TimeSpan.FromSeconds(seconds);
             SelectedDevice.MotionCurrentTime = time;
-            await _serialService.SendCommandAsync(SelectedDevice.Id, "motion_ctrl", new { action = "seek", time = time.TotalSeconds });
+            var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Seek, time.TotalSeconds);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
         }
 
-        public string FormatTime(TimeSpan time)
-        {
-            return time.ToString(@"hh\:mm\:ss");
-        }
+        public string FormatTime(TimeSpan time) => time.ToString(@"hh\:mm\:ss");
+
+        // ── GET_FILES ─────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task RefreshFilesAsync()
         {
             if (SelectedDevice == null) return;
-
             IsFileLoading = true;
             try
             {
-                var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_files");
-                if (!string.IsNullOrEmpty(response))
-                {
-                    try
-                    {
-                        var json = JsonNode.Parse(response);
-                        if (json != null && json["status"]?.ToString() == "ok")
-                        {
-                            var payload = json["payload"];
-                            if (payload != null)
-                            {
-                                List<FileSystemItem>? items = null;
-                                
-                                // Handle payload as JsonArray
-                                if (payload is JsonArray jsonArray)
-                                {
-                                    items = new List<FileSystemItem>();
-                                    foreach (var itemNode in jsonArray)
-                                    {
-                                        if (itemNode != null)
-                                        {
-                                            try
-                                            {
-                                                var itemJson = itemNode.ToString();
-                                                var item = JsonSerializer.Deserialize<FileSystemItem>(itemJson, new JsonSerializerOptions
-                                                {
-                                                    PropertyNameCaseInsensitive = true
-                                                });
-                                                if (item != null)
-                                                {
-                                                    items.Add(item);
-                                                }
-                                            }
-                                            catch
-                                            {
-                                                // Skip invalid items
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    // Fallback to string deserialization
-                                    try
-                                    {
-                                        items = JsonSerializer.Deserialize<List<FileSystemItem>>(payload.ToString(), new JsonSerializerOptions
-                                        {
-                                            PropertyNameCaseInsensitive = true
-                                        });
-                                    }
-                                    catch
-                                    {
-                                        items = null;
-                                    }
-                                }
+                var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetFiles);
+                if (responseBytes == null) return;
+                if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
+                if (!BinaryDeserializer.IsOk(hdr)) return;
 
-                                if (items != null && items.Count > 0)
-                                {
-                                    // Convert flat list to tree structure
-                                    var rootItems = BuildFileTree(items);
-                                    
-                                    // Update UI on dispatcher thread
-                                    _dispatcherQueue.TryEnqueue(() =>
-                                    {
-                                        Files = new ObservableCollection<FileSystemItem>(rootItems);
-                                    });
-                                }
-                                else
-                                {
-                                    _dispatcherQueue.TryEnqueue(() =>
-                                    {
-                                        Files = new ObservableCollection<FileSystemItem>();
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log or handle JSON parsing error
-                        System.Diagnostics.Debug.WriteLine($"Error parsing get_files response: {ex.Message}");
-                        _dispatcherQueue.TryEnqueue(() =>
-                        {
-                            Files = new ObservableCollection<FileSystemItem>();
-                        });
-                    }
-                }
+                int start    = BinaryProtocolConst.ResponseHeaderSize;
+                var payload  = responseBytes[start..(start + hdr.PayloadLen)];
+                var entries  = BinaryDeserializer.ParseGetFilesResponse(payload);
+                var rootItems = BuildFileTreeFromFlatList(entries);
+
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    Files = new ObservableCollection<FileSystemItem>(rootItems);
+                });
             }
             catch (Exception ex)
             {
-                // Log or handle general error
                 System.Diagnostics.Debug.WriteLine($"Error in RefreshFilesAsync: {ex.Message}");
-                _dispatcherQueue.TryEnqueue(() =>
-                {
-                    Files = new ObservableCollection<FileSystemItem>();
-                });
+                _dispatcherQueue.TryEnqueue(() => Files = new ObservableCollection<FileSystemItem>());
             }
             finally
             {
                 IsFileLoading = false;
             }
         }
+
+        // ── GET_FILE ──────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task LoadFileContentAsync(string path)
@@ -403,15 +296,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             IsFileLoading = true;
             try
             {
-                var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "get_file", new { path });
-                if (!string.IsNullOrEmpty(response))
-                {
-                    var json = JsonNode.Parse(response);
-                    if (json != null && json["status"]?.ToString() == "ok")
-                    {
-                        FileContent = json["payload"]?["content"]?.ToString() ?? "";
-                    }
-                }
+                var packet        = BinarySerializer.EncodeGetFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, path);
+                var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetFile, packet);
+                if (responseBytes == null) return;
+                if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
+                if (!BinaryDeserializer.IsOk(hdr)) return;
+
+                int start         = BinaryProtocolConst.ResponseHeaderSize;
+                var payload       = responseBytes[start..(start + hdr.PayloadLen)];
+                var (_, content)  = BinaryDeserializer.ParseGetFileResponse(payload);
+                FileContent       = content;
             }
             finally
             {
@@ -419,30 +313,35 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
         }
 
+        // ── SAVE_FILE ─────────────────────────────────────────────────
+
         [RelayCommand]
         private async Task SaveFileAsync()
         {
             if (SelectedDevice == null || SelectedFile == null) return;
-
-            await _serialService.SendCommandAsync(SelectedDevice.Id, "save_file", new { path = SelectedFile.Path, content = FileContent });
+            var packet = BinarySerializer.EncodeSaveFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
         }
+
+        // ── VERIFY_FILE ───────────────────────────────────────────────
 
         [RelayCommand]
         private async Task VerifyFileAsync()
         {
             if (SelectedDevice == null || SelectedFile == null) return;
 
-            var response = await _serialService.SendQueryAsync(SelectedDevice.Id, "verify_file", new { path = SelectedFile.Path, content = FileContent });
-            if (!string.IsNullOrEmpty(response))
-            {
-                var json = JsonNode.Parse(response);
-                if (json != null && json["status"]?.ToString() == "ok")
-                {
-                    bool match = json["payload"]?["match"]?.GetValue<bool>() ?? false;
-                    VerificationResult = match ? "Content Matches Device" : "Content Mismatch";
-                    IsVerificationDialogOpen = true;
-                }
-            }
+            var packet        = BinarySerializer.EncodeVerifyFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
+            var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.VerifyFile, packet);
+            if (responseBytes == null) return;
+            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
+            if (!BinaryDeserializer.IsOk(hdr)) return;
+
+            int payloadStart = BinaryProtocolConst.ResponseHeaderSize;
+            var payload      = responseBytes[payloadStart..(payloadStart + hdr.PayloadLen)];
+            bool match       = BinaryDeserializer.ParseVerifyFileResponse(payload);
+
+            VerificationResult = match ? "Content Matches Device" : "Content Mismatch";
+            IsVerificationDialogOpen = true;
         }
 
         [RelayCommand]
@@ -451,63 +350,30 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             IsVerificationDialogOpen = false;
         }
 
-        /// <summary>
-        /// Converts a flat list of file system items into a tree structure based on parentIndex
-        /// </summary>
-        private static List<FileSystemItem> BuildFileTree(List<FileSystemItem> flatList)
+        // ── GET_FILES flat list → 트리 재구성 ────────────────────────
+
+        private static List<FileSystemItem> BuildFileTreeFromFlatList(List<BinaryDeserializer.FileEntry> entries)
         {
-            if (flatList == null || flatList.Count == 0)
-                return new List<FileSystemItem>();
-
-            // Create a dictionary for quick lookup by index
-            var itemsByIndex = new Dictionary<int, FileSystemItem>();
-            for (int i = 0; i < flatList.Count; i++)
+            var nodes = entries.Select(e => new FileSystemItem
             {
-                itemsByIndex[i] = flatList[i];
-            }
+                Name        = e.Name,
+                Path        = e.Path,
+                IsDirectory = e.IsDirectory,
+                Size        = e.Size,
+            }).ToList();
 
-            // Build parent-child relationships
-            var rootItems = new List<FileSystemItem>();
-            
-            for (int i = 0; i < flatList.Count; i++)
+            var roots = new List<FileSystemItem>();
+            for (int i = 0; i < nodes.Count; i++)
             {
-                var item = flatList[i];
-                
-                // Clear children collection to avoid duplicates if method is called multiple times
-                item.Children.Clear();
-                
-                // Debug: Log item info
-                System.Diagnostics.Debug.WriteLine($"Item[{i}]: Name={item.Name}, ParentIndex={item.ParentIndex}, Depth={item.Depth}");
-                
-                if (item.ParentIndex == -1)
-                {
-                    // Root level item
-                    rootItems.Add(item);
-                }
-                else if (item.ParentIndex >= 0 && item.ParentIndex < flatList.Count)
-                {
-                    // Child item - find parent and add to its children
-                    if (itemsByIndex.TryGetValue(item.ParentIndex, out var parent))
-                    {
-                        parent.Children.Add(item);
-                    }
-                    else
-                    {
-                        // Parent not found - treat as root item
-                        System.Diagnostics.Debug.WriteLine($"Warning: Parent index {item.ParentIndex} not found for item {item.Name}, treating as root");
-                        rootItems.Add(item);
-                    }
-                }
+                int parentIdx = entries[i].ParentIndex;
+                if (parentIdx < 0)
+                    roots.Add(nodes[i]);
+                else if (parentIdx < nodes.Count)
+                    nodes[parentIdx].Children.Add(nodes[i]);
                 else
-                {
-                    // Invalid parent index - treat as root item
-                    System.Diagnostics.Debug.WriteLine($"Warning: Invalid parent index {item.ParentIndex} for item {item.Name}, treating as root");
-                    rootItems.Add(item);
-                }
+                    roots.Add(nodes[i]);
             }
-
-            System.Diagnostics.Debug.WriteLine($"BuildFileTree: {rootItems.Count} root items created from {flatList.Count} total items");
-            return rootItems;
+            return roots;
         }
     }
 }

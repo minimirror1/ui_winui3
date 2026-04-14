@@ -17,6 +17,10 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         void RecordTx(string line);
 
         void RecordRx(string line);
+
+        void RecordTxBytes(byte[] data);
+
+        void RecordRxBytes(byte[] data);
     }
 }
 

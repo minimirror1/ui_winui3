@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text.Json;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.UI.Helpers;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -31,19 +31,20 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         public int? SrcId { get; init; }
         public int? TarId { get; init; }
         public string? Status { get; init; }
-        public string RawJson { get; init; } = string.Empty;
-        public string PrettyJson { get; init; } = string.Empty;
+        // Binary 전환: RawJson → hex dump, PrettyJson → 디코딩 결과
+        public string RawJson { get; init; } = string.Empty;    // hex dump ("00 02 01 ...")
+        public string PrettyJson { get; init; } = string.Empty; // decoded header info
         public string? ParseError { get; init; }
 
         public string Summary
         {
             get
             {
-                var dir = Traffic.Prefix;
-                var time = Traffic.TimestampText;
-                var cmd = string.IsNullOrWhiteSpace(Command) ? "-" : Command;
-                var src = SrcId?.ToString() ?? "-";
-                var tar = TarId?.ToString() ?? "-";
+                var dir    = Traffic.Prefix;
+                var time   = Traffic.TimestampText;
+                var cmd    = string.IsNullOrWhiteSpace(Command) ? "-" : Command;
+                var src    = SrcId?.ToString() ?? "-";
+                var tar    = TarId?.ToString() ?? "-";
                 var status = string.IsNullOrWhiteSpace(Status) ? "-" : Status;
                 return $"{dir}[{time}] cmd={cmd} src={src} tar={tar} status={status}";
             }
@@ -206,49 +207,81 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
         }
 
-        private static string StripFramingMarker(string line)
-        {
-            if (string.IsNullOrEmpty(line)) return string.Empty;
-            return line.EndsWith("\\n", StringComparison.Ordinal) ? line[..^2] : line;
-        }
-
         private PacketItem? TryBuildPacket(SerialTrafficEntry entry)
         {
-            var raw = StripFramingMarker(entry.Line);
-            if (string.IsNullOrWhiteSpace(raw)) return null;
+            var hexLine = entry.Line?.Trim();
+            if (string.IsNullOrWhiteSpace(hexLine)) return null;
 
-            try
+            // hex 문자열("00 02 01 00 00") → byte[]
+            byte[]? data = TryParseHex(hexLine);
+            if (data == null || data.Length == 0)
             {
-                using var doc = JsonDocument.Parse(raw);
-                if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
-
-                string? cmd = doc.RootElement.TryGetProperty("cmd", out var cmdEl) ? cmdEl.GetString() : null;
-                int? src = doc.RootElement.TryGetProperty("src_id", out var srcEl) && srcEl.ValueKind == JsonValueKind.Number ? srcEl.GetInt32() : null;
-                int? tar = doc.RootElement.TryGetProperty("tar_id", out var tarEl) && tarEl.ValueKind == JsonValueKind.Number ? tarEl.GetInt32() : null;
-                string? status = doc.RootElement.TryGetProperty("status", out var stEl) ? stEl.GetString() : null;
-
-                var pretty = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
                 return new PacketItem
                 {
-                    Traffic = entry,
-                    RawJson = raw,
-                    PrettyJson = pretty,
-                    Command = cmd,
-                    SrcId = src,
-                    TarId = tar,
-                    Status = status
+                    Traffic    = entry,
+                    RawJson    = hexLine,
+                    PrettyJson = hexLine,
+                    ParseError = "Not a binary hex packet"
                 };
             }
-            catch (Exception ex)
+
+            // 응답 헤더 시도 (6 bytes 이상)
+            if (BinaryDeserializer.TryParseResponseHeader(data, out var respHdr))
             {
-                // Still show the packet in packet monitor with parse error.
+                string decoded = $"RESP cmd={respHdr.Cmd}(0x{(byte)respHdr.Cmd:X2}) " +
+                                 $"status={respHdr.Status} src={respHdr.SrcId} tar={respHdr.TarId} " +
+                                 $"payloadLen={respHdr.PayloadLen}";
                 return new PacketItem
                 {
-                    Traffic = entry,
-                    RawJson = raw,
-                    PrettyJson = raw,
-                    ParseError = ex.Message
+                    Traffic    = entry,
+                    RawJson    = hexLine,
+                    PrettyJson = decoded,
+                    Command    = respHdr.Cmd.ToString(),
+                    SrcId      = respHdr.SrcId,
+                    TarId      = respHdr.TarId,
+                    Status     = respHdr.Status.ToString(),
                 };
+            }
+
+            // 요청 헤더 시도 (5 bytes 이상)
+            if (BinaryDeserializer.TryParseRequestHeader(data, out var reqHdr))
+            {
+                string decoded = $"REQ  cmd={reqHdr.Cmd}(0x{(byte)reqHdr.Cmd:X2}) " +
+                                 $"src={reqHdr.SrcId} tar={reqHdr.TarId} payloadLen={reqHdr.PayloadLen}";
+                return new PacketItem
+                {
+                    Traffic    = entry,
+                    RawJson    = hexLine,
+                    PrettyJson = decoded,
+                    Command    = reqHdr.Cmd.ToString(),
+                    SrcId      = reqHdr.SrcId,
+                    TarId      = reqHdr.TarId,
+                    Status     = null,
+                };
+            }
+
+            return new PacketItem
+            {
+                Traffic    = entry,
+                RawJson    = hexLine,
+                PrettyJson = hexLine,
+                ParseError = "Cannot parse binary header"
+            };
+        }
+
+        private static byte[]? TryParseHex(string hex)
+        {
+            try
+            {
+                var tokens = hex.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var bytes  = new byte[tokens.Length];
+                for (int i = 0; i < tokens.Length; i++)
+                    bytes[i] = Convert.ToByte(tokens[i], 16);
+                return bytes;
+            }
+            catch
+            {
+                return null;
             }
         }
 

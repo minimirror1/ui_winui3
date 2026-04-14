@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
 
@@ -39,6 +40,13 @@ namespace AnimatronicsControlCenter.Infrastructure
         public void RecordTx(string line) => Record(SerialTrafficDirection.Tx, line);
 
         public void RecordRx(string line) => Record(SerialTrafficDirection.Rx, line);
+
+        public void RecordTxBytes(byte[] data) => Record(SerialTrafficDirection.Tx, ToHexDisplay(data));
+
+        public void RecordRxBytes(byte[] data) => Record(SerialTrafficDirection.Rx, ToHexDisplay(data));
+
+        private static string ToHexDisplay(byte[] data)
+            => data == null ? string.Empty : string.Join(" ", data.Select(b => b.ToString("X2")));
 
         private void Record(SerialTrafficDirection direction, string line)
         {

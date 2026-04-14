@@ -1,37 +1,33 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Link;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Core.Transport;
 
 namespace AnimatronicsControlCenter.Infrastructure
 {
     public class SerialService : ISerialService, IDisposable
     {
-        private const byte HostId = 0;
-        private const byte BroadcastId = 255;
         private const int ShortSessionTimeoutMs = 2000;
 
-        // Commands used for scan/health checks: fail fast when target device is absent.
-        private static readonly HashSet<string> ShortTimeoutCommands = new(StringComparer.OrdinalIgnoreCase)
+        // PING은 짧은 타임아웃 적용
+        private static readonly HashSet<BinaryCommand> ShortTimeoutCommands = new()
         {
-            "ping"
+            BinaryCommand.Ping
         };
 
-        // Commands that can include large payloads and legitimately need longer transfer time.
-        private static readonly HashSet<string> LongTimeoutCommands = new(StringComparer.OrdinalIgnoreCase)
+        // 대용량 페이로드 명령은 Fragment Protocol 기본 타임아웃 사용
+        private static readonly HashSet<BinaryCommand> LongTimeoutCommands = new()
         {
-            "save_file",
-            "get_file",
-            "verify_file",
-            "get_files"
+            BinaryCommand.SaveFile,
+            BinaryCommand.GetFile,
+            BinaryCommand.VerifyFile,
+            BinaryCommand.GetFiles,
         };
 
         private readonly ISettingsService _settingsService;
@@ -40,8 +36,8 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly XBeeService _xbeeService;
         private bool _isVirtualConnected;
 
-        // Response matching for SendQueryAsync and PingDeviceAsync
-        private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingResponses = new();
+        // Binary 응답 매칭: key = "{deviceId}:{cmd_byte}"
+        private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> _pendingResponses = new();
 
         public SerialService(ISettingsService settingsService, ISerialTrafficTap trafficTap, XBeeService xbeeService)
         {
@@ -50,8 +46,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             _virtualDeviceManager = new VirtualDeviceManager();
             _xbeeService = xbeeService;
 
-            // Subscribe to XBeeService message received events
-            _xbeeService.OnMessageReceived += HandleMessageReceived;
+            _xbeeService.OnMessageReceived += HandleBinaryReceived;
         }
 
         public bool IsConnected
@@ -78,83 +73,67 @@ namespace AnimatronicsControlCenter.Infrastructure
 
             var success = await _xbeeService.ConnectAsync(portName, baudRate);
             if (!success)
-            {
                 throw new InvalidOperationException($"Failed to connect to XBee device on {portName}");
-            }
         }
 
         public void Disconnect()
         {
             _isVirtualConnected = false;
-
             if (_xbeeService.IsConnected)
-            {
                 _xbeeService.Disconnect();
-            }
         }
 
-        public async Task SendCommandAsync(int deviceId, string command, object? payload = null)
+        // ── Binary 전송 (Fire-and-forget) ────────────────────────────────
+
+        public async Task SendBinaryCommandAsync(int deviceId, byte[] packet)
         {
             if (!IsConnected) return;
 
-            // Firmware expects addressed packets: src_id/tar_id/cmd/payload (u8 IDs) + newline framing.
-            byte tarId = checked((byte)deviceId);
-            var message = new { src_id = HostId, tar_id = tarId, cmd = command, payload };
-            var json = JsonSerializer.Serialize(message);
-            _trafficTap.RecordTx(json + "\\n");
-            
+            _trafficTap.RecordTxBytes(packet);
+
             if (_settingsService.IsVirtualModeEnabled)
             {
-                // In virtual mode, we don't "send" and forget, we process.
-                // But this method signature is void/Task.
-                // So we just simulate the send.
-                _virtualDeviceManager.ProcessCommand(json);
+                _virtualDeviceManager.ProcessBinaryCommand(packet);
                 await Task.CompletedTask;
                 return;
             }
 
-            // Convert JSON to UTF-8 bytes and send via Fragment Protocol
-            var jsonBytes = Encoding.UTF8.GetBytes(json);
             var broadcastAddress = ApiConstants.BroadcastAddress64;
-
-            using var cts = new CancellationTokenSource(GetSessionTimeoutMs(command));
-            await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, cts.Token);
+            using var cts = new CancellationTokenSource(GetSessionTimeoutMs(GetCmdFromPacket(packet)));
+            await _xbeeService.SendMessageAsync(packet, broadcastAddress, cts.Token);
         }
 
-        public async Task<string?> SendQueryAsync(int deviceId, string command, object? payload = null)
+        // ── Binary 쿼리 (응답 대기) ──────────────────────────────────────
+
+        // payload 없는 no-arg 쿼리 편의 메서드
+        public Task<byte[]?> SendBinaryQueryAsync(int deviceId, BinaryCommand cmd)
+            => SendBinaryQueryAsync(deviceId, cmd, BuildRequestPacket((byte)deviceId, cmd));
+
+        public async Task<byte[]?> SendBinaryQueryAsync(int deviceId, BinaryCommand cmd, byte[] packet)
         {
             if (!IsConnected) return null;
-
-            // Firmware expects addressed packets: src_id/tar_id/cmd/payload (u8 IDs) + newline framing.
-            byte tarId = checked((byte)deviceId);
-            var message = new { src_id = HostId, tar_id = tarId, cmd = command, payload };
-            var json = JsonSerializer.Serialize(message);
-            _trafficTap.RecordTx(json + "\\n");
+            _trafficTap.RecordTxBytes(packet);
 
             if (_settingsService.IsVirtualModeEnabled)
             {
                 await Task.Delay(20);
-                var response = _virtualDeviceManager.ProcessCommand(json);
-                if (!string.IsNullOrEmpty(response))
-                {
-                    _trafficTap.RecordRx(response + "\\n");
-                }
+                var response = _virtualDeviceManager.ProcessBinaryCommand(packet);
+                if (response != null)
+                    _trafficTap.RecordRxBytes(response);
                 return response;
             }
 
-            // Create response key for matching
-            var responseKey = $"{deviceId}:{command}";
-            var tcs = new TaskCompletionSource<string>();
+            // Real device: pending 등록 후 전송
+            // Ping 요청의 응답은 Pong cmd로 오므로 key는 Ping(0x01)로 등록
+            var responseKey = $"{deviceId}:{(byte)cmd}";
+            var tcs = new TaskCompletionSource<byte[]>();
             _pendingResponses[responseKey] = tcs;
 
             try
             {
-                // Convert JSON to UTF-8 bytes and send via Fragment Protocol
-                var jsonBytes = Encoding.UTF8.GetBytes(json);
                 var broadcastAddress = ApiConstants.BroadcastAddress64;
-
-                using var sendCts = new CancellationTokenSource(GetSessionTimeoutMs(command));
-                var sendSuccess = await _xbeeService.SendMessageAsync(jsonBytes, broadcastAddress, sendCts.Token);
+                using var sendCts = new CancellationTokenSource(GetSessionTimeoutMs(cmd));
+                var sendSuccess = await _xbeeService.SendMessageAsync(packet, broadcastAddress, sendCts.Token);
 
                 if (!sendSuccess)
                 {
@@ -162,21 +141,13 @@ namespace AnimatronicsControlCenter.Infrastructure
                     return null;
                 }
 
-                // Sliding timeout implementation
                 var timeout = TimeSpan.FromSeconds(_settingsService.ResponseTimeoutSeconds);
                 using var timeoutCts = new CancellationTokenSource(timeout);
 
-                // Reset timeout on fragment activity (sliding timeout)
                 void ResetTimeout()
                 {
-                    try
-                    {
-                        timeoutCts.CancelAfter(timeout);
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        // CancellationTokenSource already disposed, ignore
-                    }
+                    try { timeoutCts.CancelAfter(timeout); }
+                    catch (ObjectDisposedException) { }
                 }
 
                 _xbeeService.OnFragmentActivity += ResetTimeout;
@@ -185,19 +156,16 @@ namespace AnimatronicsControlCenter.Infrastructure
                 {
                     timeoutCts.Token.Register(() =>
                     {
-                        // Remove from pending responses on timeout
                         _pendingResponses.TryRemove(responseKey, out _);
                         tcs.TrySetCanceled();
                     });
 
-                    var response = await tcs.Task.WaitAsync(timeoutCts.Token);
-                    // Successfully received response, remove from pending
+                    var result = await tcs.Task.WaitAsync(timeoutCts.Token);
                     _pendingResponses.TryRemove(responseKey, out _);
-                    return response;
+                    return result;
                 }
                 catch (OperationCanceledException)
                 {
-                    // Timeout occurred, already removed from _pendingResponses in Register callback
                     return null;
                 }
                 finally
@@ -212,46 +180,40 @@ namespace AnimatronicsControlCenter.Infrastructure
             }
         }
 
+        // ── PingDeviceAsync ──────────────────────────────────────────────
+
         public async Task<Device?> PingDeviceAsync(int deviceId)
         {
             if (!IsConnected) return null;
 
             if (_settingsService.IsVirtualModeEnabled)
             {
-                await Task.Delay(20); // Simulate latency
-                byte tarId = checked((byte)deviceId);
-                var cmd = new { src_id = HostId, tar_id = tarId, cmd = "ping" };
-                var jsonCmd = JsonSerializer.Serialize(cmd);
-                _trafficTap.RecordTx(jsonCmd + "\\n");
-                var responseJson = _virtualDeviceManager.ProcessCommand(jsonCmd);
-                
-                if (!string.IsNullOrEmpty(responseJson))
+                await Task.Delay(20);
+                var ping = BinarySerializer.EncodePing(BinaryProtocolConst.HostId, (byte)deviceId);
+                _trafficTap.RecordTxBytes(ping);
+                var resp = _virtualDeviceManager.ProcessBinaryCommand(ping);
+                if (resp != null && BinaryDeserializer.TryParseResponseHeader(resp, out var hdr)
+                    && hdr.Cmd == BinaryCommand.Pong && hdr.Status == ResponseStatus.Ok)
                 {
-                     _trafficTap.RecordRx(responseJson + "\\n");
-                     // Parse response to check validity?
-                     // Assuming presence of response means device is there.
-                     return new Device(deviceId) { IsConnected = true, StatusMessage = "Online (Virtual)" };
+                    _trafficTap.RecordRxBytes(resp);
+                    return new Device(deviceId) { IsConnected = true, StatusMessage = "Online (Virtual)" };
                 }
                 return null;
             }
 
-            // Real device logic - use SendQueryAsync to wait for response
             try
             {
-                var response = await SendQueryAsync(deviceId, "ping");
-                if (!string.IsNullOrWhiteSpace(response))
+                var response = await SendBinaryQueryAsync(deviceId, BinaryCommand.Ping);
+                if (response != null
+                    && BinaryDeserializer.TryParseResponseHeader(response, out var hdr)
+                    && hdr.Cmd == BinaryCommand.Pong && hdr.Status == ResponseStatus.Ok)
                 {
-                    // Parse response to check validity
-                    var json = JsonNode.Parse(response);
-                    if (json != null && json["status"]?.ToString() == "ok")
-                    {
-                        return new Device(deviceId) { IsConnected = true, StatusMessage = "Online" };
-                    }
+                    return new Device(deviceId) { IsConnected = true, StatusMessage = "Online" };
                 }
             }
             catch (Exception)
             {
-                // Ignore timeouts
+                // 타임아웃 무시
             }
             return null;
         }
@@ -261,96 +223,72 @@ namespace AnimatronicsControlCenter.Infrastructure
             var foundDevices = new List<Device>();
             if (!IsConnected) return foundDevices;
 
-            // Run in background to avoid blocking UI if called from UI thread
             return await Task.Run(async () =>
             {
                 for (int id = startId; id <= endId; id++)
                 {
                     var device = await PingDeviceAsync(id);
                     if (device != null)
-                    {
                         foundDevices.Add(device);
-                    }
                 }
                 return foundDevices;
             });
         }
 
-        /// <summary>
-        /// Handle messages received from XBeeService
-        /// Matches responses to pending queries by parsing JSON and checking src_id and cmd
-        /// Note: Some commands may have different response cmd (e.g., "ping" -> "pong")
-        /// </summary>
-        private void HandleMessageReceived(byte[] data, ulong sourceAddress)
+        // ── Binary 수신 처리 ─────────────────────────────────────────────
+
+        private void HandleBinaryReceived(byte[] data, ulong sourceAddress)
         {
             try
             {
-                // Convert bytes to JSON string
-                var json = Encoding.UTF8.GetString(data);
-                _trafficTap.RecordRx(json + "\\n");
+                if (!BinaryDeserializer.TryParseResponseHeader(data, out var hdr)) return;
 
-                // Parse JSON to extract src_id and cmd
-                var jsonNode = JsonNode.Parse(json);
-                if (jsonNode == null) return;
+                _trafficTap.RecordRxBytes(data);
 
-                var srcId = jsonNode["src_id"]?.GetValue<int>();
-                var cmd = jsonNode["cmd"]?.GetValue<string>();
-                
-                if (!srcId.HasValue || string.IsNullOrEmpty(cmd)) return;
+                // PONG 응답은 PING 요청 key로 매칭
+                var lookupCmd  = hdr.Cmd == BinaryCommand.Pong ? BinaryCommand.Ping : hdr.Cmd;
+                var responseKey = $"{hdr.SrcId}:{(byte)lookupCmd}";
 
-                // Try to match with pending responses
-                // Format: "{deviceId}:{command}"
-                // First try exact match
-                var responseKey = $"{srcId.Value}:{cmd}";
-                
                 if (_pendingResponses.TryRemove(responseKey, out var tcs))
                 {
-                    // Check if task is already completed/cancelled before setting result
                     if (!tcs.Task.IsCompleted)
-                    {
-                        tcs.TrySetResult(json);
-                    }
-                    return;
-                }
-
-                // Handle special cases where response cmd differs from request cmd
-                // e.g., "ping" request might have "pong" response
-                if (cmd == "pong")
-                {
-                    responseKey = $"{srcId.Value}:ping";
-                    if (_pendingResponses.TryRemove(responseKey, out tcs))
-                    {
-                        if (!tcs.Task.IsCompleted)
-                        {
-                            tcs.TrySetResult(json);
-                        }
-                        return;
-                    }
+                        tcs.TrySetResult(data);
                 }
             }
             catch (Exception)
             {
-                // Ignore parsing errors
+                // 파싱 오류 무시
             }
         }
 
         public void Dispose()
         {
-            _xbeeService.OnMessageReceived -= HandleMessageReceived;
+            _xbeeService.OnMessageReceived -= HandleBinaryReceived;
         }
 
-        private static int GetSessionTimeoutMs(string command)
+        // ── 헬퍼 ────────────────────────────────────────────────────────
+
+        private static byte[] BuildRequestPacket(byte tarId, BinaryCommand cmd)
         {
-            if (ShortTimeoutCommands.Contains(command))
+            return cmd switch
             {
-                return ShortSessionTimeoutMs;
-            }
+                BinaryCommand.Ping          => BinarySerializer.EncodePing(BinaryProtocolConst.HostId, tarId),
+                BinaryCommand.GetMotors     => BinarySerializer.EncodeGetMotors(BinaryProtocolConst.HostId, tarId),
+                BinaryCommand.GetMotorState => BinarySerializer.EncodeGetMotorState(BinaryProtocolConst.HostId, tarId),
+                BinaryCommand.GetFiles      => BinarySerializer.EncodeGetFiles(BinaryProtocolConst.HostId, tarId),
+                _ => throw new ArgumentException($"Cannot build no-payload packet for cmd={cmd}. Use SendBinaryCommandAsync with pre-built packet."),
+            };
+        }
 
-            if (LongTimeoutCommands.Contains(command))
-            {
-                return FragmentProtocol.SessionTimeoutMs;
-            }
+        private static BinaryCommand GetCmdFromPacket(byte[] packet)
+        {
+            if (packet.Length < 3) return BinaryCommand.Error;
+            return (BinaryCommand)packet[2];
+        }
 
+        private static int GetSessionTimeoutMs(BinaryCommand cmd)
+        {
+            if (ShortTimeoutCommands.Contains(cmd)) return ShortSessionTimeoutMs;
             return FragmentProtocol.SessionTimeoutMs;
         }
     }
