@@ -78,10 +78,18 @@
 | 0x21 | GET_FILE | REQ/RESP |
 | 0x22 | SAVE_FILE | REQ/RESP |
 | 0x23 | VERIFY_FILE | REQ/RESP |
-| 0xFE | ACK_GENERIC | RESP |
+| 0xE0~0xEF | (예약: 향후 Push 이벤트) | — |
+| 0xFE | (예약: 버전 협상) | — |
 | 0xFF | ERROR | RESP |
 
-### 3.3 Status Enum (uint8)
+### 3.3 ResponseStatus Enum (uint8)
+
+| 값 | 의미 |
+|----|------|
+| 0x00 | OK |
+| 0x01 | ERROR |
+
+### 3.4 MotorStatus Enum (uint8)
 
 | 값 | 의미 |
 |----|------|
@@ -90,13 +98,13 @@
 | 0x02 | Overload |
 | 0x03 | Disconnected |
 
-### 3.4 Motor Type Enum (uint8)
+### 3.4b Motor Type Enum (uint8)
 
 | 값 | 의미 |
 |----|------|
 | 0x00 | Servo |
-| 0x01 | Stepper |
-| 0x02 | DC |
+| 0x01 | DC |
+| 0x02 | Stepper |
 
 ### 3.5 Action Enum (uint8)
 
@@ -121,15 +129,15 @@
 | `move` | 71 | **8** | hdr(5)+motor_id(1)+pos(2) | **89%** |
 | `motion_ctrl` play | 71 | **6** | hdr(5)+action(1) | **92%** |
 | `motion_ctrl` seek | 82 | **10** | hdr(5)+action(1)+time_ms(4) | **88%** |
-| `get_file` | 79 | **5+N** | hdr(5)+path_len(1)+path(N) | **~70%** |
+| `get_file` | 79 | **7+N** | hdr(5)+path_len(2)+path(N) | **~68%** |
 
 ### 4.2 응답 메시지
 
 | 명령 | 모터 수 | JSON (B) | Binary (B) | Binary 구조 | 절감률 |
 |------|---------|----------|------------|------------|--------|
 | `pong` | — | 80 | **6** | hdr(6) | **92%** |
-| `move` resp | — | 95 | **6** | hdr(6) | **94%** |
-| `motion_ctrl` resp | — | 90 | **6** | hdr(6) | **93%** |
+| `move` resp | — | 95 | **8** | hdr(6)+device_id(1)+motor_id(1) | **92%** |
+| `motion_ctrl` resp | — | 90 | **8** | hdr(6)+action(1)+device_id(1) | **91%** |
 | `get_motors` | 1 | 224 | **24** | hdr(6)+cnt(1)+17×1 | **89%** |
 | `get_motors` | 8 | 1,162 | **143** | hdr(6)+cnt(1)+17×8 | **88%** |
 | `get_motors` | 16 | 2,100 | **279** | hdr(6)+cnt(1)+17×16 | **87%** |
@@ -168,12 +176,12 @@ id(1) + position(2, uint16 LE) + velocity(2, uint16 LE, ×100) + status(1)
 | ping req | 36 | 2 | **72** | 5 | 1 | **26** | **64%** |
 | pong resp | 80 | 3 | **131** | 6 | 1 | **27** | **79%** |
 | move req | 71 | 3 | **122** | 8 | 1 | **29** | **76%** |
-| get_motors 1mot | 224 | 8 | **344** | 24 | 1 | **45** | **87%** |
-| get_motors 8mot | 1,162 | 39 | **1,747** | 143 | 5 | **224** | **87%** |
-| get_motors 16mot | 2,100 | 70 | **3,156** | 279 | 10 | **429** | **86%** |
-| motor_state 1mot | 148 | 5 | **223** | 13 | 1 | **34** | **85%** |
-| motor_state 8mot | 547 | 19 | **832** | 55 | 2 | **91** | **89%** |
-| **motor_state 16mot** | **946** | **32** | **1,426** | **103** | **4** | **165** | **88%** |
+| get_motors 1mot | 224 | 8 | **350** | 24 | 1 | **45** | **87%** |
+| get_motors 8mot | 1,162 | 39 | **1,753** | 143 | 5 | **224** | **87%** |
+| get_motors 16mot | 2,100 | 70 | **3,156** | 279 | 10 | **435** | **86%** |
+| motor_state 1mot | 148 | 5 | **229** | 13 | 1 | **34** | **85%** |
+| motor_state 8mot | 547 | 19 | **838** | 55 | 2 | **91** | **89%** |
+| **motor_state 16mot** | **946** | **32** | **1,432** | **103** | **4** | **169** | **88%** |
 | motion_ctrl | 71 | 3 | **122** | 6 | 1 | **27** | **78%** |
 
 ### 5.1 주기적 폴링 시나리오 (가장 중요)
@@ -182,13 +190,13 @@ id(1) + position(2, uint16 LE) + velocity(2, uint16 LE, ×100) + status(1)
 
 | 항목 | JSON | Binary | 절감 |
 |------|------|--------|------|
-| 요청 RF/초 | 2 × 137 = 274 B/s | 2 × 26 = 52 B/s | **81%** |
-| 응답 RF/초 | 2 × 1,426 = 2,852 B/s | 2 × 165 = 330 B/s | **88%** |
-| **합계 RF/초** | **3,126 B/s** | **382 B/s** | **88%** |
+| 요청 RF/초 | 2 × 113 = 226 B/s | 2 × 26 = 52 B/s | **77%** |
+| 응답 RF/초 | 2 × 1,432 = 2,864 B/s | 2 × 169 = 338 B/s | **88%** |
+| **합계 RF/초** | **3,090 B/s** | **390 B/s** | **87%** |
 | 조각 수/초 | 2 × (3+32) = 70 | 2 × (1+4) = 10 | **86%** |
 
-> Zigbee 실효 처리량 ~3,000 B/s 기준, JSON은 폴링만으로 대역폭 **100% 이상** 사용.
-> Binary는 **12.7%** 만 사용하여 다른 명령과 공존 가능.
+> Zigbee 실효 처리량 ~3,000 B/s 기준, JSON은 폴링만으로 대역폭 **~103%** 사용 (포화).
+> Binary는 **~13%** 만 사용하여 다른 명령과 공존 가능.
 
 ---
 
@@ -283,17 +291,15 @@ id(1) + position(2, uint16 LE) + velocity(2, uint16 LE, ×100) + status(1)
 
 ### 8.3 버전 호환성
 
-- 패킷 헤더에 **프로토콜 버전 바이트**를 포함 (향후 확장 대비)
-- 또는 Fragment Protocol의 기존 `Version` 필드를 활용하여 JSON/Binary 구분
+**확정된 방식 (binary-protocol-spec §2.0 참조):**
 
-**권장 전환 전략:**
-```
-Header byte 0: Protocol Version
-  0x01 = 현재 JSON (Fragment Protocol v1 + JSON payload)
-  0x02 = Binary (Fragment Protocol v1 + Binary payload)
-```
+1. **PING 기반 협상:** PC가 연결 시 최초 PING을 보내고, 응답 형식으로 프로토콜을 판별한다.
+   - STM32가 binary PONG(`0x02 0x00 0x02 0x00 0x00 0x00`)을 반환 → binary v1.0
+   - STM32가 JSON `{"cmd":"pong",...}`을 반환 → legacy JSON
+2. **향후 버전 확장:** `cmd = 0xFE`를 `CMD_VERSION_NEGOTIATE`로 예약.
+   v2+ 장치는 이 명령에 응답하고, v1 장치는 `ERR_UNKNOWN_CMD`를 반환하여 자연스럽게 버전 분기.
 
-이렇게 하면 펌웨어가 두 프로토콜을 **동시 지원**할 수 있어 점진적 전환 가능.
+이 방식으로 application 헤더에 별도 버전 바이트 없이도 점진적 전환이 가능하다.
 
 ### 8.4 가변 길이 데이터
 
@@ -304,11 +310,14 @@ Header byte 0: Protocol Version
 ### 8.5 에러 메시지
 
 JSON에서는 `"message": "Unknown command"` 같은 자유 형식 에러 문자열을 보낼 수 있었지만,
-binary에서는 **에러 코드 enum**으로 대체하거나, 제한된 길이의 문자열 필드를 별도 정의해야 한다.
+binary에서는 **에러 코드 enum + 선택적 디버깅 문자열** 구조로 전달한다 (binary-protocol-spec §4.10 참조).
 
 ```
-ERROR 응답: hdr(6) + error_code(2) + msg_len(1) + msg(0~128)
+ERROR 응답: hdr(6) + error_code(1, uint8) + msg_len(1, uint8) + msg(0~255 bytes, UTF-8)
 ```
+
+> `msg_len`은 uint8이므로 최대 255바이트까지 가능하나, STM32 메모리를 고려하여 **≤64B** 권장.
+> `msg_len = 0`이면 error_code만 전달하며 메시지는 생략.
 
 ### 8.6 테스트 전략
 
@@ -334,9 +343,9 @@ ERROR 응답: hdr(6) + error_code(2) + msg_len(1) + msg(0~128)
 
 | 시나리오 | JSON RF | Binary RF | 절감 |
 |----------|---------|-----------|------|
-| **motor_state 16대 왕복 RF** | 1,563 B | 191 B | **88%** |
-| **초당 2회 폴링 16대 RF** | 3,126 B/s | 382 B/s | **88%** |
-| **Zigbee 대역폭 점유** | ~104% (포화) | ~12.7% | — |
+| **motor_state 16대 왕복 RF** | 1,545 B | 195 B | **87%** |
+| **초당 2회 폴링 16대 RF** | 3,090 B/s | 390 B/s | **87%** |
+| **Zigbee 대역폭 점유** | ~103% (포화) | ~13% | — |
 
 ### 9.3 STM32 메모리
 
