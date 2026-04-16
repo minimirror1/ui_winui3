@@ -1,5 +1,6 @@
-using Windows.Storage;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Utilities;
+using Windows.Storage;
 
 namespace AnimatronicsControlCenter.Infrastructure
 {
@@ -17,7 +18,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         public string Theme { get; set; } = "Default";
         public bool IsVirtualModeEnabled { get; set; } = false;
         public string Language { get; set; } = "ko-KR";
-        public double ResponseTimeoutSeconds { get; set; } = 1.0;
+        public double ResponseTimeoutSeconds { get; set; } = 2.0;
 
         public void Save()
         {
@@ -31,7 +32,9 @@ namespace AnimatronicsControlCenter.Infrastructure
                 localSettings.Values[KeyLanguage] = Language;
                 localSettings.Values[KeyResponseTimeout] = ResponseTimeoutSeconds;
             }
-            catch { /* Ignore if ApplicationData is not available (e.g. unpackaged) */ }
+            catch
+            {
+            }
         }
 
         public void Load()
@@ -44,10 +47,14 @@ namespace AnimatronicsControlCenter.Infrastructure
                 if (localSettings.Values.TryGetValue(KeyTheme, out var theme)) Theme = (string)theme;
                 if (localSettings.Values.TryGetValue(KeyIsVirtualModeEnabled, out var isVirtual)) IsVirtualModeEnabled = (bool)isVirtual;
                 if (localSettings.Values.TryGetValue(KeyLanguage, out var lang)) Language = (string)lang;
-                if (localSettings.Values.TryGetValue(KeyResponseTimeout, out var timeout)) ResponseTimeoutSeconds = (int)timeout;
+                if (localSettings.Values.TryGetValue(KeyResponseTimeout, out var timeout))
+                {
+                    ResponseTimeoutSeconds = SettingValueConverter.ReadDouble(timeout, ResponseTimeoutSeconds);
+                }
             }
-            catch { /* Ignore if ApplicationData is not available (e.g. unpackaged) */ }
+            catch
+            {
+            }
         }
     }
 }
-

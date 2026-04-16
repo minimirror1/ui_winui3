@@ -19,15 +19,27 @@ namespace AnimatronicsControlCenter.UI.Views
             DataContext = ViewModel;
 
             ViewModel.Entries.CollectionChanged += Entries_CollectionChanged;
+            ViewModel.ComRawEntries.CollectionChanged += ComRawEntries_CollectionChanged;
+            Unloaded += SerialMonitorPage_Unloaded;
         }
 
         private void Entries_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (!ViewModel.IsAutoScrollEnabled) return;
             if (ViewModel.IsPaused) return;
+            if (ViewModel.SelectedTabIndex != 0) return;
 
             // ItemsRepeater doesn't support ScrollIntoView; scroll the viewer to bottom.
             SerialScroll.ChangeView(null, SerialScroll.ScrollableHeight, null);
+        }
+
+        private void ComRawEntries_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (!ViewModel.IsAutoScrollEnabled) return;
+            if (ViewModel.IsPaused) return;
+            if (ViewModel.SelectedTabIndex != 2) return;
+
+            ComRawScroll.ChangeView(null, ComRawScroll.ScrollableHeight, null);
         }
 
         private void FilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -40,6 +52,16 @@ namespace AnimatronicsControlCenter.UI.Views
             if (idx < 0 || idx > 2) return;
 
             ViewModel.Filter = (SerialTrafficFilter)idx;
+        }
+
+        private void MainPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ViewModel.SelectedTabIndex = MainPivot.SelectedIndex;
+        }
+
+        private void SerialMonitorPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.IsComRawCaptureEnabled = false;
         }
 
         private async void SaveButton_Click(object sender, RoutedEventArgs e)

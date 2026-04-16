@@ -1,9 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
-using AnimatronicsControlCenter.Core.Motors;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Motors;
 using AnimatronicsControlCenter.Core.Protocol;
+using AnimatronicsControlCenter.Core.Utilities;
 using Microsoft.UI.Dispatching;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private bool _isMotorsPollingAllowed;
         private CancellationTokenSource? _motorsPollingCts;
         private Task? _motorsPollingTask;
+        private CancellationTokenSource? _deviceLoadCts;
 
         [ObservableProperty]
         private Device? selectedDevice;
@@ -44,6 +46,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private bool isVerificationDialogOpen;
 
+        [ObservableProperty]
+        private bool isInitialLoadInProgress;
+
+        [ObservableProperty]
+        private string filesStatusMessage = string.Empty;
+
+        [ObservableProperty]
+        private string motorsStatusMessage = string.Empty;
+
+        [ObservableProperty]
+        private string lastLoadError = string.Empty;
+
         public ObservableCollection<int> MotorPollingIntervals { get; } = new() { 250, 500, 1000, 2000, 5000 };
 
         [ObservableProperty]
@@ -51,6 +65,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         [ObservableProperty]
         private int motorPollingIntervalMs = 1000;
+
+        public string MotionTotalTimeDisplay
+            => SelectedDevice == null || SelectedDevice.MotionTotalTime == TimeSpan.Zero
+                ? "Unavailable"
+                : FormatTime(SelectedDevice.MotionTotalTime);
+
+        public string MotionDataCountDisplay => SelectedDevice?.MotionDataCount.ToString() ?? "0";
+
+        public string MotionCreatedAtDisplay
+            => SelectedDevice == null || SelectedDevice.MotionCreatedAt == default
+                ? "Unavailable"
+                : SelectedDevice.MotionCreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
         public DeviceDetailViewModel(ISerialService serialService)
         {
@@ -60,15 +86,28 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         partial void OnSelectedDeviceChanged(Device? value)
         {
+            CancelPendingLoads();
+            StopMotorsPolling();
+
             if (value != null)
             {
-                _ = RefreshFilesAsync();
-                _ = LoadMotorsAsync();
-                EnsureMotorsPollingState();
+                ResetSnapshotState(value);
+                FilesStatusMessage = "Loading files...";
+                MotorsStatusMessage = "Loading motors...";
+                LastLoadError = string.Empty;
+
+                _deviceLoadCts = new CancellationTokenSource();
+                _ = LoadDeviceSnapshotAsync(value, _deviceLoadCts.Token);
             }
             else
             {
-                StopMotorsPolling();
+                Files = new ObservableCollection<FileSystemItem>();
+                SelectedFile = null;
+                FileContent = string.Empty;
+                FilesStatusMessage = string.Empty;
+                MotorsStatusMessage = string.Empty;
+                LastLoadError = string.Empty;
+                NotifyOverviewBindings();
             }
         }
 
@@ -79,8 +118,6 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             else
                 FileContent = string.Empty;
         }
-
-        // ── 모터 이동 ─────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task MoveMotorAsync(MotorState motor)
@@ -96,12 +133,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
         }
 
-        // ── 모터 폴링 ─────────────────────────────────────────────────
-
         public void SetMotorsPollingAllowed(bool allowed)
         {
             _isMotorsPollingAllowed = allowed;
             EnsureMotorsPollingState();
+        }
+
+        public void CancelPendingLoads()
+        {
+            try { _deviceLoadCts?.Cancel(); }
+            catch { }
+            finally
+            {
+                _deviceLoadCts?.Dispose();
+                _deviceLoadCts = null;
+                IsInitialLoadInProgress = false;
+            }
         }
 
         public void StopMotorsPolling()
@@ -128,12 +175,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 MotorPollingIntervalMs = 100;
                 return;
             }
+
             EnsureMotorsPollingState(restartIfRunning: true);
         }
 
         private void EnsureMotorsPollingState(bool restartIfRunning = false)
         {
-            if (SelectedDevice == null || !IsMotorPollingEnabled || !_isMotorsPollingAllowed)
+            if (SelectedDevice == null || !IsMotorPollingEnabled || !_isMotorsPollingAllowed || IsInitialLoadInProgress)
             {
                 StopMotorsPolling();
                 return;
@@ -151,67 +199,25 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private async Task RunMotorsPollingLoopAsync(CancellationToken token)
         {
-            await RefreshMotorsOnceAsync(token);
+            var device = SelectedDevice;
+            await RefreshMotorStateForDeviceAsync(device, token, updateStatusMessage: false);
+
             using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(MotorPollingIntervalMs));
             while (await timer.WaitForNextTickAsync(token))
-                await RefreshMotorsOnceAsync(token);
+            {
+                await RefreshMotorStateForDeviceAsync(device, token, updateStatusMessage: false);
+            }
         }
 
         [RelayCommand]
         private async Task RefreshMotorsAsync()
         {
-            await RefreshMotorsOnceAsync(CancellationToken.None);
-        }
-
-        // ── GET_MOTORS ────────────────────────────────────────────────
-
-        private async Task LoadMotorsAsync()
-        {
             if (SelectedDevice == null) return;
 
-            var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetMotors);
-            if (responseBytes == null) return;
-            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
-            if (!BinaryDeserializer.IsOk(hdr)) return;
-
-            // async 메서드에서 ReadOnlySpan 불가 → byte[] 슬라이스 사용
-            int start    = BinaryProtocolConst.ResponseHeaderSize;
-            var payload  = responseBytes[start..(start + hdr.PayloadLen)];
-            var patches  = BinaryDeserializer.ParseGetMotorsResponse(payload);
-            if (patches.Count == 0) return;
-
-            _dispatcherQueue.TryEnqueue(() =>
-            {
-                if (SelectedDevice == null) return;
-                MotorStateMerger.Apply(SelectedDevice.Motors, patches);
-            });
+            LastLoadError = string.Empty;
+            await LoadMotorsForDeviceAsync(SelectedDevice, CancellationToken.None, announceRefresh: true);
+            await RefreshMotorStateForDeviceAsync(SelectedDevice, CancellationToken.None, updateStatusMessage: true);
         }
-
-        // ── GET_MOTOR_STATE ───────────────────────────────────────────
-
-        private async Task RefreshMotorsOnceAsync(CancellationToken token)
-        {
-            if (SelectedDevice == null) return;
-            token.ThrowIfCancellationRequested();
-
-            var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetMotorState);
-            if (responseBytes == null) return;
-            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
-            if (!BinaryDeserializer.IsOk(hdr)) return;
-
-            int start   = BinaryProtocolConst.ResponseHeaderSize;
-            var payload = responseBytes[start..(start + hdr.PayloadLen)];
-            var patches = BinaryDeserializer.ParseMotorStateResponse(payload);
-            if (patches.Count == 0) return;
-
-            _dispatcherQueue.TryEnqueue(() =>
-            {
-                if (SelectedDevice == null) return;
-                MotorStateMerger.Apply(SelectedDevice.Motors, patches);
-            });
-        }
-
-        // ── 모션 제어 ─────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task PlayMotionAsync()
@@ -252,68 +258,40 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public string FormatTime(TimeSpan time) => time.ToString(@"hh\:mm\:ss");
 
-        // ── GET_FILES ─────────────────────────────────────────────────
-
         [RelayCommand]
         private async Task RefreshFilesAsync()
         {
             if (SelectedDevice == null) return;
-            IsFileLoading = true;
-            try
-            {
-                var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetFiles);
-                if (responseBytes == null) return;
-                if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
-                if (!BinaryDeserializer.IsOk(hdr)) return;
-
-                int start    = BinaryProtocolConst.ResponseHeaderSize;
-                var payload  = responseBytes[start..(start + hdr.PayloadLen)];
-                var entries  = BinaryDeserializer.ParseGetFilesResponse(payload);
-                var rootItems = BuildFileTreeFromFlatList(entries);
-
-                _dispatcherQueue.TryEnqueue(() =>
-                {
-                    Files = new ObservableCollection<FileSystemItem>(rootItems);
-                });
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in RefreshFilesAsync: {ex.Message}");
-                _dispatcherQueue.TryEnqueue(() => Files = new ObservableCollection<FileSystemItem>());
-            }
-            finally
-            {
-                IsFileLoading = false;
-            }
+            LastLoadError = string.Empty;
+            await LoadFilesForDeviceAsync(SelectedDevice, CancellationToken.None, announceRefresh: true);
         }
-
-        // ── GET_FILE ──────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task LoadFileContentAsync(string path)
         {
             if (SelectedDevice == null) return;
+
             IsFileLoading = true;
             try
             {
-                var packet        = BinarySerializer.EncodeGetFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, path);
+                var packet = BinarySerializer.EncodeGetFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, path);
                 var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetFile, packet);
-                if (responseBytes == null) return;
-                if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
-                if (!BinaryDeserializer.IsOk(hdr)) return;
+                if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
+                {
+                    FilesStatusMessage = $"Failed to load file content: {errorMessage}";
+                    RegisterLoadError("Files", errorMessage);
+                    return;
+                }
 
-                int start         = BinaryProtocolConst.ResponseHeaderSize;
-                var payload       = responseBytes[start..(start + hdr.PayloadLen)];
-                var (_, content)  = BinaryDeserializer.ParseGetFileResponse(payload);
-                FileContent       = content;
+                var (_, content) = BinaryDeserializer.ParseGetFileResponse(payload);
+                FileContent = content;
+                FilesStatusMessage = $"Loaded file: {path}";
             }
             finally
             {
                 IsFileLoading = false;
             }
         }
-
-        // ── SAVE_FILE ─────────────────────────────────────────────────
 
         [RelayCommand]
         private async Task SaveFileAsync()
@@ -323,22 +301,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
         }
 
-        // ── VERIFY_FILE ───────────────────────────────────────────────
-
         [RelayCommand]
         private async Task VerifyFileAsync()
         {
             if (SelectedDevice == null || SelectedFile == null) return;
 
-            var packet        = BinarySerializer.EncodeVerifyFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
+            var packet = BinarySerializer.EncodeVerifyFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
             var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.VerifyFile, packet);
-            if (responseBytes == null) return;
-            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out var hdr)) return;
-            if (!BinaryDeserializer.IsOk(hdr)) return;
+            if (!TryGetOkPayload(responseBytes, out var hdr, out var payload, out _)) return;
 
-            int payloadStart = BinaryProtocolConst.ResponseHeaderSize;
-            var payload      = responseBytes[payloadStart..(payloadStart + hdr.PayloadLen)];
-            bool match       = BinaryDeserializer.ParseVerifyFileResponse(payload);
+            bool match = BinaryDeserializer.ParseVerifyFileResponse(payload);
 
             VerificationResult = match ? "Content Matches Device" : "Content Mismatch";
             IsVerificationDialogOpen = true;
@@ -350,16 +322,286 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             IsVerificationDialogOpen = false;
         }
 
-        // ── GET_FILES flat list → 트리 재구성 ────────────────────────
+        private async Task LoadDeviceSnapshotAsync(Device device, CancellationToken token)
+        {
+            IsInitialLoadInProgress = true;
+
+            try
+            {
+                await LoadFilesForDeviceAsync(device, token, announceRefresh: false);
+                token.ThrowIfCancellationRequested();
+
+                await LoadMotorsForDeviceAsync(device, token, announceRefresh: false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                if (IsCurrentSelectedDevice(device))
+                    IsInitialLoadInProgress = false;
+
+                if (!token.IsCancellationRequested && IsCurrentSelectedDevice(device))
+                    EnsureMotorsPollingState();
+            }
+        }
+
+        private async Task<bool> LoadFilesForDeviceAsync(Device? device, CancellationToken token, bool announceRefresh)
+        {
+            if (device == null || !IsCurrentSelectedDevice(device)) return false;
+
+            IsFileLoading = true;
+            if (announceRefresh)
+                FilesStatusMessage = "Refreshing file list...";
+
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                var responseBytes = await _serialService.SendBinaryQueryAsync(device.Id, BinaryCommand.GetFiles);
+                token.ThrowIfCancellationRequested();
+
+                if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
+                {
+                    SetFilesFailure(errorMessage);
+                    return false;
+                }
+
+                var entries = BinaryDeserializer.ParseGetFilesResponse(payload);
+                var rootItems = BuildFileTreeFromFlatList(entries);
+
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    if (!IsCurrentSelectedDevice(device)) return;
+
+                    Files = new ObservableCollection<FileSystemItem>(rootItems);
+                    SelectedFile = null;
+                    FileContent = string.Empty;
+                    ApplyMotionFileSummary(device, entries);
+                    FilesStatusMessage = entries.Count == 0
+                        ? "No files found."
+                        : $"Loaded {entries.Count} file entries.";
+                });
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                SetFilesFailure(ex.Message);
+                return false;
+            }
+            finally
+            {
+                if (IsCurrentSelectedDevice(device))
+                    IsFileLoading = false;
+            }
+        }
+
+        private async Task<bool> LoadMotorsForDeviceAsync(Device? device, CancellationToken token, bool announceRefresh)
+        {
+            if (device == null || !IsCurrentSelectedDevice(device)) return false;
+
+            if (announceRefresh)
+                MotorsStatusMessage = "Refreshing motors...";
+
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                var responseBytes = await _serialService.SendBinaryQueryAsync(device.Id, BinaryCommand.GetMotors);
+                token.ThrowIfCancellationRequested();
+
+                if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
+                {
+                    SetMotorsFailure(errorMessage);
+                    return false;
+                }
+
+                var patches = BinaryDeserializer.ParseGetMotorsResponse(payload);
+
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    if (!IsCurrentSelectedDevice(device)) return;
+
+                    device.Motors.Clear();
+                    MotorStateMerger.Apply(device.Motors, patches);
+                    MotorsStatusMessage = patches.Count == 0
+                        ? "No motors found."
+                        : $"Loaded {patches.Count} motors.";
+                });
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                SetMotorsFailure(ex.Message);
+                return false;
+            }
+        }
+
+        private async Task<bool> RefreshMotorStateForDeviceAsync(Device? device, CancellationToken token, bool updateStatusMessage)
+        {
+            if (device == null || !IsCurrentSelectedDevice(device)) return false;
+
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                var responseBytes = await _serialService.SendBinaryQueryAsync(device.Id, BinaryCommand.GetMotorState);
+                token.ThrowIfCancellationRequested();
+
+                if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
+                {
+                    if (updateStatusMessage)
+                        SetMotorsFailure(errorMessage);
+                    return false;
+                }
+
+                var patches = BinaryDeserializer.ParseMotorStateResponse(payload);
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    if (!IsCurrentSelectedDevice(device)) return;
+
+                    MotorStateMerger.Apply(device.Motors, patches);
+                    if (updateStatusMessage)
+                    {
+                        MotorsStatusMessage = patches.Count == 0
+                            ? "No motor state returned."
+                            : $"Updated {patches.Count} motor states.";
+                    }
+                });
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                if (updateStatusMessage)
+                    SetMotorsFailure(ex.Message);
+                return false;
+            }
+        }
+
+        private void ResetSnapshotState(Device device)
+        {
+            Files = new ObservableCollection<FileSystemItem>();
+            SelectedFile = null;
+            FileContent = string.Empty;
+            device.Motors.Clear();
+            device.MotionTotalTime = TimeSpan.Zero;
+            device.MotionDataCount = 0;
+            device.MotionCreatedAt = default;
+            NotifyOverviewBindings();
+        }
+
+        private void ApplyMotionFileSummary(Device device, List<BinaryDeserializer.FileEntry> entries)
+        {
+            device.MotionDataCount = MotionFileSummary.CountMotionDataFiles(entries.Where(entry => !entry.IsDirectory).Select(entry => entry.Path));
+            device.MotionTotalTime = TimeSpan.Zero;
+            device.MotionCreatedAt = default;
+            NotifyOverviewBindings();
+        }
+
+        private bool IsCurrentSelectedDevice(Device? device)
+            => device != null && ReferenceEquals(SelectedDevice, device);
+
+        private void SetFilesFailure(string message)
+        {
+            var text = $"Failed to load files: {message}";
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                FilesStatusMessage = text;
+                RegisterLoadError("Files", message);
+            });
+        }
+
+        private void SetMotorsFailure(string message)
+        {
+            var text = $"Failed to load motors: {message}";
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                MotorsStatusMessage = text;
+                RegisterLoadError("Motors", message);
+            });
+        }
+
+        private void RegisterLoadError(string section, string message)
+        {
+            var formatted = $"{section}: {message}";
+            LastLoadError = string.IsNullOrWhiteSpace(LastLoadError)
+                ? formatted
+                : $"{LastLoadError}\n{formatted}";
+        }
+
+        private void NotifyOverviewBindings()
+        {
+            OnPropertyChanged(nameof(MotionTotalTimeDisplay));
+            OnPropertyChanged(nameof(MotionDataCountDisplay));
+            OnPropertyChanged(nameof(MotionCreatedAtDisplay));
+        }
+
+        private static bool TryGetOkPayload(byte[]? responseBytes, out ResponseHeader header, out byte[] payload, out string errorMessage)
+        {
+            header = default;
+            payload = Array.Empty<byte>();
+
+            if (responseBytes == null)
+            {
+                errorMessage = "No response from device.";
+                return false;
+            }
+
+            if (!BinaryDeserializer.TryParseResponseHeader(responseBytes, out header))
+            {
+                errorMessage = "Invalid response header.";
+                return false;
+            }
+
+            int payloadStart = BinaryProtocolConst.ResponseHeaderSize;
+            if (responseBytes.Length < payloadStart + header.PayloadLen)
+            {
+                errorMessage = "Incomplete response payload.";
+                return false;
+            }
+
+            payload = responseBytes[payloadStart..(payloadStart + header.PayloadLen)];
+            if (BinaryDeserializer.IsOk(header))
+            {
+                errorMessage = string.Empty;
+                return true;
+            }
+
+            if (payload.Length > 0)
+            {
+                var (code, message) = BinaryDeserializer.ParseErrorResponse(payload);
+                errorMessage = string.IsNullOrWhiteSpace(message)
+                    ? $"Device returned {code} for {header.Cmd}."
+                    : message;
+            }
+            else
+            {
+                errorMessage = $"Device returned {header.Status} for {header.Cmd}.";
+            }
+
+            return false;
+        }
 
         private static List<FileSystemItem> BuildFileTreeFromFlatList(List<BinaryDeserializer.FileEntry> entries)
         {
             var nodes = entries.Select(e => new FileSystemItem
             {
-                Name        = e.Name,
-                Path        = e.Path,
+                Name = e.Name,
+                Path = e.Path,
                 IsDirectory = e.IsDirectory,
-                Size        = e.Size,
+                Size = e.Size,
             }).ToList();
 
             var roots = new List<FileSystemItem>();
@@ -373,6 +615,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 else
                     roots.Add(nodes[i]);
             }
+
             return roots;
         }
     }

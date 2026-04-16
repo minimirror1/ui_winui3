@@ -56,18 +56,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private const int DefaultMaxLines = 10_000;
 
         private readonly ISerialTrafficTap _tap;
+        private readonly IComRawTrafficTap _comRawTap;
         private readonly DispatcherQueue _dispatcherQueue;
         private readonly DispatcherQueueTimer _flushTimer;
 
         private readonly object _pendingLock = new();
         private readonly Queue<SerialTrafficEntry> _pending = new();
+        private readonly Queue<SerialTrafficEntry> _pendingComRaw = new();
 
         private readonly List<SerialTrafficEntry> _allEntries = new(DefaultMaxLines);
         private readonly List<PacketItem> _allPackets = new(DefaultMaxLines);
+        private readonly List<SerialTrafficEntry> _allComRawEntries = new(DefaultMaxLines);
 
         public LocalizedStrings Strings { get; }
 
         public ObservableCollection<SerialTrafficEntry> Entries { get; } = new();
+        public ObservableCollection<SerialTrafficEntry> ComRawEntries { get; } = new();
         public ObservableCollection<PacketItem> Packets { get; } = new();
 
         [ObservableProperty]
@@ -95,13 +99,23 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private int parseErrorCount;
 
+        [ObservableProperty]
+        private bool isComRawCaptureEnabled;
+
+        [ObservableProperty]
+        private int selectedTabIndex;
+
         public string PauseButtonText => IsPaused
             ? Strings.Get("SerialMonitor_Resume", Strings.Code)
             : Strings.Get("SerialMonitor_Pause", Strings.Code);
 
-        public SerialMonitorViewModel(ISerialTrafficTap tap, ILocalizationService localizationService)
+        public SerialMonitorViewModel(
+            ISerialTrafficTap tap,
+            IComRawTrafficTap comRawTap,
+            ILocalizationService localizationService)
         {
             _tap = tap;
+            _comRawTap = comRawTap;
             Strings = new LocalizedStrings(localizationService);
 
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
@@ -110,9 +124,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 AppendToAll(entry);
             }
+
+            foreach (var entry in _comRawTap.GetSnapshot())
+            {
+                AppendToComRawAll(entry);
+            }
+
             RebuildVisible();
 
             _tap.EntryRecorded += TapOnEntryRecorded;
+            _comRawTap.EntryRecorded += TapOnComRawEntryRecorded;
 
             _flushTimer = _dispatcherQueue.CreateTimer();
             _flushTimer.Interval = TimeSpan.FromMilliseconds(75);
@@ -120,6 +141,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _flushTimer.Start();
 
             FilterIndex = (int)Filter;
+            IsComRawCaptureEnabled = _comRawTap.IsCaptureEnabled;
         }
 
         private void TapOnEntryRecorded(object? sender, SerialTrafficEntry entry)
@@ -130,6 +152,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 while (_pending.Count > 2_000)
                 {
                     _pending.Dequeue();
+                }
+            }
+        }
+
+        private void TapOnComRawEntryRecorded(object? sender, SerialTrafficEntry entry)
+        {
+            lock (_pendingLock)
+            {
+                _pendingComRaw.Enqueue(entry);
+                while (_pendingComRaw.Count > 2_000)
+                {
+                    _pendingComRaw.Dequeue();
                 }
             }
         }
@@ -164,20 +198,29 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             Filter = next;
         }
 
+        partial void OnIsComRawCaptureEnabledChanged(bool value)
+        {
+            _comRawTap.IsCaptureEnabled = value;
+        }
+
         private void FlushPendingToUi(bool force = false)
         {
             if (IsPaused && !force) return;
 
             List<SerialTrafficEntry> drained = new();
+            List<SerialTrafficEntry> drainedComRaw = new();
             lock (_pendingLock)
             {
                 while (_pending.Count > 0 && drained.Count < 500)
                 {
                     drained.Add(_pending.Dequeue());
                 }
-            }
 
-            if (drained.Count == 0) return;
+                while (_pendingComRaw.Count > 0 && drainedComRaw.Count < 500)
+                {
+                    drainedComRaw.Add(_pendingComRaw.Dequeue());
+                }
+            }
 
             foreach (var entry in drained)
             {
@@ -188,6 +231,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 }
             }
 
+            foreach (var entry in drainedComRaw)
+            {
+                AppendToComRawAll(entry);
+                if (MatchesFilter(entry))
+                {
+                    ComRawEntries.Add(entry);
+                }
+            }
+
+            if (drained.Count == 0 && drainedComRaw.Count == 0) return;
             TrimIfNeeded();
         }
 
@@ -205,6 +258,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     Packets.Add(packet);
                 }
             }
+        }
+
+        private void AppendToComRawAll(SerialTrafficEntry entry)
+        {
+            _allComRawEntries.Add(entry);
         }
 
         private PacketItem? TryBuildPacket(SerialTrafficEntry entry)
@@ -296,11 +354,17 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private void RebuildVisible()
         {
             Entries.Clear();
+            ComRawEntries.Clear();
             Packets.Clear();
 
             foreach (var entry in _allEntries.Where(MatchesFilter))
             {
                 Entries.Add(entry);
+            }
+
+            foreach (var entry in _allComRawEntries.Where(MatchesFilter))
+            {
+                ComRawEntries.Add(entry);
             }
 
             foreach (var packet in _allPackets.Where(p => MatchesFilter(p.Traffic)))
@@ -351,6 +415,21 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     }
                 }
             }
+
+            while (_allComRawEntries.Count > DefaultMaxLines)
+            {
+                var removedEntry = _allComRawEntries[0];
+                _allComRawEntries.RemoveAt(0);
+
+                for (int i = 0; i < ComRawEntries.Count; i++)
+                {
+                    if (Equals(ComRawEntries[i], removedEntry))
+                    {
+                        ComRawEntries.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
         }
 
         [RelayCommand]
@@ -365,11 +444,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             lock (_pendingLock)
             {
                 _pending.Clear();
+                _pendingComRaw.Clear();
             }
             _tap.Clear();
+            _comRawTap.Clear();
             _allEntries.Clear();
             _allPackets.Clear();
+            _allComRawEntries.Clear();
             Entries.Clear();
+            ComRawEntries.Clear();
             Packets.Clear();
             ParseErrorCount = 0;
             SelectedEntry = null;
@@ -379,7 +462,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [RelayCommand]
         private void CopyAll()
         {
-            var text = string.Join(Environment.NewLine, Entries.Select(e => e.DisplayLine));
+            var source = SelectedTabIndex == 2 ? ComRawEntries : Entries;
+            var text = string.Join(Environment.NewLine, source.Select(e => e.DisplayLine));
             var package = new DataPackage();
             package.SetText(text);
             Clipboard.SetContent(package);
@@ -451,13 +535,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             InitializeWithWindow.Initialize(picker, windowHandle);
 
             picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-            picker.SuggestedFileName = "serial-monitor";
+            picker.SuggestedFileName = SelectedTabIndex == 2 ? "com-raw-monitor" : "serial-monitor";
             picker.FileTypeChoices.Add("Log", new List<string> { ".log", ".txt" });
 
             StorageFile? file = await picker.PickSaveFileAsync();
             if (file == null) return;
 
-            var content = string.Join(Environment.NewLine, Entries.Select(e => e.DisplayLine)) + Environment.NewLine;
+            var source = SelectedTabIndex == 2 ? ComRawEntries : Entries;
+            var content = string.Join(Environment.NewLine, source.Select(e => e.DisplayLine)) + Environment.NewLine;
             await FileIO.WriteTextAsync(file, content);
         }
     }

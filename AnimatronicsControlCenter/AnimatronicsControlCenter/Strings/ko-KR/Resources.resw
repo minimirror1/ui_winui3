@@ -175,4 +175,16 @@
   <data name="SerialMonitor_ParseErrors" xml:space="preserve">
     <value>파싱 오류:</value>
   </data>
+  <data name="SerialMonitor_Tab_ComRaw" xml:space="preserve">
+    <value>COM Raw</value>
+  </data>
+  <data name="SerialMonitor_ComRaw_On" xml:space="preserve">
+    <value>Raw 캡처 켜짐</value>
+  </data>
+  <data name="SerialMonitor_ComRaw_Off" xml:space="preserve">
+    <value>Raw 캡처 꺼짐</value>
+  </data>
+  <data name="SerialMonitor_ComRaw_Desc" xml:space="preserve">
+    <value>이 스위치를 켰을 때만 COM 포트에 실제로 쓰고 읽는 전체 프레임을 기록합니다.</value>
+  </data>
 </root>

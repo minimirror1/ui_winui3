@@ -14,6 +14,7 @@ namespace AnimatronicsControlCenter.Core.Transport;
 /// </summary>
 public class XBeeDevice : IXBeeTransport, IDisposable
 {
+    private readonly IComRawTrafficTap _comRawTrafficTap;
     private readonly SerialPortWrapper _serial = new();
     private readonly ApiFrameParser _parser = new();
     private readonly ApiFrameBuilder _builder = new();
@@ -75,10 +76,13 @@ public class XBeeDevice : IXBeeTransport, IDisposable
     /// </summary>
     public bool EnableRawLogging { get; set; } = false;
 
-    public XBeeDevice()
+    public XBeeDevice(IComRawTrafficTap comRawTrafficTap)
     {
+        _comRawTrafficTap = comRawTrafficTap;
+
         _serial.OnDataReceived += (data, offset, count) =>
         {
+            _comRawTrafficTap.RecordRxBytes(data, offset, count);
             if (EnableRawLogging)
             {
                 var hex = BitConverter.ToString(data, offset, count).Replace("-", " ");
@@ -182,6 +186,7 @@ public class XBeeDevice : IXBeeTransport, IDisposable
 
         try
         {
+            _comRawTrafficTap.RecordTxBytes(frame);
             if (!_serial.Write(frame))
             {
                 OnError?.Invoke($"[{Name}] Failed to write TX Request");
@@ -232,6 +237,7 @@ public class XBeeDevice : IXBeeTransport, IDisposable
             OnLog?.Invoke($"[{Name}] TX RAW ({frame.Length}B): {hex.Substring(0, Math.Min(100, hex.Length))}...");
         }
 
+        _comRawTrafficTap.RecordTxBytes(frame);
         return _serial.Write(frame);
     }
 
@@ -331,6 +337,7 @@ public class XBeeDevice : IXBeeTransport, IDisposable
 
         try
         {
+            _comRawTrafficTap.RecordTxBytes(frame);
             if (!_serial.Write(frame))
             {
                 OnError?.Invoke($"[{Name}] Failed to write AT command: {command}");

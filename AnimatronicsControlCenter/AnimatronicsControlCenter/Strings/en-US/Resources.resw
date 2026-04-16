@@ -175,4 +175,16 @@
   <data name="SerialMonitor_ParseErrors" xml:space="preserve">
     <value>Parse errors:</value>
   </data>
+  <data name="SerialMonitor_Tab_ComRaw" xml:space="preserve">
+    <value>COM raw</value>
+  </data>
+  <data name="SerialMonitor_ComRaw_On" xml:space="preserve">
+    <value>Raw capture On</value>
+  </data>
+  <data name="SerialMonitor_ComRaw_Off" xml:space="preserve">
+    <value>Raw capture Off</value>
+  </data>
+  <data name="SerialMonitor_ComRaw_Desc" xml:space="preserve">
+    <value>Capture full frames written to and read from the COM port only while this switch is enabled.</value>
+  </data>
 </root>

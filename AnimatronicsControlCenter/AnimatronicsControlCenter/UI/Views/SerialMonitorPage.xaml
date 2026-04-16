@@ -79,7 +79,9 @@
                     Click="SaveButton_Click"/>
         </Grid>
 
-        <Pivot Grid.Row="1">
+        <Pivot x:Name="MainPivot"
+               Grid.Row="1"
+               SelectionChanged="MainPivot_SelectionChanged">
             <PivotItem Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Tab_Serial', ViewModel.Strings.Code), Mode=OneWay}">
                 <Grid>
                     <ScrollViewer x:Name="SerialScroll"
@@ -151,6 +153,47 @@
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                     </Grid>
+                </Grid>
+            </PivotItem>
+
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Tab_ComRaw', ViewModel.Strings.Code), Mode=OneWay}">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.IsComRawCaptureEnabled, Mode=TwoWay}"
+                                      OnContent="{x:Bind ViewModel.Strings.Get('SerialMonitor_ComRaw_On', ViewModel.Strings.Code), Mode=OneWay}"
+                                      OffContent="{x:Bind ViewModel.Strings.Get('SerialMonitor_ComRaw_Off', ViewModel.Strings.Code), Mode=OneWay}"/>
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_ComRaw_Desc', ViewModel.Strings.Code), Mode=OneWay}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <ScrollViewer x:Name="ComRawScroll"
+                                  Grid.Row="1"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer.Resources>
+                            <cv:SerialDirectionToBrushConverter x:Key="SerialDirectionToBrushConverter"/>
+                        </ScrollViewer.Resources>
+
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.ComRawEntries, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Vertical"/>
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="models:SerialTrafficEntry" xmlns:models="using:AnimatronicsControlCenter.Core.Models">
+                                    <TextBlock Text="{x:Bind DisplayLine}"
+                                               FontFamily="Consolas"
+                                               Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                               TextWrapping="NoWrap"/>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
                 </Grid>
             </PivotItem>
         </Pivot>

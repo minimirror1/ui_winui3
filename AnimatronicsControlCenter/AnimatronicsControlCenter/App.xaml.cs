@@ -46,6 +46,7 @@ namespace AnimatronicsControlCenter
             
             // Core Services
             // XBeeService must be registered before SerialService since SerialService depends on it
+            services.AddSingleton<IComRawTrafficTap, ComRawTrafficTap>();
             services.AddSingleton<XBeeService>();
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();

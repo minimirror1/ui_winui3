@@ -16,7 +16,10 @@
 
   <ItemGroup>
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\MotorState.cs" Link="Core\Models\MotorState.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Models\SerialTrafficEntry.cs" Link="Core\Models\SerialTrafficEntry.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStatePatch.cs" Link="Core\Motors\MotorStatePatch.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStateMerger.cs" Link="Core\Motors\MotorStateMerger.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
   </ItemGroup>
 </Project>

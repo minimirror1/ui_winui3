@@ -35,6 +35,7 @@ namespace AnimatronicsControlCenter.UI.Views
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
+            ViewModel.CancelPendingLoads();
             ViewModel.StopMotorsPolling();
         }
 

@@ -52,10 +52,9 @@ namespace AnimatronicsControlCenter.Core.Models
             // Default motion values (can be replaced by device data later)
             MotionState = MotionState.Idle;
             MotionCurrentTime = TimeSpan.Zero;
-            MotionTotalTime = TimeSpan.FromMinutes(2.5);
+            MotionTotalTime = TimeSpan.Zero;
             MotionDataCount = 0;
             MotionCreatedAt = default;
         }
     }
 }
-

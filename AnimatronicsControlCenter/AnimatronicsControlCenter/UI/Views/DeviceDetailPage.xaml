@@ -7,11 +7,12 @@
     xmlns:models="using:AnimatronicsControlCenter.Core.Models"
     mc:Ignorable="d">
 
-    <Grid Padding="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid Padding="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
         <!-- Device Header -->
         <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,24">
@@ -36,7 +37,14 @@
             </StackPanel>
         </Grid>
 
-        <Pivot x:Name="MainPivot" Grid.Row="1" SelectionChanged="MainPivot_SelectionChanged">
+        <TextBlock Grid.Row="1"
+                   Text="{x:Bind ViewModel.LastLoadError, Mode=OneWay}"
+                   Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                   Style="{StaticResource CaptionTextBlockStyle}"
+                   Margin="0,0,0,12"
+                   TextWrapping="Wrap"/>
+
+        <Pivot x:Name="MainPivot" Grid.Row="2" SelectionChanged="MainPivot_SelectionChanged">
             <PivotItem Header="Overview" Margin="0,12,0,0">
                 <Grid ColumnSpacing="24">
                     <Grid.ColumnDefinitions>
@@ -115,17 +123,17 @@
 
                                 <StackPanel>
                                     <TextBlock Text="Total Duration" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionTotalTime, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.MotionTotalTimeDisplay, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="Data Points" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionDataCount, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.MotionDataCountDisplay, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
                                     <TextBlock Text="Created At" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionCreatedAt, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.MotionCreatedAtDisplay, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
                                 </StackPanel>
                             </Grid>
                         </Grid>
@@ -144,11 +152,17 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Motors" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="10" Padding="8,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Motors.Count, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
-                                </Border>
+                            <StackPanel Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Motors" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                    <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="10" Padding="8,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Motors.Count, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{x:Bind ViewModel.MotorsStatusMessage, Mode=OneWay}"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <!-- Polling controls -->
@@ -229,18 +243,24 @@
                         <CommandBar DefaultLabelPosition="Right">
                             <AppBarButton Icon="Refresh" Label="Refresh" Command="{x:Bind ViewModel.RefreshFilesCommand}"/>
                         </CommandBar>
-                        <TreeView x:Name="FileTreeView" Grid.Row="1" ItemInvoked="FileTreeView_ItemInvoked" ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}">
-                            <TreeView.ItemTemplate>
-                                <DataTemplate x:DataType="models:FileSystemItem">
-                                    <TreeViewItem ItemsSource="{x:Bind Children}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <FontIcon Glyph="{x:Bind Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
-                                            <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </TreeViewItem>
-                                </DataTemplate>
-                            </TreeView.ItemTemplate>
-                        </TreeView>
+                        <StackPanel Grid.Row="1" Spacing="8">
+                            <TextBlock Text="{x:Bind ViewModel.FilesStatusMessage, Mode=OneWay}"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       TextWrapping="Wrap"/>
+                            <TreeView x:Name="FileTreeView" ItemInvoked="FileTreeView_ItemInvoked" ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}">
+                                <TreeView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:FileSystemItem">
+                                        <TreeViewItem ItemsSource="{x:Bind Children}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="{x:Bind Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                                <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </TreeViewItem>
+                                    </DataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+                        </StackPanel>
                     </Grid>
 
                     <Grid Grid.Column="1" RowSpacing="10">

@@ -63,9 +63,9 @@ public class XBeeService : IDisposable
     public int CrcFailures => _receiver.CrcFailures;
     public int MessagesCompleted => _receiver.MessagesCompleted;
 
-    public XBeeService()
+    public XBeeService(IComRawTrafficTap comRawTrafficTap)
     {
-        _device = new XBeeDevice();
+        _device = new XBeeDevice(comRawTrafficTap);
         _sessionManager = new SessionManager();
         _receiver = new FragmentReceiver(_device, _sessionManager);
         _transmitter = new FragmentTransmitter(_device, _sessionManager);
