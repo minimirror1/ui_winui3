@@ -23,6 +23,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private bool _isMotorsPollingAllowed;
         private CancellationTokenSource? _motorsPollingCts;
         private Task? _motorsPollingTask;
+        private CancellationTokenSource? _statusPollingCts;
+        private Task? _statusPollingTask;
         private CancellationTokenSource? _deviceLoadCts;
 
         [ObservableProperty]
@@ -88,6 +90,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             CancelPendingLoads();
             StopMotorsPolling();
+            StopStatusPolling();
 
             if (value != null)
             {
@@ -163,6 +166,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
         }
 
+        public void StopStatusPolling()
+        {
+            try { _statusPollingCts?.Cancel(); }
+            catch { }
+            finally
+            {
+                _statusPollingCts?.Dispose();
+                _statusPollingCts = null;
+                _statusPollingTask = null;
+            }
+        }
+
         partial void OnIsMotorPollingEnabledChanged(bool value)
         {
             EnsureMotorsPollingState();
@@ -206,6 +221,34 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             while (await timer.WaitForNextTickAsync(token))
             {
                 await RefreshMotorStateForDeviceAsync(device, token, updateStatusMessage: false);
+            }
+        }
+
+        private void EnsureStatusPollingState(bool restartIfRunning = false)
+        {
+            if (!DeviceStatusRefreshPolicy.ShouldRun(SelectedDevice != null, IsInitialLoadInProgress))
+            {
+                StopStatusPolling();
+                return;
+            }
+
+            if (_statusPollingTask != null && !_statusPollingTask.IsCompleted)
+            {
+                if (!restartIfRunning) return;
+                StopStatusPolling();
+            }
+
+            _statusPollingCts = new CancellationTokenSource();
+            _statusPollingTask = RunStatusPollingLoopAsync(_statusPollingCts.Token);
+        }
+
+        private async Task RunStatusPollingLoopAsync(CancellationToken token)
+        {
+            var device = SelectedDevice;
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(DeviceStatusRefreshPolicy.IntervalMs));
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                await RefreshDeviceStatusForDeviceAsync(device, token);
             }
         }
 
@@ -394,7 +437,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     IsInitialLoadInProgress = false;
 
                 if (!token.IsCancellationRequested && IsCurrentSelectedDevice(device))
+                {
                     EnsureMotorsPollingState();
+                    EnsureStatusPollingState();
+                }
             }
         }
 

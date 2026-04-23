@@ -19,11 +19,11 @@
 - [x] `SAVE_FILE` acknowledgement flow and returned-path validation
 - [x] Firmware error codes `0x06` / `0x07`
 - [x] Protocol size-limit enforcement
-- [ ] Lightweight periodic status refresh path
+- [x] Lightweight periodic status refresh path
 
 ### Task 1: Align Protocol Types And Parsers
 
-**Status:** In progress
+**Status:** Completed
 
 **Completed in this task:**
 - [x] `VERIFY_FILE` parsing now consumes `path_len(2) + path + match(1)` instead of treating the first payload byte as the match flag
@@ -148,7 +148,7 @@ Implement the actual status flow:
 - [x] Populate `Device.StatusMessage`, `Device.MotionState`, `Device.MotionCurrentTime`, and `Device.MotionTotalTime` from firmware values
 - [x] Capture the XBee source address from the reply and store it in `Device.Address64`
 - [x] On device detail load, refresh device status once before file/motor loading
-- [ ] Add a lightweight periodic status refresh path so the UI no longer relies on optimistic local state only
+- [x] Add a lightweight periodic status refresh path so the UI no longer relies on optimistic local state only
 
 Recommended rule:
 
