@@ -311,15 +311,125 @@ git commit -m "fix: enforce firmware protocol limits in WinUI"
 
 ### Manual Verification
 
-**Status:** Not started
+**Status:** Ready for hardware verification
 
-After Task 4, verify against a real device:
+Use this section as the real-device runbook. The code work is complete; only on-device confirmation remains.
 
-1. Connect to the XBee module and scan a device ID that exists.
-2. Confirm the dashboard/device page shows firmware-derived status instead of generic `"Online"`.
-3. Trigger `Play`, `Pause`, `Stop`, and `Seek`; verify the UI follows the real PONG status after refresh.
-4. Open a known `Setting/*.TXT` file, edit it, save it, and confirm the app reports the returned path.
-5. Verify matching and mismatching file content and confirm the dialog reflects the actual firmware result.
-6. Try an oversized edit and confirm the app blocks the send before transport.
+**Pre-check**
+
+- [ ] XBee module is connected and the WinUI app can open the correct COM port
+- [ ] At least one real device ID is known and responds to `SCAN`
+- [ ] At least one editable file under `Setting/*.TXT` exists on the device
+- [ ] Use a small text edit first so protocol-limit failures do not mask basic save/verify behavior
+
+**Runbook**
+
+1. Connect and scan a real device
+   - Action:
+     - Launch the WinUI app
+     - Connect to the XBee transport
+     - Scan for the known device ID and open its detail page
+   - Expected:
+     - Device detail load finishes without protocol errors
+     - Device status is firmware-derived, not the old generic `"Online"`
+     - Expected status text is one of: `Playing`, `Stopped`, `Initializing`, `Ready`, `Error`
+   - Failure clues:
+     - Status stays blank or generic
+     - File/motor snapshot never loads
+     - Repeated transport error in the detail page
+
+2. Confirm periodic status refresh is alive
+   - Action:
+     - Keep the detail page open for at least 3 seconds without changing selection
+     - If the device is already playing, watch the motion time fields
+   - Expected:
+     - Status refresh continues while the page remains open
+     - During playback, current motion time advances without needing manual refresh
+     - The page no longer relies only on optimistic local state after a prior button press
+   - Failure clues:
+     - Motion time freezes while firmware is known to be playing
+     - Status changes on the device but not in the app until page reload
+
+3. Verify motion command round-trip
+   - Action:
+     - Trigger `Play`
+     - Trigger `Pause`
+     - Trigger `Stop`
+     - Trigger `Seek` to a visible offset
+   - Expected:
+     - After each command, the app refreshes from firmware state
+     - `Play` leads to `Playing`
+     - `Stop` leads to `Stopped`
+     - `Pause` and initialization-related states do not regress to the old fake `"Online"` state
+     - After `Seek`, the reported current time reflects the new position or the firmware's actual accepted position
+   - Failure clues:
+     - Button press changes UI immediately but the next refresh snaps to a contradictory state
+     - `Seek` does not affect reported current time
+     - Status text does not match the firmware behavior
+
+4. Verify file load and save acknowledgement path
+   - Action:
+     - Open a known `Setting/*.TXT` file
+     - Make a minimal edit
+     - Save the file
+   - Expected:
+     - File load succeeds and the editor shows the device content
+     - Save succeeds with a path-confirming message in the format `Saved file: <path>`
+     - No silent success on malformed or mismatched save response
+   - Failure clues:
+     - Save appears to work with no returned-path confirmation
+     - Save fails with `invalid device response` even though firmware saved the file
+     - Returned path does not match the selected file path
+
+5. Verify matching content response
+   - Action:
+     - Without changing the just-saved content, run `Verify`
+   - Expected:
+     - Verify dialog shows `Content Matches Device`
+     - No path mismatch or malformed-payload error appears
+   - Failure clues:
+     - Match result is inconsistent for identical content
+     - Dialog shows `Verification failed: invalid device response.`
+
+6. Verify mismatching content response
+   - Action:
+     - Edit the local text again without saving
+     - Run `Verify`
+   - Expected:
+     - Verify dialog shows `Content Mismatch`
+     - The app does not report a false match
+   - Failure clues:
+     - Device mismatch is reported as a match
+     - Verify failure path is taken when payload is otherwise valid
+
+7. Verify protocol limit enforcement
+   - Action:
+     - Increase content length beyond the firmware limit (`APP_CONTENT_MAX_LEN = 512`, effective payload content budget `511` bytes)
+     - Attempt `Save`
+     - Attempt `Verify`
+   - Expected:
+     - The app blocks the request before transport
+     - Save shows `Failed to save file: ...`
+     - Verify shows `Verification failed: ...`
+     - A device round-trip is not required for this rejection
+   - Failure clues:
+     - Oversized content is transmitted to firmware
+     - The app waits for a device reply before rejecting obviously oversized content
+
+8. Record outcome
+   - [ ] Status refresh on real device confirmed
+   - [ ] Motion commands confirmed against real firmware state
+   - [ ] Save returned-path acknowledgement confirmed
+   - [ ] Verify match/mismatch confirmed
+   - [ ] Client-side size-limit enforcement confirmed
+   - [ ] Any mismatch captured with device ID, file path, exact UI message, and reproduction steps
+
+**If a failure is found**
+
+- Record the device ID
+- Record the exact file path involved
+- Record the exact UI message shown by the app
+- Note whether the issue reproduces in virtual mode or only on the real device
+- Note whether the failure happens on `Play`, `Stop`, `Pause`, `Seek`, `Save`, or `Verify`
 
 Plan complete and saved to `docs/plans/2026-04-23-winui3-firmware-alignment.md`.
