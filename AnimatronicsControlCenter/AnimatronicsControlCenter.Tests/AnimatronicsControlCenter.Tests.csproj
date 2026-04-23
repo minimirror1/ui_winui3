@@ -24,6 +24,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStateMerger.cs" Link="Core\Motors\MotorStateMerger.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryProtocol.cs" Link="Core\Protocol\BinaryProtocol.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryDeserializer.cs" Link="Core\Protocol\BinaryDeserializer.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\SaveFileResponseProjection.cs" Link="Core\Protocol\SaveFileResponseProjection.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />

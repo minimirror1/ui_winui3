@@ -297,8 +297,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private async Task SaveFileAsync()
         {
             if (SelectedDevice == null || SelectedFile == null) return;
+
             var packet = BinarySerializer.EncodeSaveFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
-            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
+            var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.SaveFile, packet);
+            var result = SaveFileResponseProjection.Evaluate(responseBytes, SelectedFile.Path);
+
+            FilesStatusMessage = result.StatusMessage;
+            if (!result.Success)
+                RegisterLoadError("Files", result.ErrorDetail);
         }
 
         [RelayCommand]

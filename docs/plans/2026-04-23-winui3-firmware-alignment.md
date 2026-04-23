@@ -16,7 +16,7 @@
 - [x] Verify-focused tests added and passing
 - [x] PONG payload parsing and device status projection
 - [x] Virtual `PONG` responses aligned to firmware shape
-- [ ] `SAVE_FILE` acknowledgement flow and returned-path validation
+- [x] `SAVE_FILE` acknowledgement flow and returned-path validation
 - [x] Firmware error codes `0x06` / `0x07`
 - [ ] Protocol size-limit enforcement
 
@@ -178,9 +178,9 @@ git commit -m "feat: surface firmware device status in WinUI"
 **Completed in this task:**
 - [x] Use the new verify parser result in `VerifyFileAsync`
 - [x] Update `VirtualDeviceManager.HandleVerifyFile` to emit `path_len + path + match`
-- [ ] Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
-- [ ] Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
-- [ ] Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
+- [x] Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
+- [x] Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
+- [x] Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/UI/ViewModels/DeviceDetailViewModel.cs`
@@ -190,7 +190,7 @@ git commit -m "feat: surface firmware device status in WinUI"
 
 **Step 1: Write the failing tests**
 
-Status: partially completed for verify-response behavior only.
+Status: completed.
 
 Add tests for the virtual device and file-response behavior:
 
@@ -200,7 +200,7 @@ Add tests for the virtual device and file-response behavior:
 
 **Step 2: Run test to verify it fails**
 
-Status: partially completed for verify-focused tests only.
+Status: completed.
 
 Run:
 
@@ -212,19 +212,19 @@ Expected: FAIL because virtual PONG currently has an empty payload and virtual V
 
 **Step 3: Write minimal implementation**
 
-Status: partially completed.
+Status: completed.
 
 Update the WinUI app behavior to match the firmware:
 
-- [ ] Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
+- [x] Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
 - [x] Use the new verify parser result in `VerifyFileAsync`
-- [ ] Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
-- [ ] Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
+- [x] Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
+- [x] Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
 - [x] Update `VirtualDeviceManager.HandleVerifyFile` to emit `path_len + path + match`
 
 **Step 4: Run test to verify it passes**
 
-Status: partially completed for verify-focused tests only.
+Status: completed.
 
 Run:
 
