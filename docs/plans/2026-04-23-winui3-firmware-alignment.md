@@ -8,7 +8,24 @@
 
 **Tech Stack:** WinUI 3, CommunityToolkit.Mvvm, MSTest, custom binary protocol, XBee Fragment Protocol
 
+## Progress Status
+
+- [x] `VERIFY_FILE` response parsing aligned to firmware shape: `path_len(2) + path + match(1)`
+- [x] `VerifyFileAsync` updated to validate the returned verify path before trusting the match flag
+- [x] `VirtualDeviceManager.HandleVerifyFile` updated to emit firmware-shaped verify responses
+- [x] Verify-focused tests added and passing
+- [ ] PONG payload parsing and device status projection
+- [ ] `SAVE_FILE` acknowledgement flow and returned-path validation
+- [ ] Firmware error codes `0x06` / `0x07` and protocol size-limit enforcement
+
 ### Task 1: Align Protocol Types And Parsers
+
+**Status:** In progress
+
+**Completed in this task:**
+- [x] `VERIFY_FILE` parsing now consumes `path_len(2) + path + match(1)` instead of treating the first payload byte as the match flag
+- [ ] Firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
+- [ ] Parsed PONG status model and `ParsePongResponse`
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/Core/Protocol/BinaryProtocol.cs`
@@ -19,6 +36,8 @@
 - Reference: `firmware_reference/stm32_json_com/Src/binary_com.c`
 
 **Step 1: Write the failing tests**
+
+Status: partially completed for the verify-response portion only.
 
 Add MSTest cases that prove the app currently disagrees with firmware:
 
@@ -35,6 +54,8 @@ byte[] pongPayload = { 0x01, 0x03, 0x10, 0x27, 0x00, 0x00, 0x20, 0x4E, 0x00, 0x0
 
 **Step 2: Run test to verify it fails**
 
+Status: partially completed for verify-focused tests only.
+
 Run:
 
 ```powershell
@@ -45,16 +66,18 @@ Expected: FAIL because `ParseVerifyFileResponse` reads `payload[0]` as the match
 
 **Step 3: Write minimal implementation**
 
+Status: partially completed.
+
 Implement the missing protocol contract:
 
-- Add firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
-- Add a parsed PONG status model or record with:
+- [ ] Add firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
+- [ ] Add a parsed PONG status model or record with:
   - `state`
   - `init_state`
   - `current_ms`
   - `total_ms`
-- Add a `ParsePongResponse` method that reads the 10-byte firmware payload
-- Change verify parsing to consume `path_len(2) + path + match(1)` and return both path and match, not just a bare bool
+- [ ] Add a `ParsePongResponse` method that reads the 10-byte firmware payload
+- [x] Change verify parsing to consume `path_len(2) + path + match(1)` and return both path and match, not just a bare bool
 
 Suggested signature:
 
@@ -63,6 +86,8 @@ public static (string Path, bool Match) ParseVerifyFileResponse(ReadOnlySpan<byt
 ```
 
 **Step 4: Run test to verify it passes**
+
+Status: partially completed for verify-focused tests only.
 
 Run:
 
@@ -80,6 +105,8 @@ git commit -m "fix: align WinUI protocol parsers with firmware"
 ```
 
 ### Task 2: Propagate Firmware PONG Status Through The App
+
+**Status:** Not started
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/Infrastructure/SerialService.cs`
@@ -144,6 +171,15 @@ git commit -m "feat: surface firmware device status in WinUI"
 
 ### Task 3: Make Save And Verify Use Real Firmware Responses
 
+**Status:** In progress
+
+**Completed in this task:**
+- [x] Use the new verify parser result in `VerifyFileAsync`
+- [x] Update `VirtualDeviceManager.HandleVerifyFile` to emit `path_len + path + match`
+- [ ] Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
+- [ ] Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
+- [ ] Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
+
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/UI/ViewModels/DeviceDetailViewModel.cs`
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/Core/Protocol/BinaryDeserializer.cs`
@@ -152,6 +188,8 @@ git commit -m "feat: surface firmware device status in WinUI"
 
 **Step 1: Write the failing tests**
 
+Status: partially completed for verify-response behavior only.
+
 Add tests for the virtual device and file-response behavior:
 
 - `Virtual_verify_response_matches_firmware_shape`
@@ -159,6 +197,8 @@ Add tests for the virtual device and file-response behavior:
 - `Save_file_returns_path_confirmation_payload`
 
 **Step 2: Run test to verify it fails**
+
+Status: partially completed for verify-focused tests only.
 
 Run:
 
@@ -170,15 +210,19 @@ Expected: FAIL because virtual PONG currently has an empty payload and virtual V
 
 **Step 3: Write minimal implementation**
 
+Status: partially completed.
+
 Update the WinUI app behavior to match the firmware:
 
-- Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
-- Use the new verify parser result in `VerifyFileAsync`
-- Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
-- Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
-- Update `VirtualDeviceManager.HandleVerifyFile` to emit `path_len + path + match`
+- [ ] Change `SaveFileAsync` to use `SendBinaryQueryAsync(..., BinaryCommand.SaveFile, packet)` and confirm the returned path
+- [x] Use the new verify parser result in `VerifyFileAsync`
+- [ ] Surface firmware failures in `FilesStatusMessage` and `LastLoadError`
+- [ ] Update `VirtualDeviceManager.HandlePing` to emit a 10-byte PONG payload
+- [x] Update `VirtualDeviceManager.HandleVerifyFile` to emit `path_len + path + match`
 
 **Step 4: Run test to verify it passes**
+
+Status: partially completed for verify-focused tests only.
 
 Run:
 
@@ -196,6 +240,8 @@ git commit -m "fix: use firmware-compatible save and verify responses"
 ```
 
 ### Task 4: Enforce Firmware Limits And Verify End-To-End Behavior
+
+**Status:** Not started
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/UI/ViewModels/DeviceDetailViewModel.cs`
@@ -253,6 +299,8 @@ git commit -m "fix: enforce firmware protocol limits in WinUI"
 ```
 
 ### Manual Verification
+
+**Status:** Not started
 
 After Task 4, verify against a real device:
 
