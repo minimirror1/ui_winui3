@@ -58,6 +58,17 @@ public enum BinaryErrorCode : byte
     InvalidParam  = 0x03,
     FileNotFound  = 0x04,
     MotorNotFound = 0x05,
+    ResponseTooLarge = 0x06,
+    TxBusy = 0x07,
+}
+
+public enum BinaryPingState : byte
+{
+    Stopped  = 0x00,
+    Playing  = 0x01,
+    InitBusy = 0x02,
+    InitDone = 0x03,
+    Error    = 0x04,
 }
 
 // 헤더 크기 상수
@@ -65,6 +76,7 @@ public static class BinaryProtocolConst
 {
     public const int RequestHeaderSize  = 5;  // src(1)+tar(1)+cmd(1)+payload_len(2)
     public const int ResponseHeaderSize = 6;  // src(1)+tar(1)+cmd(1)+status(1)+payload_len(2)
+    public const int PongPayloadSize    = 10;
     public const byte HostId            = 0;
     public const byte BroadcastId       = 0xFF;
 }
@@ -74,3 +86,5 @@ public record struct RequestHeader(byte SrcId, byte TarId, BinaryCommand Cmd, us
 
 // 응답 헤더 (parsed)
 public record struct ResponseHeader(byte SrcId, byte TarId, BinaryCommand Cmd, ResponseStatus Status, ushort PayloadLen);
+
+public readonly record struct PongStatus(BinaryPingState State, byte InitState, uint CurrentMs, uint TotalMs);

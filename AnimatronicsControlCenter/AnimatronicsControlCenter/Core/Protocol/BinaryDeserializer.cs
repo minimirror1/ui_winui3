@@ -40,6 +40,27 @@ public static class BinaryDeserializer
         return true;
     }
 
+    public static bool TryParsePongResponse(ReadOnlySpan<byte> payload, out PongStatus status)
+    {
+        status = default;
+        if (payload.Length != BinaryProtocolConst.PongPayloadSize) return false;
+
+        status = new PongStatus(
+            State: (BinaryPingState)payload[0],
+            InitState: payload[1],
+            CurrentMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[2..]),
+            TotalMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[6..]));
+        return true;
+    }
+
+    public static PongStatus ParsePongResponse(ReadOnlySpan<byte> payload)
+    {
+        if (!TryParsePongResponse(payload, out var status))
+            throw new ArgumentException("Invalid PONG payload.", nameof(payload));
+
+        return status;
+    }
+
     // ── §4.5 GET_MOTOR_STATE 응답 ─────────────────────────────────────
 
     /// byte[] → MotorStatePatch 리스트 (부분 응답 지원)

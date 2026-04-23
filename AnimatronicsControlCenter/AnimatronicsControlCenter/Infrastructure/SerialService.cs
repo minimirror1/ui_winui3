@@ -35,7 +35,9 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly DeviceCommandGate _deviceCommandGate = new();
         private bool _isVirtualConnected;
 
-        private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> _pendingResponses = new();
+        private readonly ConcurrentDictionary<string, TaskCompletionSource<ReceivedBinaryResponse?>> _pendingResponses = new();
+
+        private readonly record struct ReceivedBinaryResponse(byte[] Data, ulong SourceAddress);
 
         public SerialService(ISettingsService settingsService, ISerialTrafficTap trafficTap, XBeeService xbeeService)
         {
@@ -108,9 +110,15 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         public async Task<byte[]?> SendBinaryQueryAsync(int deviceId, BinaryCommand cmd, byte[] packet)
         {
+            var response = await SendBinaryQueryWithSourceAsync(deviceId, cmd, packet).ConfigureAwait(false);
+            return response?.Data;
+        }
+
+        private async Task<ReceivedBinaryResponse?> SendBinaryQueryWithSourceAsync(int deviceId, BinaryCommand cmd, byte[] packet)
+        {
             if (!IsConnected) return null;
 
-            return await _deviceCommandGate.RunExclusiveAsync(deviceId, async () =>
+            return await _deviceCommandGate.RunExclusiveAsync<ReceivedBinaryResponse?>(deviceId, async () =>
             {
                 _trafficTap.RecordTxBytes(packet);
 
@@ -119,12 +127,16 @@ namespace AnimatronicsControlCenter.Infrastructure
                     await Task.Delay(20).ConfigureAwait(false);
                     var response = _virtualDeviceManager.ProcessBinaryCommand(packet);
                     if (response != null)
+                    {
                         _trafficTap.RecordRxBytes(response);
-                    return response;
+                        return new ReceivedBinaryResponse(response, 0);
+                    }
+
+                    return null;
                 }
 
                 var responseKey = $"{deviceId}:{(byte)cmd}";
-                var tcs = new TaskCompletionSource<byte[]>();
+                var tcs = new TaskCompletionSource<ReceivedBinaryResponse?>(TaskCreationOptions.RunContinuationsAsynchronously);
                 _pendingResponses[responseKey] = tcs;
 
                 try
@@ -183,34 +195,14 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             if (!IsConnected) return null;
 
-            if (_settingsService.IsVirtualModeEnabled)
-            {
-                await Task.Delay(20).ConfigureAwait(false);
-                var ping = BinarySerializer.EncodePing(BinaryProtocolConst.HostId, (byte)deviceId);
-                _trafficTap.RecordTxBytes(ping);
-                var resp = _virtualDeviceManager.ProcessBinaryCommand(ping);
-                if (resp != null &&
-                    BinaryDeserializer.TryParseResponseHeader(resp, out var hdr) &&
-                    hdr.Cmd == BinaryCommand.Pong &&
-                    hdr.Status == ResponseStatus.Ok)
-                {
-                    _trafficTap.RecordRxBytes(resp);
-                    return new Device(deviceId) { IsConnected = true, StatusMessage = "Online (Virtual)" };
-                }
-
-                return null;
-            }
-
             try
             {
-                var response = await SendBinaryQueryAsync(deviceId, BinaryCommand.Ping).ConfigureAwait(false);
-                if (response != null &&
-                    BinaryDeserializer.TryParseResponseHeader(response, out var hdr) &&
-                    hdr.Cmd == BinaryCommand.Pong &&
-                    hdr.Status == ResponseStatus.Ok)
-                {
-                    return new Device(deviceId) { IsConnected = true, StatusMessage = "Online" };
-                }
+                var packet = BuildRequestPacket((byte)deviceId, BinaryCommand.Ping);
+                var response = await SendBinaryQueryWithSourceAsync(deviceId, BinaryCommand.Ping, packet).ConfigureAwait(false);
+                if (response == null)
+                    return null;
+
+                return CreateDeviceFromPong(deviceId, response.Value, _settingsService.IsVirtualModeEnabled);
             }
             catch (Exception)
             {
@@ -249,11 +241,33 @@ namespace AnimatronicsControlCenter.Infrastructure
                 var responseKey = $"{hdr.SrcId}:{(byte)lookupCmd}";
 
                 if (_pendingResponses.TryRemove(responseKey, out var tcs) && !tcs.Task.IsCompleted)
-                    tcs.TrySetResult(data);
+                    tcs.TrySetResult(new ReceivedBinaryResponse(data, sourceAddress));
             }
             catch (Exception)
             {
             }
+        }
+
+        private static Device? CreateDeviceFromPong(int deviceId, ReceivedBinaryResponse response, bool isVirtual)
+        {
+            if (!BinaryDeserializer.TryParseResponseHeader(response.Data, out var hdr) ||
+                hdr.Cmd != BinaryCommand.Pong ||
+                hdr.Status != ResponseStatus.Ok)
+            {
+                return null;
+            }
+
+            int payloadStart = BinaryProtocolConst.ResponseHeaderSize;
+            if (response.Data.Length < payloadStart + hdr.PayloadLen)
+                return null;
+
+            var payload = response.Data.AsSpan(payloadStart, hdr.PayloadLen);
+            if (!BinaryDeserializer.TryParsePongResponse(payload, out var pongStatus))
+                return null;
+
+            var device = new Device(deviceId);
+            FirmwareStatusProjection.Apply(device, pongStatus, response.SourceAddress, isVirtual);
+            return device;
         }
 
         public void Dispose()

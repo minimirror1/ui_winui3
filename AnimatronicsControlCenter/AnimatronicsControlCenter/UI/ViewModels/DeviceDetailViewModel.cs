@@ -225,7 +225,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (SelectedDevice == null) return;
             var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Play);
             await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
-            SelectedDevice.MotionState = MotionState.Playing;
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
         }
 
         [RelayCommand]
@@ -234,7 +234,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (SelectedDevice == null) return;
             var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Stop);
             await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
-            SelectedDevice.MotionState = MotionState.Stopped;
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
         }
 
         [RelayCommand]
@@ -243,7 +243,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (SelectedDevice == null) return;
             var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Pause);
             await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
-            SelectedDevice.MotionState = MotionState.Paused;
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
         }
 
         [RelayCommand]
@@ -251,9 +251,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             if (SelectedDevice == null) return;
             var time = TimeSpan.FromSeconds(seconds);
-            SelectedDevice.MotionCurrentTime = time;
             var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.Seek, time.TotalSeconds);
             await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
         }
 
         public string FormatTime(TimeSpan time) => time.ToString(@"hh\:mm\:ss");
@@ -343,6 +343,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
             try
             {
+                await RefreshDeviceStatusForDeviceAsync(device, token);
+                token.ThrowIfCancellationRequested();
+
                 await LoadFilesForDeviceAsync(device, token, announceRefresh: false);
                 token.ThrowIfCancellationRequested();
 
@@ -503,6 +506,49 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     SetMotorsFailure(ex.Message);
                 return false;
             }
+        }
+
+        private async Task<bool> RefreshDeviceStatusForDeviceAsync(Device? device, CancellationToken token)
+        {
+            if (device == null || !IsCurrentSelectedDevice(device)) return false;
+
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                var refreshedDevice = await _serialService.PingDeviceAsync(device.Id);
+                token.ThrowIfCancellationRequested();
+
+                if (refreshedDevice == null)
+                    return false;
+
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    if (!IsCurrentSelectedDevice(device)) return;
+
+                    ApplyDeviceStatus(device, refreshedDevice);
+                    NotifyOverviewBindings();
+                });
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static void ApplyDeviceStatus(Device target, Device source)
+        {
+            target.IsConnected = source.IsConnected;
+            target.StatusMessage = source.StatusMessage;
+            target.MotionState = source.MotionState;
+            target.MotionCurrentTime = source.MotionCurrentTime;
+            target.MotionTotalTime = source.MotionTotalTime;
+            target.Address64 = source.Address64;
         }
 
         private void ResetSnapshotState(Device device)

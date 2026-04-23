@@ -14,6 +14,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly Dictionary<int, Dictionary<string, string>> _deviceFileSystems;
         private readonly Dictionary<int, List<MotorState>> _deviceMotors = new();
         private readonly Dictionary<int, int> _deviceMotorTick = new();
+        private readonly Dictionary<int, PongStatus> _devicePingStatuses = new();
 
         public VirtualDeviceManager()
         {
@@ -84,6 +85,17 @@ namespace AnimatronicsControlCenter.Infrastructure
             return motors;
         }
 
+        private PongStatus GetPingStatus(int deviceId)
+        {
+            if (!_devicePingStatuses.TryGetValue(deviceId, out var status))
+            {
+                status = new PongStatus(BinaryPingState.Stopped, 0, 0, 0);
+                _devicePingStatuses[deviceId] = status;
+            }
+
+            return status;
+        }
+
         // ── Binary 진입점 ─────────────────────────────────────────────
 
         public byte[]? ProcessBinaryCommand(byte[] data)
@@ -126,7 +138,13 @@ namespace AnimatronicsControlCenter.Infrastructure
         private byte[] HandlePing(RequestHeader hdr)
         {
             // PONG: 헤더만, payload 없음
-            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.Pong, Array.Empty<byte>());
+            var status = GetPingStatus(hdr.TarId);
+            var payload = new byte[BinaryProtocolConst.PongPayloadSize];
+            payload[0] = (byte)status.State;
+            payload[1] = status.InitState;
+            BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(2), status.CurrentMs);
+            BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(6), status.TotalMs);
+            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.Pong, payload);
         }
 
         private byte[] HandleMove(RequestHeader hdr, ReadOnlySpan<byte> payload)
@@ -152,6 +170,29 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return BuildErrorResponse(hdr.TarId, hdr.SrcId, hdr.Cmd, BinaryErrorCode.InvalidParam, "MOTION_CTRL: payload too short");
 
             byte action = payload[0];
+            var status = GetPingStatus(hdr.TarId);
+
+            switch ((BinaryMotionAction)action)
+            {
+                case BinaryMotionAction.Play:
+                    status = status with { State = BinaryPingState.Playing };
+                    break;
+                case BinaryMotionAction.Stop:
+                    status = status with { State = BinaryPingState.Stopped, CurrentMs = 0 };
+                    break;
+                case BinaryMotionAction.Pause:
+                    status = status with { State = BinaryPingState.Stopped };
+                    break;
+                case BinaryMotionAction.Seek:
+                    if (payload.Length >= 5)
+                    {
+                        uint currentMs = BinaryPrimitives.ReadUInt32LittleEndian(payload[1..]);
+                        status = status with { CurrentMs = currentMs };
+                    }
+                    break;
+            }
+
+            _devicePingStatuses[hdr.TarId] = status;
 
             // 응답 payload: action(1) + device_id(1)
             var respPayload = new byte[] { action, hdr.TarId };

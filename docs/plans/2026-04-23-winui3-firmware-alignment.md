@@ -14,18 +14,20 @@
 - [x] `VerifyFileAsync` updated to validate the returned verify path before trusting the match flag
 - [x] `VirtualDeviceManager.HandleVerifyFile` updated to emit firmware-shaped verify responses
 - [x] Verify-focused tests added and passing
-- [ ] PONG payload parsing and device status projection
+- [x] PONG payload parsing and device status projection
+- [x] Virtual `PONG` responses aligned to firmware shape
 - [ ] `SAVE_FILE` acknowledgement flow and returned-path validation
-- [ ] Firmware error codes `0x06` / `0x07` and protocol size-limit enforcement
+- [x] Firmware error codes `0x06` / `0x07`
+- [ ] Protocol size-limit enforcement
 
 ### Task 1: Align Protocol Types And Parsers
 
-**Status:** In progress
+**Status:** Completed
 
 **Completed in this task:**
 - [x] `VERIFY_FILE` parsing now consumes `path_len(2) + path + match(1)` instead of treating the first payload byte as the match flag
-- [ ] Firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
-- [ ] Parsed PONG status model and `ParsePongResponse`
+- [x] Firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
+- [x] Parsed PONG status model and `ParsePongResponse`
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/Core/Protocol/BinaryProtocol.cs`
@@ -37,7 +39,7 @@
 
 **Step 1: Write the failing tests**
 
-Status: partially completed for the verify-response portion only.
+Status: completed.
 
 Add MSTest cases that prove the app currently disagrees with firmware:
 
@@ -54,7 +56,7 @@ byte[] pongPayload = { 0x01, 0x03, 0x10, 0x27, 0x00, 0x00, 0x20, 0x4E, 0x00, 0x0
 
 **Step 2: Run test to verify it fails**
 
-Status: partially completed for verify-focused tests only.
+Status: completed.
 
 Run:
 
@@ -66,17 +68,17 @@ Expected: FAIL because `ParseVerifyFileResponse` reads `payload[0]` as the match
 
 **Step 3: Write minimal implementation**
 
-Status: partially completed.
+Status: completed.
 
 Implement the missing protocol contract:
 
-- [ ] Add firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
-- [ ] Add a parsed PONG status model or record with:
+- [x] Add firmware error codes `ResponseTooLarge = 0x06` and `TxBusy = 0x07`
+- [x] Add a parsed PONG status model or record with:
   - `state`
   - `init_state`
   - `current_ms`
   - `total_ms`
-- [ ] Add a `ParsePongResponse` method that reads the 10-byte firmware payload
+- [x] Add a `ParsePongResponse` method that reads the 10-byte firmware payload
 - [x] Change verify parsing to consume `path_len(2) + path + match(1)` and return both path and match, not just a bare bool
 
 Suggested signature:
@@ -87,7 +89,7 @@ public static (string Path, bool Match) ParseVerifyFileResponse(ReadOnlySpan<byt
 
 **Step 4: Run test to verify it passes**
 
-Status: partially completed for verify-focused tests only.
+Status: completed.
 
 Run:
 
@@ -106,7 +108,7 @@ git commit -m "fix: align WinUI protocol parsers with firmware"
 
 ### Task 2: Propagate Firmware PONG Status Through The App
 
-**Status:** Not started
+**Status:** Completed
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/Infrastructure/SerialService.cs`
@@ -141,15 +143,15 @@ Expected: FAIL because the current code only checks `hdr.Cmd == Pong` and hardco
 
 Implement the actual status flow:
 
-- Parse the PONG payload inside `SerialService.PingDeviceAsync`
-- Populate `Device.StatusMessage`, `Device.MotionState`, `Device.MotionCurrentTime`, and `Device.MotionTotalTime` from firmware values
-- Capture the XBee source address from the reply and store it in `Device.Address64`
-- On device detail load, refresh device status once before or alongside file/motor loading
-- Add a lightweight periodic status refresh path so the UI no longer relies on optimistic local state only
+- [x] Parse the PONG payload inside `SerialService.PingDeviceAsync`
+- [x] Populate `Device.StatusMessage`, `Device.MotionState`, `Device.MotionCurrentTime`, and `Device.MotionTotalTime` from firmware values
+- [x] Capture the XBee source address from the reply and store it in `Device.Address64`
+- [x] On device detail load, refresh device status once before file/motor loading
+- [ ] Add a lightweight periodic status refresh path so the UI no longer relies on optimistic local state only
 
 Recommended rule:
 
-- `Play/Stop/Pause/Seek` commands may update the UI optimistically only if followed by a real status refresh
+- [x] `Play/Stop/Pause/Seek` commands may update the UI optimistically only if followed by a real status refresh
 - The firmware PONG payload should be the long-term source of truth for motion status and time
 
 **Step 4: Run test to verify it passes**
