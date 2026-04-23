@@ -28,9 +28,10 @@ public static class SaveFileResponseProjection
             string error = $"Device returned {header.Status} for {header.Cmd}.";
             if (!payload.IsEmpty)
             {
-                var (_, message) = BinaryDeserializer.ParseErrorResponse(payload);
-                if (!string.IsNullOrWhiteSpace(message))
-                    error = message;
+                var (code, message) = BinaryDeserializer.ParseErrorResponse(payload);
+                error = string.IsNullOrWhiteSpace(message)
+                    ? BinaryProtocolErrorText.Describe(code, header.Cmd)
+                    : message;
             }
 
             return Failure(error);

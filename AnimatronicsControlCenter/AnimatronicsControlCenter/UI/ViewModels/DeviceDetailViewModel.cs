@@ -298,6 +298,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             if (SelectedDevice == null || SelectedFile == null) return;
 
+            LastLoadError = string.Empty;
+            var validation = FirmwareFileRequestValidation.Validate(SelectedFile.Path, FileContent);
+            if (!validation.IsValid)
+            {
+                FilesStatusMessage = $"Failed to save file: {validation.ErrorMessage}";
+                RegisterLoadError("Files", validation.ErrorMessage);
+                return;
+            }
+
             var packet = BinarySerializer.EncodeSaveFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
             var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.SaveFile, packet);
             var result = SaveFileResponseProjection.Evaluate(responseBytes, SelectedFile.Path);
@@ -312,9 +321,28 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             if (SelectedDevice == null || SelectedFile == null) return;
 
+            LastLoadError = string.Empty;
+            var validation = FirmwareFileRequestValidation.Validate(SelectedFile.Path, FileContent);
+            if (!validation.IsValid)
+            {
+                var message = validation.ErrorMessage;
+                FilesStatusMessage = $"Verification failed: {message}";
+                RegisterLoadError("Files", message);
+                VerificationResult = $"Verification failed: {message}";
+                IsVerificationDialogOpen = true;
+                return;
+            }
+
             var packet = BinarySerializer.EncodeVerifyFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
             var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.VerifyFile, packet);
-            if (!TryGetOkPayload(responseBytes, out var hdr, out var payload, out _)) return;
+            if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
+            {
+                FilesStatusMessage = $"Verification failed: {errorMessage}";
+                RegisterLoadError("Files", errorMessage);
+                VerificationResult = $"Verification failed: {errorMessage}";
+                IsVerificationDialogOpen = true;
+                return;
+            }
 
             if (payload.Length < 3)
             {
@@ -650,7 +678,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 var (code, message) = BinaryDeserializer.ParseErrorResponse(payload);
                 errorMessage = string.IsNullOrWhiteSpace(message)
-                    ? $"Device returned {code} for {header.Cmd}."
+                    ? BinaryProtocolErrorText.Describe(code, header.Cmd)
                     : message;
             }
             else

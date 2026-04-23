@@ -77,6 +77,10 @@ public static class BinaryProtocolConst
     public const int RequestHeaderSize  = 5;  // src(1)+tar(1)+cmd(1)+payload_len(2)
     public const int ResponseHeaderSize = 6;  // src(1)+tar(1)+cmd(1)+status(1)+payload_len(2)
     public const int PongPayloadSize    = 10;
+    public const int AppPathMaxLen      = 128;
+    public const int AppContentMaxLen   = 512;
+    public const int MaxPathUtf8Bytes   = AppPathMaxLen - 1;
+    public const int MaxContentUtf8Bytes = AppContentMaxLen - 1;
     public const byte HostId            = 0;
     public const byte BroadcastId       = 0xFF;
 }

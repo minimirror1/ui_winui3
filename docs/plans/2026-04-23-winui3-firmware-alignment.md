@@ -18,11 +18,12 @@
 - [x] Virtual `PONG` responses aligned to firmware shape
 - [x] `SAVE_FILE` acknowledgement flow and returned-path validation
 - [x] Firmware error codes `0x06` / `0x07`
-- [ ] Protocol size-limit enforcement
+- [x] Protocol size-limit enforcement
+- [ ] Lightweight periodic status refresh path
 
 ### Task 1: Align Protocol Types And Parsers
 
-**Status:** Completed
+**Status:** In progress
 
 **Completed in this task:**
 - [x] `VERIFY_FILE` parsing now consumes `path_len(2) + path + match(1)` instead of treating the first payload byte as the match flag
@@ -173,7 +174,7 @@ git commit -m "feat: surface firmware device status in WinUI"
 
 ### Task 3: Make Save And Verify Use Real Firmware Responses
 
-**Status:** In progress
+**Status:** Completed
 
 **Completed in this task:**
 - [x] Use the new verify parser result in `VerifyFileAsync`
@@ -243,7 +244,7 @@ git commit -m "fix: use firmware-compatible save and verify responses"
 
 ### Task 4: Enforce Firmware Limits And Verify End-To-End Behavior
 
-**Status:** Not started
+**Status:** Completed
 
 **Files:**
 - Modify: `AnimatronicsControlCenter/AnimatronicsControlCenter/UI/ViewModels/DeviceDetailViewModel.cs`
@@ -252,6 +253,8 @@ git commit -m "fix: use firmware-compatible save and verify responses"
 - Reference: `firmware_reference/stm32_json_com/Inc/device_hal.h`
 
 **Step 1: Write the failing test**
+
+Status: completed.
 
 Add tests that assert the app recognizes firmware-side limits:
 
@@ -263,6 +266,8 @@ Use a helper if necessary so the checks are testable without UI.
 
 **Step 2: Run test to verify it fails**
 
+Status: completed.
+
 Run:
 
 ```powershell
@@ -273,17 +278,21 @@ Expected: FAIL because the app currently sends arbitrarily large content and doe
 
 **Step 3: Write minimal implementation**
 
+Status: completed.
+
 Implement guardrails:
 
-- Add client-side validation before `SAVE_FILE` and `VERIFY_FILE`
-- Reject oversized path/content before sending
-- Show a clear UI message for:
+- [x] Add client-side validation before `SAVE_FILE` and `VERIFY_FILE`
+- [x] Reject oversized path/content before sending
+- [x] Show a clear UI message for:
   - `ResponseTooLarge`
   - `TxBusy`
   - `InvalidParam`
-- Keep the limit constants near protocol code so they do not drift from firmware expectations
+- [x] Keep the limit constants near protocol code so they do not drift from firmware expectations
 
 **Step 4: Run test to verify it passes**
+
+Status: completed.
 
 Run:
 
