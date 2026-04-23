@@ -183,7 +183,15 @@ public static class BinaryDeserializer
     // ── §4.9 VERIFY_FILE 응답 ────────────────────────────────────────
 
     public static bool ParseVerifyFileResponse(ReadOnlySpan<byte> payload)
-        => payload.Length >= 1 && payload[0] != 0;
+    {
+        if (payload.Length < 3) return false;
+
+        ushort pathLen = BinaryPrimitives.ReadUInt16LittleEndian(payload);
+        int matchOffset = 2 + pathLen;
+        if (payload.Length != matchOffset + 1) return false;
+
+        return payload[matchOffset] != 0;
+    }
 
     // ── §4.2 MOVE 응답 ──────────────────────────────────────────────
 

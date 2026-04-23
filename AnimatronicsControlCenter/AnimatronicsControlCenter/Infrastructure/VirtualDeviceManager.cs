@@ -296,7 +296,13 @@ namespace AnimatronicsControlCenter.Infrastructure
             string normCheck   = content.Replace("\r\n", "\n").Replace("\r", "\n");
             bool   match       = normStored == normCheck;
 
-            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.VerifyFile, new byte[] { match ? (byte)1 : (byte)0 });
+            byte[] pathBytes = Encoding.UTF8.GetBytes(path);
+            byte[] respPayload = new byte[2 + pathBytes.Length + 1];
+            BinaryPrimitives.WriteUInt16LittleEndian(respPayload.AsSpan(0), (ushort)pathBytes.Length);
+            pathBytes.CopyTo(respPayload.AsSpan(2));
+            respPayload[^1] = match ? (byte)1 : (byte)0;
+
+            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.VerifyFile, respPayload);
         }
 
         // ── 응답 빌더 ─────────────────────────────────────────────────

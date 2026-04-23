@@ -310,6 +310,21 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.VerifyFile, packet);
             if (!TryGetOkPayload(responseBytes, out var hdr, out var payload, out _)) return;
 
+            if (payload.Length < 3)
+            {
+                VerificationResult = "Verification failed: invalid device response.";
+                IsVerificationDialogOpen = true;
+                return;
+            }
+
+            string responsePath = BinaryDeserializer.ParseSaveFileResponse(payload[..^1]);
+            if (!string.Equals(responsePath, SelectedFile.Path, StringComparison.Ordinal))
+            {
+                VerificationResult = "Verification failed: invalid device response.";
+                IsVerificationDialogOpen = true;
+                return;
+            }
+
             bool match = BinaryDeserializer.ParseVerifyFileResponse(payload);
 
             VerificationResult = match ? "Content Matches Device" : "Content Mismatch";
