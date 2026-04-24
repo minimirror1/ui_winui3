@@ -243,12 +243,19 @@
                         <CommandBar DefaultLabelPosition="Right">
                             <AppBarButton Icon="Refresh" Label="Refresh" Command="{x:Bind ViewModel.RefreshFilesCommand}"/>
                         </CommandBar>
-                        <StackPanel Grid.Row="1" Spacing="8">
+                        <Grid Grid.Row="1" RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
                             <TextBlock Text="{x:Bind ViewModel.FilesStatusMessage, Mode=OneWay}"
                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                        Style="{StaticResource CaptionTextBlockStyle}"
                                        TextWrapping="Wrap"/>
-                            <TreeView x:Name="FileTreeView" ItemInvoked="FileTreeView_ItemInvoked" ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}">
+                            <TreeView x:Name="FileTreeView"
+                                      Grid.Row="1"
+                                      ItemInvoked="FileTreeView_ItemInvoked"
+                                      ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}">
                                 <TreeView.ItemTemplate>
                                     <DataTemplate x:DataType="models:FileSystemItem">
                                         <TreeViewItem ItemsSource="{x:Bind Children}">
@@ -260,7 +267,7 @@
                                     </DataTemplate>
                                 </TreeView.ItemTemplate>
                             </TreeView>
-                        </StackPanel>
+                        </Grid>
                     </Grid>
 
                     <Grid Grid.Column="1" RowSpacing="10">
