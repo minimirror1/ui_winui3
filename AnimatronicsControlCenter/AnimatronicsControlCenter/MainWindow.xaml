@@ -38,7 +38,42 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
-            
+
+            <NavigationView.PaneFooter>
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,12">
+                    <Button x:Name="SerialTrafficButton"
+                            Click="SerialTrafficButton_Click"
+                            Width="36"
+                            Height="52"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            ToolTipService.ToolTip="Serial activity">
+                        <Border x:Name="SerialTrafficButtonChrome"
+                                Width="28"
+                                Height="44"
+                                Padding="0"
+                                CornerRadius="14"
+                                Background="#10FFFFFF">
+                            <StackPanel VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Spacing="8">
+                                <Border x:Name="RxTrafficDot"
+                                        Width="8"
+                                        Height="8"
+                                        CornerRadius="4"
+                                        Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                                <Border x:Name="TxTrafficDot"
+                                        Width="8"
+                                        Height="8"
+                                        CornerRadius="4"
+                                        Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Button>
+                </StackPanel>
+            </NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame"/>
         </NavigationView>

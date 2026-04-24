@@ -28,6 +28,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\FirmwareFileRequestValidation.cs" Link="Core\Protocol\FirmwareFileRequestValidation.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\SaveFileResponseProjection.cs" Link="Core\Protocol\SaveFileResponseProjection.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\DeviceStatusRefreshPolicy.cs" Link="Core\Utilities\DeviceStatusRefreshPolicy.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialTrafficIndicatorState.cs" Link="Core\Utilities\SerialTrafficIndicatorState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
