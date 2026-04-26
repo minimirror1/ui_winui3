@@ -40,7 +40,10 @@
             </NavigationView.MenuItems>
 
             <NavigationView.PaneFooter>
-                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,12">
+                <Grid x:Name="SerialTrafficFooterHost"
+                      Width="48"
+                      HorizontalAlignment="Left"
+                      Margin="0,0,0,12">
                     <Button x:Name="SerialTrafficButton"
                             Click="SerialTrafficButton_Click"
                             Width="36"
@@ -72,7 +75,7 @@
                             </StackPanel>
                         </Border>
                     </Button>
-                </StackPanel>
+                </Grid>
             </NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame"/>
