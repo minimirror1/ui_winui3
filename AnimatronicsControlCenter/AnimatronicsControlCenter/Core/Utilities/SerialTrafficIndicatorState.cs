@@ -7,7 +7,7 @@ public readonly record struct SerialTrafficIndicatorSnapshot(bool IsRxActive, bo
 
 public sealed class SerialTrafficIndicatorState
 {
-    public static readonly TimeSpan ActivityWindow = TimeSpan.FromMilliseconds(350);
+    public static readonly TimeSpan ActivityWindow = TimeSpan.FromMilliseconds(180);
 
     public DateTimeOffset? LastRxAt { get; private set; }
 

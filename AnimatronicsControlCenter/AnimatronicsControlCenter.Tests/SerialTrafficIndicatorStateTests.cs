@@ -26,7 +26,7 @@ public class SerialTrafficIndicatorStateTests
         var now = DateTimeOffset.Parse("2026-04-24T10:00:00+09:00");
 
         state.Record(new SerialTrafficEntry(now, SerialTrafficDirection.Rx, "AA"));
-        var snapshot = state.GetSnapshot(now.AddMilliseconds(300));
+        var snapshot = state.GetSnapshot(now.AddMilliseconds(120));
 
         Assert.IsTrue(snapshot.IsRxActive);
         Assert.IsFalse(snapshot.IsTxActive);
@@ -46,6 +46,18 @@ public class SerialTrafficIndicatorStateTests
     }
 
     [TestMethod]
+    public void GetSnapshot_ExpiresActivity_AfterResponsivePulseWindow()
+    {
+        var state = new SerialTrafficIndicatorState();
+        var now = DateTimeOffset.Parse("2026-04-24T10:00:00+09:00");
+
+        state.Record(new SerialTrafficEntry(now, SerialTrafficDirection.Rx, "AA"));
+        var snapshot = state.GetSnapshot(now.AddMilliseconds(201));
+
+        Assert.IsFalse(snapshot.IsRxActive);
+    }
+
+    [TestMethod]
     public void Record_TracksRxAndTx_Independently()
     {
         var state = new SerialTrafficIndicatorState();
@@ -54,7 +66,7 @@ public class SerialTrafficIndicatorStateTests
         state.Record(new SerialTrafficEntry(baseTime, SerialTrafficDirection.Rx, "11"));
         state.Record(new SerialTrafficEntry(baseTime.AddMilliseconds(100), SerialTrafficDirection.Tx, "22"));
 
-        var snapshot = state.GetSnapshot(baseTime.AddMilliseconds(360));
+        var snapshot = state.GetSnapshot(baseTime.AddMilliseconds(220));
 
         Assert.IsFalse(snapshot.IsRxActive);
         Assert.IsTrue(snapshot.IsTxActive);

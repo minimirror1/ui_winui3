@@ -42,7 +42,7 @@ namespace AnimatronicsControlCenter
 
             _serialTrafficIndicatorTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromMilliseconds(100)
+                Interval = TimeSpan.FromMilliseconds(16)
             };
             _serialTrafficIndicatorTimer.Tick += SerialTrafficIndicatorTimer_Tick;
 
@@ -159,7 +159,7 @@ namespace AnimatronicsControlCenter
                 return;
             }
 
-            DispatcherQueue.TryEnqueue(ActivateSerialTrafficIndicator);
+            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, ActivateSerialTrafficIndicator);
         }
 
         private void ActivateSerialTrafficIndicator()
