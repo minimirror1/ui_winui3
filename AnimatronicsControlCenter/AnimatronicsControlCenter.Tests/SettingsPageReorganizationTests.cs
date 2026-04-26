@@ -71,6 +71,26 @@ public class SettingsPageReorganizationTests
                       xaml.IndexOf("PeriodicPing_Header.Header", StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public void SettingsPage_ConsolidatesDuplicateComAndXBeePortSettings()
+    {
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string xaml = page.ToString(SaveOptions.DisableFormatting);
+
+        StringAssert.Contains(xaml, "XBee_Header.Header");
+        StringAssert.Contains(xaml, "XBeePort_Header.Header");
+        StringAssert.Contains(xaml, "VirtualMode_Header.Header");
+
+        Assert.AreEqual(1, CountOccurrences(xaml, "AvailablePorts"));
+        Assert.AreEqual(1, CountOccurrences(xaml, "AvailableBaudRates"));
+        Assert.AreEqual(1, CountOccurrences(xaml, "ConnectCommand"));
+        Assert.AreEqual(0, CountOccurrences(xaml, "SelectedXBeePort"));
+        Assert.AreEqual(0, CountOccurrences(xaml, "XBeeConnectCommand"));
+        Assert.AreEqual(0, CountOccurrences(xaml, "Connection_Header.Header"));
+        Assert.IsTrue(xaml.IndexOf("XBeePort_Header.Header", StringComparison.Ordinal) <
+                      xaml.IndexOf("VirtualMode_Header.Header", StringComparison.Ordinal));
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
