@@ -32,9 +32,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         public int? TarId { get; init; }
         public string? Status { get; init; }
         // Binary 전환: RawJson → hex dump, PrettyJson → 디코딩 결과
-        public string RawJson { get; init; } = string.Empty;    // hex dump ("00 02 01 ...")
-        public string PrettyJson { get; init; } = string.Empty; // decoded header info
+        public string RawJson { get; init; } = string.Empty;
+        public string PrettyJson { get; init; } = string.Empty;
+        public string RawHex => RawJson;
+        public string DecodedText => PrettyJson;
         public string? ParseError { get; init; }
+        public bool HasParseError => ParseError != null;
 
         public string Summary
         {
@@ -73,6 +76,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         public ObservableCollection<SerialTrafficEntry> Entries { get; } = new();
         public ObservableCollection<SerialTrafficEntry> ComRawEntries { get; } = new();
         public ObservableCollection<PacketItem> Packets { get; } = new();
+        public ObservableCollection<string> PacketCommandFilters { get; } = new() { "All" };
+        public ObservableCollection<string> PacketStatusFilters { get; } = new() { "All", "Ok", "Error" };
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(PauseButtonText))]
@@ -104,6 +109,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         [ObservableProperty]
         private int selectedTabIndex;
+
+        [ObservableProperty]
+        private string selectedPacketCommandFilter = "All";
+
+        [ObservableProperty]
+        private string selectedPacketStatusFilter = "All";
+
+        [ObservableProperty]
+        private bool isParseErrorOnly;
 
         public string PauseButtonText => IsPaused
             ? Strings.Get("SerialMonitor_Resume", Strings.Code)
@@ -203,6 +217,21 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _comRawTap.IsCaptureEnabled = value;
         }
 
+        partial void OnSelectedPacketCommandFilterChanged(string value)
+        {
+            RebuildVisible();
+        }
+
+        partial void OnSelectedPacketStatusFilterChanged(string value)
+        {
+            RebuildVisible();
+        }
+
+        partial void OnIsParseErrorOnlyChanged(bool value)
+        {
+            RebuildVisible();
+        }
+
         private void FlushPendingToUi(bool force = false)
         {
             if (IsPaused && !force) return;
@@ -253,7 +282,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 _allPackets.Add(packet);
                 if (packet.ParseError != null) ParseErrorCount++;
-                if (MatchesFilter(entry))
+                AddPacketCommandFilter(packet.Command);
+                if (MatchesPacketFilter(packet))
                 {
                     Packets.Add(packet);
                 }
@@ -270,77 +300,26 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             var hexLine = entry.Line?.Trim();
             if (string.IsNullOrWhiteSpace(hexLine)) return null;
 
-            // hex 문자열("00 02 01 00 00") → byte[]
-            byte[]? data = TryParseHex(hexLine);
-            if (data == null || data.Length == 0)
-            {
-                return new PacketItem
-                {
-                    Traffic    = entry,
-                    RawJson    = hexLine,
-                    PrettyJson = hexLine,
-                    ParseError = "Not a binary hex packet"
-                };
-            }
-
-            // 응답 헤더 시도 (6 bytes 이상)
-            if (BinaryDeserializer.TryParseResponseHeader(data, out var respHdr))
-            {
-                string decoded = $"RESP cmd={respHdr.Cmd}(0x{(byte)respHdr.Cmd:X2}) " +
-                                 $"status={respHdr.Status} src={respHdr.SrcId} tar={respHdr.TarId} " +
-                                 $"payloadLen={respHdr.PayloadLen}";
-                return new PacketItem
-                {
-                    Traffic    = entry,
-                    RawJson    = hexLine,
-                    PrettyJson = decoded,
-                    Command    = respHdr.Cmd.ToString(),
-                    SrcId      = respHdr.SrcId,
-                    TarId      = respHdr.TarId,
-                    Status     = respHdr.Status.ToString(),
-                };
-            }
-
-            // 요청 헤더 시도 (5 bytes 이상)
-            if (BinaryDeserializer.TryParseRequestHeader(data, out var reqHdr))
-            {
-                string decoded = $"REQ  cmd={reqHdr.Cmd}(0x{(byte)reqHdr.Cmd:X2}) " +
-                                 $"src={reqHdr.SrcId} tar={reqHdr.TarId} payloadLen={reqHdr.PayloadLen}";
-                return new PacketItem
-                {
-                    Traffic    = entry,
-                    RawJson    = hexLine,
-                    PrettyJson = decoded,
-                    Command    = reqHdr.Cmd.ToString(),
-                    SrcId      = reqHdr.SrcId,
-                    TarId      = reqHdr.TarId,
-                    Status     = null,
-                };
-            }
-
+            BinaryPacketDecodeResult decodedPacket = BinaryPacketDecoder.DecodeHex(hexLine);
             return new PacketItem
             {
-                Traffic    = entry,
-                RawJson    = hexLine,
-                PrettyJson = hexLine,
-                ParseError = "Cannot parse binary header"
+                Traffic = entry,
+                RawJson = decodedPacket.RawHex,
+                PrettyJson = decodedPacket.Details,
+                Command = string.IsNullOrWhiteSpace(decodedPacket.Command) ? null : decodedPacket.Command,
+                SrcId = decodedPacket.SrcId,
+                TarId = decodedPacket.TarId,
+                Status = decodedPacket.Status,
+                ParseError = decodedPacket.ParseError
             };
         }
 
-        private static byte[]? TryParseHex(string hex)
+        private void AddPacketCommandFilter(string? command)
         {
-            try
-            {
-                var tokens = hex.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                var bytes  = new byte[tokens.Length];
-                for (int i = 0; i < tokens.Length; i++)
-                    bytes[i] = Convert.ToByte(tokens[i], 16);
-                return bytes;
-            }
-            catch
-            {
-                return null;
-            }
+            if (string.IsNullOrWhiteSpace(command)) return;
+            if (PacketCommandFilters.Contains(command)) return;
+
+            PacketCommandFilters.Add(command);
         }
 
         private bool MatchesFilter(SerialTrafficEntry entry) =>
@@ -350,6 +329,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 SerialTrafficFilter.Rx => entry.Direction == SerialTrafficDirection.Rx,
                 _ => true
             };
+
+        private bool MatchesPacketFilter(PacketItem packet)
+        {
+            if (!MatchesFilter(packet.Traffic)) return false;
+            if (IsParseErrorOnly && packet.ParseError == null) return false;
+            if (SelectedPacketCommandFilter != "All" && packet.Command != SelectedPacketCommandFilter) return false;
+            if (SelectedPacketStatusFilter != "All" && packet.Status != SelectedPacketStatusFilter) return false;
+            return true;
+        }
 
         private void RebuildVisible()
         {
@@ -367,7 +355,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 ComRawEntries.Add(entry);
             }
 
-            foreach (var packet in _allPackets.Where(p => MatchesFilter(p.Traffic)))
+            foreach (var packet in _allPackets.Where(MatchesPacketFilter))
             {
                 Packets.Add(packet);
             }
@@ -451,6 +439,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _allEntries.Clear();
             _allPackets.Clear();
             _allComRawEntries.Clear();
+            PacketCommandFilters.Clear();
+            PacketCommandFilters.Add("All");
             Entries.Clear();
             ComRawEntries.Clear();
             Packets.Clear();
@@ -462,8 +452,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [RelayCommand]
         private void CopyAll()
         {
-            var source = SelectedTabIndex == 2 ? ComRawEntries : Entries;
-            var text = string.Join(Environment.NewLine, source.Select(e => e.DisplayLine));
+            var text = SelectedTabIndex switch
+            {
+                1 => BuildPacketExport(Packets),
+                2 => string.Join(Environment.NewLine, ComRawEntries.Select(e => e.DisplayLine)),
+                _ => string.Join(Environment.NewLine, Entries.Select(e => e.DisplayLine)),
+            };
             var package = new DataPackage();
             package.SetText(text);
             Clipboard.SetContent(package);
@@ -483,6 +477,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 if (item is SerialTrafficEntry entry)
                 {
                     lines.Add(entry.DisplayLine);
+                }
+                else if (item is PacketItem packet)
+                {
+                    lines.Add(FormatPacketForExport(packet));
                 }
             }
 
@@ -535,16 +533,33 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             InitializeWithWindow.Initialize(picker, windowHandle);
 
             picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-            picker.SuggestedFileName = SelectedTabIndex == 2 ? "com-raw-monitor" : "serial-monitor";
+            picker.SuggestedFileName = SelectedTabIndex switch
+            {
+                1 => "serial-packet-monitor",
+                2 => "com-raw-monitor",
+                _ => "serial-monitor",
+            };
             picker.FileTypeChoices.Add("Log", new List<string> { ".log", ".txt" });
 
             StorageFile? file = await picker.PickSaveFileAsync();
             if (file == null) return;
 
-            var source = SelectedTabIndex == 2 ? ComRawEntries : Entries;
-            var content = string.Join(Environment.NewLine, source.Select(e => e.DisplayLine)) + Environment.NewLine;
+            var content = SelectedTabIndex switch
+            {
+                1 => BuildPacketExport(Packets),
+                2 => string.Join(Environment.NewLine, ComRawEntries.Select(e => e.DisplayLine)) + Environment.NewLine,
+                _ => string.Join(Environment.NewLine, Entries.Select(e => e.DisplayLine)) + Environment.NewLine,
+            };
             await FileIO.WriteTextAsync(file, content);
         }
+
+        private static string BuildPacketExport(IEnumerable<PacketItem> packets)
+            => string.Join(Environment.NewLine + Environment.NewLine, packets.Select(FormatPacketForExport)) + Environment.NewLine;
+
+        private static string FormatPacketForExport(PacketItem packet)
+            => $"{packet.Traffic.Prefix}[{packet.Traffic.TimestampText}] {packet.Summary}{Environment.NewLine}" +
+               $"{packet.DecodedText}{Environment.NewLine}" +
+               $"Raw: {packet.RawHex}";
     }
 }
 
