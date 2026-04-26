@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Protocol;
+using AnimatronicsControlCenter.Core.Utilities;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter; // For App and MainWindow
@@ -28,6 +29,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         [ObservableProperty]
         private string[] availablePorts = System.Array.Empty<string>();
+
+        [ObservableProperty]
+        private SerialPortOption[] availablePortOptions = System.Array.Empty<SerialPortOption>();
 
         [ObservableProperty]
         private string selectedPort;
@@ -281,10 +285,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [RelayCommand]
         private void RefreshPorts()
         {
-            AvailablePorts = SerialPort.GetPortNames();
-            if (AvailablePorts.Any() && (string.IsNullOrEmpty(SelectedPort) || !AvailablePorts.Contains(SelectedPort)))
+            var portNames = SerialPort.GetPortNames();
+            var deviceInfoByPort = SerialPortDeviceInfoProvider.GetDeviceInfoByPort(portNames);
+
+            AvailablePorts = portNames;
+            AvailablePortOptions = portNames
+                .Select(portName => SerialPortDisplay.CreateOption(
+                    portName,
+                    deviceInfoByPort.TryGetValue(portName, out var deviceInfo) ? deviceInfo : null))
+                .OrderByDescending(option => option.IsLikelyXBee)
+                .ThenBy(option => option.PortName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (AvailablePortOptions.Any() &&
+                (string.IsNullOrEmpty(SelectedPort) || !AvailablePortOptions.Any(option => option.PortName == SelectedPort)))
             {
-                SelectedPort = AvailablePorts[0];
+                SelectedPort = AvailablePortOptions[0].PortName;
             }
         }
 

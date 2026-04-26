@@ -81,7 +81,7 @@ public class SettingsPageReorganizationTests
         StringAssert.Contains(xaml, "XBeePort_Header.Header");
         StringAssert.Contains(xaml, "VirtualMode_Header.Header");
 
-        Assert.AreEqual(1, CountOccurrences(xaml, "AvailablePorts"));
+        Assert.AreEqual(1, CountOccurrences(xaml, "AvailablePortOptions"));
         Assert.AreEqual(1, CountOccurrences(xaml, "AvailableBaudRates"));
         Assert.AreEqual(1, CountOccurrences(xaml, "ConnectCommand"));
         Assert.AreEqual(0, CountOccurrences(xaml, "SelectedXBeePort"));
@@ -89,6 +89,19 @@ public class SettingsPageReorganizationTests
         Assert.AreEqual(0, CountOccurrences(xaml, "Connection_Header.Header"));
         Assert.IsTrue(xaml.IndexOf("XBeePort_Header.Header", StringComparison.Ordinal) <
                       xaml.IndexOf("VirtualMode_Header.Header", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void SettingsPage_ShowsUsbDeviceHintsWhileKeepingSelectedComPortValue()
+    {
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string xaml = page.ToString(SaveOptions.DisableFormatting);
+
+        StringAssert.Contains(xaml, "AvailablePortOptions");
+        StringAssert.Contains(xaml, "DisplayMemberPath=\"DisplayName\"");
+        StringAssert.Contains(xaml, "SelectedValuePath=\"PortName\"");
+        StringAssert.Contains(xaml, "SelectedValue=\"{x:Bind ViewModel.SelectedPort, Mode=TwoWay}\"");
+        Assert.AreEqual(0, CountOccurrences(xaml, "SelectedItem=\"{x:Bind ViewModel.SelectedPort"));
     }
 
     private static string ProjectPath(params string[] segments)
