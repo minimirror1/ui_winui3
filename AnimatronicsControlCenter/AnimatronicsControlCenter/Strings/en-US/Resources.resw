@@ -187,4 +187,58 @@
   <data name="SerialMonitor_ComRaw_Desc" xml:space="preserve">
     <value>Capture full frames written to and read from the COM port only while this switch is enabled.</value>
   </data>
+  <data name="Section_Connection.Text" xml:space="preserve">
+    <value>Connection</value>
+  </data>
+  <data name="Section_Communication.Text" xml:space="preserve">
+    <value>Communication</value>
+  </data>
+  <data name="Section_App.Text" xml:space="preserve">
+    <value>App Settings</value>
+  </data>
+  <data name="XBee_Header.Header" xml:space="preserve">
+    <value>XBee DigiMesh</value>
+  </data>
+  <data name="XBee_Desc.Text" xml:space="preserve">
+    <value>XBee DigiMesh wireless connection for STM32</value>
+  </data>
+  <data name="XBeePort_Header.Header" xml:space="preserve">
+    <value>XBee Port</value>
+  </data>
+  <data name="ResponseTimeout_Header.Header" xml:space="preserve">
+    <value>Response Timeout</value>
+  </data>
+  <data name="ResponseTimeout_Desc.Text" xml:space="preserve">
+    <value>Wait time between packets (seconds)</value>
+  </data>
+  <data name="PingSettings_Header.Header" xml:space="preserve">
+    <value>PING Settings</value>
+  </data>
+  <data name="PingSettings_Desc.Text" xml:space="preserve">
+    <value>Configure periodic status check and PING time payload</value>
+  </data>
+  <data name="PeriodicPing_Header.Header" xml:space="preserve">
+    <value>Periodic PING</value>
+  </data>
+  <data name="PeriodicPing_Desc.Text" xml:space="preserve">
+    <value>When enabled, sends PING packets periodically</value>
+  </data>
+  <data name="PingInterval_Header.Header" xml:space="preserve">
+    <value>PING Interval</value>
+  </data>
+  <data name="PingInterval_Desc.Text" xml:space="preserve">
+    <value>PING transmission interval in seconds (1-60)</value>
+  </data>
+  <data name="PingCountryCode_Header.Header" xml:space="preserve">
+    <value>Country Code</value>
+  </data>
+  <data name="PingCountryCode_Desc.Text" xml:space="preserve">
+    <value>2-letter ISO country code (e.g. KR)</value>
+  </data>
+  <data name="PingTimeZone_Header.Header" xml:space="preserve">
+    <value>Time Zone</value>
+  </data>
+  <data name="PingPreview_Header.Header" xml:space="preserve">
+    <value>Payload Preview</value>
+  </data>
 </root>

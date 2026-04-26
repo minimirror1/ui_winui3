@@ -187,4 +187,58 @@
   <data name="SerialMonitor_ComRaw_Desc" xml:space="preserve">
     <value>이 스위치를 켰을 때만 COM 포트에 실제로 쓰고 읽는 전체 프레임을 기록합니다.</value>
   </data>
+  <data name="Section_Connection.Text" xml:space="preserve">
+    <value>연결 설정</value>
+  </data>
+  <data name="Section_Communication.Text" xml:space="preserve">
+    <value>통신 설정</value>
+  </data>
+  <data name="Section_App.Text" xml:space="preserve">
+    <value>앱 설정</value>
+  </data>
+  <data name="XBee_Header.Header" xml:space="preserve">
+    <value>XBee DigiMesh</value>
+  </data>
+  <data name="XBee_Desc.Text" xml:space="preserve">
+    <value>XBee DigiMesh 무선 연결 (STM32)</value>
+  </data>
+  <data name="XBeePort_Header.Header" xml:space="preserve">
+    <value>XBee 포트</value>
+  </data>
+  <data name="ResponseTimeout_Header.Header" xml:space="preserve">
+    <value>응답 타임아웃</value>
+  </data>
+  <data name="ResponseTimeout_Desc.Text" xml:space="preserve">
+    <value>패킷 수신 후 다음 패킷을 기다리는 시간 (초)</value>
+  </data>
+  <data name="PingSettings_Header.Header" xml:space="preserve">
+    <value>PING 설정</value>
+  </data>
+  <data name="PingSettings_Desc.Text" xml:space="preserve">
+    <value>주기 상태 확인과 PING 시간 페이로드를 설정합니다</value>
+  </data>
+  <data name="PeriodicPing_Header.Header" xml:space="preserve">
+    <value>주기 PING</value>
+  </data>
+  <data name="PeriodicPing_Desc.Text" xml:space="preserve">
+    <value>활성화 시 주기적으로 PING 패킷을 전송합니다</value>
+  </data>
+  <data name="PingInterval_Header.Header" xml:space="preserve">
+    <value>PING 주기</value>
+  </data>
+  <data name="PingInterval_Desc.Text" xml:space="preserve">
+    <value>PING 전송 주기 (초, 1-60)</value>
+  </data>
+  <data name="PingCountryCode_Header.Header" xml:space="preserve">
+    <value>국가 코드</value>
+  </data>
+  <data name="PingCountryCode_Desc.Text" xml:space="preserve">
+    <value>2자리 ISO 국가 코드 (예: KR)</value>
+  </data>
+  <data name="PingTimeZone_Header.Header" xml:space="preserve">
+    <value>시간대</value>
+  </data>
+  <data name="PingPreview_Header.Header" xml:space="preserve">
+    <value>페이로드 미리보기</value>
+  </data>
 </root>
