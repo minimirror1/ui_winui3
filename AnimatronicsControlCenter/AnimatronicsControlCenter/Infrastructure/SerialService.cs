@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
@@ -276,7 +275,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             _xbeeService.OnMessageReceived -= HandleBinaryReceived;
         }
 
-        private static byte[] BuildRequestPacket(byte tarId, BinaryCommand cmd)
+        private byte[] BuildRequestPacket(byte tarId, BinaryCommand cmd)
         {
             return cmd switch
             {
@@ -288,27 +287,15 @@ namespace AnimatronicsControlCenter.Infrastructure
             };
         }
 
-        private static byte[] BuildTimedPingRequestPacket(byte tarId)
+        private byte[] BuildTimedPingRequestPacket(byte tarId)
         {
             return BinarySerializer.EncodePing(
                 BinaryProtocolConst.HostId,
                 tarId,
-                new PingTimePayload(GetCurrentCountryCode(), DateTimeOffset.Now));
-        }
-
-        private static string GetCurrentCountryCode()
-        {
-            try
-            {
-                var code = RegionInfo.CurrentRegion.TwoLetterISORegionName;
-                if (code.Length == 2 && char.IsAsciiLetter(code[0]) && char.IsAsciiLetter(code[1]))
-                    return code;
-            }
-            catch (ArgumentException)
-            {
-            }
-
-            return "KR";
+                PingTimePayloadFactory.Create(
+                    _settingsService.PingCountryCode,
+                    _settingsService.PingUtcOffsetMinutes,
+                    DateTimeOffset.UtcNow));
         }
 
         private static BinaryCommand GetCmdFromPacket(byte[] packet)

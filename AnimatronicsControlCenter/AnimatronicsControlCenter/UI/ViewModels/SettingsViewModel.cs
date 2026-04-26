@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter; // For App and MainWindow
+using System;
 using System.IO.Ports;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -87,7 +89,37 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private double responseTimeoutSeconds;
 
+        public List<PingTimeZoneOption> PingTimeZoneOptions { get; } = PingTimeZoneCatalog.All.ToList();
+
+        [ObservableProperty]
+        private PingTimeZoneOption? selectedPingTimeZoneOption;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PingPreviewText))]
+        [NotifyPropertyChangedFor(nameof(PingPayloadPreviewText))]
+        private bool isPeriodicPingEnabled;
+
+        [ObservableProperty]
+        private double pingIntervalSeconds;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PingPreviewText))]
+        [NotifyPropertyChangedFor(nameof(PingPayloadPreviewText))]
+        private string pingCountryCode = "KR";
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PingPreviewText))]
+        [NotifyPropertyChangedFor(nameof(PingPayloadPreviewText))]
+        private int pingUtcOffsetMinutes;
+
+        public string PingPreviewText
+            => PingTimePayloadFactory.FormatPreview(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow);
+
+        public string PingPayloadPreviewText
+            => $"payload: {FormatPingPayloadPreview()}";
+
         private bool _isInitialized;
+        private bool _isUpdatingPingSelection;
 
         public SettingsViewModel(
             ISettingsService settingsService,
@@ -111,6 +143,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             BaudRate = _settingsService.LastBaudRate == 0 ? 115200 : _settingsService.LastBaudRate;
             IsVirtualModeEnabled = _settingsService.IsVirtualModeEnabled;
             ResponseTimeoutSeconds = _settingsService.ResponseTimeoutSeconds;
+            IsPeriodicPingEnabled = _settingsService.IsPeriodicPingEnabled;
+            PingIntervalSeconds = _settingsService.PingIntervalSeconds;
+            PingCountryCode = _settingsService.PingCountryCode;
+            PingUtcOffsetMinutes = _settingsService.PingUtcOffsetMinutes;
+            SelectedPingTimeZoneOption = PingTimeZoneCatalog.FindOrDefault(PingCountryCode, PingUtcOffsetMinutes);
 
             RefreshPorts();
             
@@ -169,6 +206,76 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (!_isInitialized) return;
             _settingsService.ResponseTimeoutSeconds = value;
             _settingsService.Save();
+        }
+
+        partial void OnIsPeriodicPingEnabledChanged(bool value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.IsPeriodicPingEnabled = value;
+            _settingsService.Save();
+        }
+
+        partial void OnPingIntervalSecondsChanged(double value)
+        {
+            if (!_isInitialized) return;
+            var intervalSeconds = Math.Clamp((int)Math.Round(value), 1, 60);
+            if (Math.Abs(value - intervalSeconds) > 0.001)
+            {
+                PingIntervalSeconds = intervalSeconds;
+                return;
+            }
+
+            _settingsService.PingIntervalSeconds = intervalSeconds;
+            _settingsService.Save();
+        }
+
+        partial void OnPingCountryCodeChanged(string value)
+        {
+            OnPropertyChanged(nameof(PingPreviewText));
+            OnPropertyChanged(nameof(PingPayloadPreviewText));
+            if (!_isInitialized || _isUpdatingPingSelection) return;
+            if (string.IsNullOrWhiteSpace(value) || value.Length != 2) return;
+
+            var normalized = PingTimeZoneCatalog.NormalizeCountryCodeOrDefault(value);
+            if (value != normalized)
+            {
+                PingCountryCode = normalized;
+                return;
+            }
+
+            _settingsService.PingCountryCode = normalized;
+            var matchingOption = PingTimeZoneCatalog.GetOptionsForCountry(normalized).FirstOrDefault();
+            if (matchingOption != null)
+            {
+                SelectedPingTimeZoneOption = matchingOption;
+            }
+            else
+            {
+                _settingsService.Save();
+            }
+        }
+
+        partial void OnPingUtcOffsetMinutesChanged(int value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.PingUtcOffsetMinutes = value;
+            _settingsService.Save();
+        }
+
+        partial void OnSelectedPingTimeZoneOptionChanged(PingTimeZoneOption? value)
+        {
+            if (!_isInitialized || value == null) return;
+
+            _isUpdatingPingSelection = true;
+            PingCountryCode = value.CountryCode.ToUpperInvariant();
+            PingUtcOffsetMinutes = value.UtcOffsetMinutes;
+            _isUpdatingPingSelection = false;
+
+            _settingsService.PingCountryCode = PingCountryCode;
+            _settingsService.PingUtcOffsetMinutes = PingUtcOffsetMinutes;
+            _settingsService.Save();
+            OnPropertyChanged(nameof(PingPreviewText));
+            OnPropertyChanged(nameof(PingPayloadPreviewText));
         }
 
         [RelayCommand]
@@ -236,6 +343,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 IsXBeeConnected = false;
             }
+        }
+
+        private string FormatPingPayloadPreview()
+        {
+            var packet = BinarySerializer.EncodePing(
+                BinaryProtocolConst.HostId,
+                tarId: 1,
+                PingTimePayloadFactory.Create(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow));
+            var payload = packet.AsSpan(BinaryProtocolConst.RequestHeaderSize);
+            return string.Join(" ", payload.ToArray().Select(b => b.ToString("X2")));
         }
     }
 }

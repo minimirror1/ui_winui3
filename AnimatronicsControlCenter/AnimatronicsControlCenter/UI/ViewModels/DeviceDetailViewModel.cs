@@ -18,6 +18,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
     public partial class DeviceDetailViewModel : ObservableObject
     {
         private readonly ISerialService _serialService;
+        private readonly ISettingsService _settingsService;
         private readonly DispatcherQueue _dispatcherQueue;
 
         private bool _isMotorsPollingAllowed;
@@ -80,9 +81,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 ? "Unavailable"
                 : SelectedDevice.MotionCreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
-        public DeviceDetailViewModel(ISerialService serialService)
+        public DeviceDetailViewModel(ISerialService serialService, ISettingsService settingsService)
         {
             _serialService = serialService;
+            _settingsService = settingsService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         }
 
@@ -226,7 +228,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private void EnsureStatusPollingState(bool restartIfRunning = false)
         {
-            if (!DeviceStatusRefreshPolicy.ShouldRun(SelectedDevice != null, IsInitialLoadInProgress))
+            if (!DeviceStatusRefreshPolicy.ShouldRun(
+                    SelectedDevice != null,
+                    IsInitialLoadInProgress,
+                    _settingsService.IsPeriodicPingEnabled))
             {
                 StopStatusPolling();
                 return;
@@ -245,9 +250,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private async Task RunStatusPollingLoopAsync(CancellationToken token)
         {
             var device = SelectedDevice;
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(DeviceStatusRefreshPolicy.IntervalMs));
-            while (await timer.WaitForNextTickAsync(token))
+            while (!token.IsCancellationRequested)
             {
+                if (!_settingsService.IsPeriodicPingEnabled) break;
+
+                await Task.Delay(
+                    DeviceStatusRefreshPolicy.GetIntervalMs(_settingsService.PingIntervalSeconds),
+                    token);
                 await RefreshDeviceStatusForDeviceAsync(device, token);
             }
         }

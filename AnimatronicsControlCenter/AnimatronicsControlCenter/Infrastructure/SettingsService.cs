@@ -12,6 +12,10 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyIsVirtualModeEnabled = "IsVirtualModeEnabled";
         private const string KeyLanguage = "Language";
         private const string KeyResponseTimeout = "ResponseTimeoutSeconds";
+        private const string KeyIsPeriodicPingEnabled = "IsPeriodicPingEnabled";
+        private const string KeyPingIntervalSeconds = "PingIntervalSeconds";
+        private const string KeyPingCountryCode = "PingCountryCode";
+        private const string KeyPingUtcOffsetMinutes = "PingUtcOffsetMinutes";
 
         public string LastComPort { get; set; } = "COM1";
         public int LastBaudRate { get; set; } = 115200;
@@ -19,6 +23,10 @@ namespace AnimatronicsControlCenter.Infrastructure
         public bool IsVirtualModeEnabled { get; set; } = false;
         public string Language { get; set; } = "ko-KR";
         public double ResponseTimeoutSeconds { get; set; } = 2.0;
+        public bool IsPeriodicPingEnabled { get; set; } = true;
+        public int PingIntervalSeconds { get; set; } = 5;
+        public string PingCountryCode { get; set; } = "KR";
+        public int PingUtcOffsetMinutes { get; set; } = 540;
 
         public void Save()
         {
@@ -31,6 +39,10 @@ namespace AnimatronicsControlCenter.Infrastructure
                 localSettings.Values[KeyIsVirtualModeEnabled] = IsVirtualModeEnabled;
                 localSettings.Values[KeyLanguage] = Language;
                 localSettings.Values[KeyResponseTimeout] = ResponseTimeoutSeconds;
+                localSettings.Values[KeyIsPeriodicPingEnabled] = IsPeriodicPingEnabled;
+                localSettings.Values[KeyPingIntervalSeconds] = PingIntervalSeconds;
+                localSettings.Values[KeyPingCountryCode] = PingCountryCode;
+                localSettings.Values[KeyPingUtcOffsetMinutes] = PingUtcOffsetMinutes;
             }
             catch
             {
@@ -51,6 +63,10 @@ namespace AnimatronicsControlCenter.Infrastructure
                 {
                     ResponseTimeoutSeconds = SettingValueConverter.ReadDouble(timeout, ResponseTimeoutSeconds);
                 }
+                if (localSettings.Values.TryGetValue(KeyIsPeriodicPingEnabled, out var pingEnabled)) IsPeriodicPingEnabled = (bool)pingEnabled;
+                if (localSettings.Values.TryGetValue(KeyPingIntervalSeconds, out var pingInterval)) PingIntervalSeconds = (int)pingInterval;
+                if (localSettings.Values.TryGetValue(KeyPingCountryCode, out var pingCountryCode)) PingCountryCode = (string)pingCountryCode;
+                if (localSettings.Values.TryGetValue(KeyPingUtcOffsetMinutes, out var pingOffset)) PingUtcOffsetMinutes = (int)pingOffset;
             }
             catch
             {

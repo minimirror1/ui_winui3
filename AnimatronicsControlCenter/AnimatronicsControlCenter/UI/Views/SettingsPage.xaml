@@ -145,6 +145,58 @@
                            MinWidth="120"/>
             </tk:SettingsCard>
 
+            <!-- PING Settings -->
+            <tk:SettingsCard Header="PING 설정"
+                             Description="주기 상태 확인과 PING 시간 payload 값을 설정합니다.">
+                <tk:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE823;"/>
+                </tk:SettingsCard.HeaderIcon>
+                <StackPanel Spacing="12" MinWidth="420">
+                    <ToggleSwitch Header="주기 PING"
+                                  IsOn="{x:Bind ViewModel.IsPeriodicPingEnabled, Mode=TwoWay}"
+                                  OnContent="활성"
+                                  OffContent="비활성"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel>
+                            <TextBlock Text="주기 (초)" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <NumberBox Value="{x:Bind ViewModel.PingIntervalSeconds, Mode=TwoWay}"
+                                       Minimum="1"
+                                       Maximum="60"
+                                       SpinButtonPlacementMode="Inline"
+                                       SmallChange="1"
+                                       LargeChange="5"
+                                       MinWidth="120"/>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock Text="국가 코드" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBox Text="{x:Bind ViewModel.PingCountryCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     MaxLength="2"
+                                     MinWidth="100"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel>
+                        <TextBlock Text="시간대" Style="{StaticResource CaptionTextBlockStyle}"/>
+                        <ComboBox ItemsSource="{x:Bind ViewModel.PingTimeZoneOptions}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPingTimeZoneOption, Mode=TwoWay}"
+                                  DisplayMemberPath="Label"
+                                  MinWidth="280"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Bind ViewModel.PingPreviewText, Mode=OneWay}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{x:Bind ViewModel.PingPayloadPreviewText, Mode=OneWay}"
+                                   FontFamily="Consolas"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </tk:SettingsCard>
+
             <!-- Language -->
             <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('Language_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                 <tk:SettingsCard.HeaderIcon>
