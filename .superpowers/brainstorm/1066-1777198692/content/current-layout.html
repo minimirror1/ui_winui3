@@ -1,0 +1,93 @@
+<h2>현재 설정 페이지 구조 분석</h2>
+<p class="subtitle">항목들이 논리적 그룹 없이 나열되어 있음</p>
+
+<div class="section">
+  <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
+
+    <!-- Current Layout -->
+    <div style="flex:1;min-width:280px;">
+      <h3 style="color:#ef4444;margin-bottom:12px;">⚠ 현재 (난잡한 구조)</h3>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+
+        <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:8px;padding:10px 14px;">
+          <span style="color:#93c5fd;font-size:11px;font-weight:600;">SettingsExpander</span><br/>
+          <b>🔌 연결 (Connection)</b>
+          <div style="margin-top:6px;padding-left:12px;display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#0f2744;border-radius:4px;padding:6px 10px;color:#94a3b8;">COM 포트 선택</div>
+            <div style="background:#0f2744;border-radius:4px;padding:6px 10px;color:#94a3b8;">보드레이트 선택</div>
+            <div style="background:#0f2744;border-radius:4px;padding:6px 10px;color:#94a3b8;">연결/해제 버튼 + 상태</div>
+          </div>
+        </div>
+
+        <div style="background:#3b1f1f;border:1px solid #ef4444;border-radius:8px;padding:10px 14px;border-left:4px solid #ef4444;">
+          <span style="color:#fca5a5;font-size:10px;font-weight:600;">⚠ 독립 카드 (연결 그룹 밖)</span><br/>
+          <b>🖥 가상 모드</b>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">연결 설정과 논리적으로 연관되나 분리됨</div>
+        </div>
+
+        <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:8px;padding:10px 14px;">
+          <span style="color:#93c5fd;font-size:11px;font-weight:600;">SettingsExpander</span><br/>
+          <b>📡 XBee DigiMesh</b>
+          <div style="margin-top:6px;padding-left:12px;display:flex;flex-direction:column;gap:4px;">
+            <div style="background:#0f2744;border-radius:4px;padding:6px 10px;color:#94a3b8;">XBee 포트 선택</div>
+            <div style="background:#0f2744;border-radius:4px;padding:6px 10px;color:#94a3b8;">보드레이트 선택</div>
+            <div style="background:#0f2744;border-radius:4px;padding:6px 10px;color:#94a3b8;">연결/해제 버튼 + 상태</div>
+          </div>
+        </div>
+
+        <div style="background:#3b1f1f;border:1px solid #ef4444;border-radius:8px;padding:10px 14px;border-left:4px solid #ef4444;">
+          <span style="color:#fca5a5;font-size:10px;font-weight:600;">⚠ 독립 카드 (하드코딩 한국어)</span><br/>
+          <b>⏱ 응답 타임아웃</b>
+        </div>
+
+        <div style="background:#3b1f1f;border:2px solid #ef4444;border-radius:8px;padding:10px 14px;border-left:4px solid #ef4444;">
+          <span style="color:#fca5a5;font-size:10px;font-weight:600;">⚠ 단일 카드에 복잡한 중첩 레이아웃</span><br/>
+          <b>📶 PING 설정</b>
+          <div style="margin-top:6px;padding-left:12px;font-size:11px;color:#94a3b8;">
+            토글 + 주기 + 국가코드 + 시간대 + 미리보기<br/>
+            → 모두 하나의 카드에 비표준 StackPanel으로 묶임
+          </div>
+        </div>
+
+        <div style="background:#1e3a5f;border:1px solid #6366f1;border-radius:8px;padding:10px 14px;">
+          <b>🌐 언어</b>
+        </div>
+
+        <div style="background:#1e3a5f;border:1px solid #6366f1;border-radius:8px;padding:10px 14px;">
+          <b>🖥 시리얼 모니터</b>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Problems -->
+    <div style="flex:1;min-width:260px;">
+      <h3 style="color:#f59e0b;margin-bottom:12px;">문제점 요약</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#292000;border:1px solid #f59e0b;border-radius:8px;padding:12px;">
+          <div style="font-weight:600;color:#fcd34d;margin-bottom:4px;">1. 그룹핑 없음</div>
+          <div style="font-size:12px;color:#94a3b8;">연결/프로토콜/앱설정이 하나의 평면 목록으로 나열됨</div>
+        </div>
+        <div style="background:#292000;border:1px solid #f59e0b;border-radius:8px;padding:12px;">
+          <div style="font-weight:600;color:#fcd34d;margin-bottom:4px;">2. 가상 모드 위치 불일치</div>
+          <div style="font-size:12px;color:#94a3b8;">연결 Expander 밖에 있어 논리적 흐름이 끊김</div>
+        </div>
+        <div style="background:#292000;border:1px solid #f59e0b;border-radius:8px;padding:12px;">
+          <div style="font-weight:600;color:#fcd34d;margin-bottom:4px;">3. PING 카드 과부하</div>
+          <div style="font-size:12px;color:#94a3b8;">5개 하위 설정이 하나의 SettingsCard에 비표준 StackPanel로 묶임 — SettingsExpander로 분리해야 함</div>
+        </div>
+        <div style="background:#292000;border:1px solid #f59e0b;border-radius:8px;padding:12px;">
+          <div style="font-weight:600;color:#fcd34d;margin-bottom:4px;">4. 하드코딩 문자열 혼재</div>
+          <div style="font-size:12px;color:#94a3b8;">일부는 다국어 리소스, 일부는 한국어 하드코딩</div>
+        </div>
+        <div style="background:#292000;border:1px solid #f59e0b;border-radius:8px;padding:12px;">
+          <div style="font-weight:600;color:#fcd34d;margin-bottom:4px;">5. 응답 타임아웃 위치</div>
+          <div style="font-size:12px;color:#94a3b8;">통신 프로토콜 설정인데 연결 그룹과 분리됨</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<p style="text-align:center;color:#6b7280;font-size:12px;margin-top:20px;">다음: 재구성 방안 3가지 접근법 제시</p>
