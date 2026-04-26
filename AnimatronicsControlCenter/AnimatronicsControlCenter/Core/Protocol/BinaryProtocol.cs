@@ -1,3 +1,5 @@
+using System;
+
 namespace AnimatronicsControlCenter.Core.Protocol;
 
 // §3.1 Command (uint8)
@@ -77,6 +79,8 @@ public static class BinaryProtocolConst
     public const int RequestHeaderSize  = 5;  // src(1)+tar(1)+cmd(1)+payload_len(2)
     public const int ResponseHeaderSize = 6;  // src(1)+tar(1)+cmd(1)+status(1)+payload_len(2)
     public const int PongPayloadSize    = 10;
+    public const int PingTimePayloadSize = 12;
+    public const byte PingTimeFormatLocal = 0x01;
     public const int AppPathMaxLen      = 128;
     public const int AppContentMaxLen   = 512;
     public const int MaxPathUtf8Bytes   = AppPathMaxLen - 1;
@@ -92,3 +96,5 @@ public record struct RequestHeader(byte SrcId, byte TarId, BinaryCommand Cmd, us
 public record struct ResponseHeader(byte SrcId, byte TarId, BinaryCommand Cmd, ResponseStatus Status, ushort PayloadLen);
 
 public readonly record struct PongStatus(BinaryPingState State, byte InitState, uint CurrentMs, uint TotalMs);
+
+public readonly record struct PingTimePayload(string CountryCode, DateTimeOffset Timestamp);

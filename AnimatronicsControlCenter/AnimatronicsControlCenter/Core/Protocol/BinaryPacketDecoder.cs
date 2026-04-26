@@ -201,12 +201,66 @@ public static class BinaryPacketDecoder
 
     private static string DecodeRequestPayload(RequestHeader header, ReadOnlySpan<byte> payload)
     {
+        if (header.Cmd == BinaryCommand.Ping)
+        {
+            return DecodePingRequest(payload, header);
+        }
+
         return Lines(
             $"type=REQUEST",
             $"cmd={header.Cmd}",
             $"src={header.SrcId}",
             $"tar={header.TarId}",
             $"payload_len={header.PayloadLen}",
+            $"raw={ToHex(payload)}");
+    }
+
+    private static string DecodePingRequest(ReadOnlySpan<byte> payload, RequestHeader header)
+    {
+        if (payload.Length == 0)
+        {
+            return Lines(
+                "type=REQUEST",
+                $"cmd={header.Cmd}",
+                $"src={header.SrcId}",
+                $"tar={header.TarId}",
+                $"payload_len={header.PayloadLen}",
+                "time_payload=absent",
+                $"raw={ToHex(payload)}");
+        }
+
+        if (payload.Length != BinaryProtocolConst.PingTimePayloadSize)
+        {
+            return Lines(
+                "type=REQUEST",
+                $"cmd={header.Cmd}",
+                $"src={header.SrcId}",
+                $"tar={header.TarId}",
+                $"payload_len={header.PayloadLen}",
+                "payload_error=invalid PING time payload length",
+                $"raw={ToHex(payload)}");
+        }
+
+        byte timeFormat = payload[0];
+        string countryCode = Encoding.ASCII.GetString(payload.Slice(1, 2));
+        ushort year = BinaryPrimitives.ReadUInt16LittleEndian(payload.Slice(3, 2));
+        byte month = payload[5];
+        byte day = payload[6];
+        byte hour = payload[7];
+        byte minute = payload[8];
+        byte second = payload[9];
+        short utcOffsetMin = BinaryPrimitives.ReadInt16LittleEndian(payload.Slice(10, 2));
+
+        return Lines(
+            "type=REQUEST",
+            $"cmd={header.Cmd}",
+            $"src={header.SrcId}",
+            $"tar={header.TarId}",
+            $"payload_len={header.PayloadLen}",
+            $"time_fmt={timeFormat}",
+            $"country_code={countryCode}",
+            $"timestamp={year:D4}-{month:D2}-{day:D2} {hour:D2}:{minute:D2}:{second:D2}",
+            $"utc_offset_min={utcOffsetMin}",
             $"raw={ToHex(payload)}");
     }
 

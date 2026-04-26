@@ -23,6 +23,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStatePatch.cs" Link="Core\Motors\MotorStatePatch.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStateMerger.cs" Link="Core\Motors\MotorStateMerger.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryProtocol.cs" Link="Core\Protocol\BinaryProtocol.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinarySerializer.cs" Link="Core\Protocol\BinarySerializer.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryDeserializer.cs" Link="Core\Protocol\BinaryDeserializer.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryPacketDecodeResult.cs" Link="Core\Protocol\BinaryPacketDecodeResult.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryPacketDecoder.cs" Link="Core\Protocol\BinaryPacketDecoder.cs" />

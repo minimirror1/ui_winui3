@@ -26,6 +26,26 @@ public static class BinarySerializer
     public static byte[] EncodePing(byte srcId, byte tarId)
         => BuildRequest(srcId, tarId, BinaryCommand.Ping, ReadOnlySpan<byte>.Empty);
 
+    public static byte[] EncodePing(byte srcId, byte tarId, PingTimePayload timePayload)
+    {
+        var countryCode = NormalizeCountryCode(timePayload.CountryCode);
+        var timestamp = timePayload.Timestamp;
+        var payload = new byte[BinaryProtocolConst.PingTimePayloadSize];
+
+        payload[0] = BinaryProtocolConst.PingTimeFormatLocal;
+        payload[1] = (byte)countryCode[0];
+        payload[2] = (byte)countryCode[1];
+        BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(3), checked((ushort)timestamp.Year));
+        payload[5] = checked((byte)timestamp.Month);
+        payload[6] = checked((byte)timestamp.Day);
+        payload[7] = checked((byte)timestamp.Hour);
+        payload[8] = checked((byte)timestamp.Minute);
+        payload[9] = checked((byte)timestamp.Second);
+        BinaryPrimitives.WriteInt16LittleEndian(payload.AsSpan(10), checked((short)timestamp.Offset.TotalMinutes));
+
+        return BuildRequest(srcId, tarId, BinaryCommand.Ping, payload);
+    }
+
     /// §4.2 MOVE — motor_id(1) + pos(2)
     public static byte[] EncodeMove(byte srcId, byte tarId, byte motorId, double posRaw)
     {
@@ -98,5 +118,17 @@ public static class BinarySerializer
         offset += 2;
         contentBytes.CopyTo(payload.AsSpan(offset));
         return BuildRequest(srcId, tarId, cmd, payload);
+    }
+
+    private static string NormalizeCountryCode(string countryCode)
+    {
+        if (countryCode.Length != 2 ||
+            !char.IsAsciiLetter(countryCode[0]) ||
+            !char.IsAsciiLetter(countryCode[1]))
+        {
+            throw new ArgumentException("Country code must be two ASCII letters.", nameof(countryCode));
+        }
+
+        return countryCode.ToUpperInvariant();
     }
 }

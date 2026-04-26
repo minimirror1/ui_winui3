@@ -28,6 +28,25 @@ public class BinaryPacketDecoderTests
     }
 
     [TestMethod]
+    public void DecodePingRequest_IncludesTimePayload()
+    {
+        byte[] packet = BinarySerializer.EncodePing(
+            BinaryProtocolConst.HostId,
+            tarId: 1,
+            new PingTimePayload("KR", new DateTimeOffset(2026, 4, 24, 15, 30, 45, TimeSpan.FromHours(9))));
+
+        BinaryPacketDecodeResult result = BinaryPacketDecoder.Decode(packet);
+
+        Assert.IsTrue(result.IsValid);
+        Assert.IsFalse(result.IsResponse);
+        Assert.AreEqual("Ping", result.Command);
+        StringAssert.Contains(result.Details, "time_fmt=1");
+        StringAssert.Contains(result.Details, "country_code=KR");
+        StringAssert.Contains(result.Details, "timestamp=2026-04-24 15:30:45");
+        StringAssert.Contains(result.Details, "utc_offset_min=540");
+    }
+
+    [TestMethod]
     public void DecodeErrorResponse_IncludesErrorCodeAndMessage()
     {
         byte[] payload = BuildErrorPayload(BinaryErrorCode.TxBusy, "TX busy");

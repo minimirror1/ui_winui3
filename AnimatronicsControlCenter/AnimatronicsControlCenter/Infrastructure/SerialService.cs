@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
@@ -279,12 +280,35 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             return cmd switch
             {
-                BinaryCommand.Ping => BinarySerializer.EncodePing(BinaryProtocolConst.HostId, tarId),
+                BinaryCommand.Ping => BuildTimedPingRequestPacket(tarId),
                 BinaryCommand.GetMotors => BinarySerializer.EncodeGetMotors(BinaryProtocolConst.HostId, tarId),
                 BinaryCommand.GetMotorState => BinarySerializer.EncodeGetMotorState(BinaryProtocolConst.HostId, tarId),
                 BinaryCommand.GetFiles => BinarySerializer.EncodeGetFiles(BinaryProtocolConst.HostId, tarId),
                 _ => throw new ArgumentException($"Cannot build no-payload packet for cmd={cmd}. Use SendBinaryCommandAsync with pre-built packet."),
             };
+        }
+
+        private static byte[] BuildTimedPingRequestPacket(byte tarId)
+        {
+            return BinarySerializer.EncodePing(
+                BinaryProtocolConst.HostId,
+                tarId,
+                new PingTimePayload(GetCurrentCountryCode(), DateTimeOffset.Now));
+        }
+
+        private static string GetCurrentCountryCode()
+        {
+            try
+            {
+                var code = RegionInfo.CurrentRegion.TwoLetterISORegionName;
+                if (code.Length == 2 && char.IsAsciiLetter(code[0]) && char.IsAsciiLetter(code[1]))
+                    return code;
+            }
+            catch (ArgumentException)
+            {
+            }
+
+            return "KR";
         }
 
         private static BinaryCommand GetCmdFromPacket(byte[] packet)
