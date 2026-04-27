@@ -351,7 +351,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (SelectedDevice == null || SelectedFile == null) return;
 
             LastLoadError = string.Empty;
-            var validation = FirmwareFileRequestValidation.Validate(SelectedFile.Path, FileContent);
+            string contentForDevice = FirmwareFileContentFormatting.NormalizeLineEndingsForDevice(FileContent);
+            var validation = FirmwareFileRequestValidation.Validate(SelectedFile.Path, contentForDevice);
             if (!validation.IsValid)
             {
                 FilesStatusMessage = $"Failed to save file: {validation.ErrorMessage}";
@@ -359,7 +360,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 return;
             }
 
-            var packet = BinarySerializer.EncodeSaveFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
+            var packet = BinarySerializer.EncodeSaveFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, contentForDevice);
             var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.SaveFile, packet);
             var result = SaveFileResponseProjection.Evaluate(responseBytes, SelectedFile.Path);
 
@@ -374,7 +375,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (SelectedDevice == null || SelectedFile == null) return;
 
             LastLoadError = string.Empty;
-            var validation = FirmwareFileRequestValidation.Validate(SelectedFile.Path, FileContent);
+            string contentForDevice = FirmwareFileContentFormatting.NormalizeLineEndingsForDevice(FileContent);
+            var validation = FirmwareFileRequestValidation.Validate(SelectedFile.Path, contentForDevice);
             if (!validation.IsValid)
             {
                 var message = validation.ErrorMessage;
@@ -385,7 +387,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 return;
             }
 
-            var packet = BinarySerializer.EncodeVerifyFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, FileContent);
+            var packet = BinarySerializer.EncodeVerifyFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, SelectedFile.Path, contentForDevice);
             var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.VerifyFile, packet);
             if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
             {

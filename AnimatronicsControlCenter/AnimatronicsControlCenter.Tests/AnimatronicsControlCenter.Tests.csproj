@@ -29,6 +29,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryPacketDecoder.cs" Link="Core\Protocol\BinaryPacketDecoder.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryProtocolErrorText.cs" Link="Core\Protocol\BinaryProtocolErrorText.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\PingTimeSettings.cs" Link="Core\Protocol\PingTimeSettings.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\FirmwareFileContentFormatting.cs" Link="Core\Protocol\FirmwareFileContentFormatting.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\FirmwareFileRequestValidation.cs" Link="Core\Protocol\FirmwareFileRequestValidation.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\SaveFileResponseProjection.cs" Link="Core\Protocol\SaveFileResponseProjection.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\DeviceStatusRefreshPolicy.cs" Link="Core\Utilities\DeviceStatusRefreshPolicy.cs" />
