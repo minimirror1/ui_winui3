@@ -9,7 +9,7 @@
   <Identity
     Name="AnimatronicsControlCenter"
     Publisher="CN=Development"
-    Version="1.1.4.0" />
+    Version="1.1.5.0" />
 
   <mp:PhoneIdentity PhoneProductId="12345678-1234-1234-1234-123456789012" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
