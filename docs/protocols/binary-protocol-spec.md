@@ -143,9 +143,13 @@ JSON                          → Binary
 
 | 값 | 이름 | JSON 문자열 |
 |----|------|-------------|
-| `0x00` | MOTOR_SERVO | `"Servo"` |
-| `0x01` | MOTOR_DC | `"DC"` |
-| `0x02` | MOTOR_STEPPER | `"Stepper"` |
+| `0x00` | APP_MOTOR_TYPE_NULL | `"Null"` |
+| `0x01` | APP_MOTOR_TYPE_RC | `"RC"` |
+| `0x02` | APP_MOTOR_TYPE_AC | `"AC"` |
+| `0x03` | APP_MOTOR_TYPE_BL | `"BL"` |
+| `0x04` | APP_MOTOR_TYPE_ZER | `"ZER"` |
+| `0x05` | APP_MOTOR_TYPE_DXL | `"DXL"` |
+| `0x06` | APP_MOTOR_TYPE_AC2 | `"AC2"` |
 
 ### 3.4 MotorStatus (uint8)
 
@@ -374,7 +378,7 @@ JSON 원본:
 ```json
 { "src_id": 2, "tar_id": 0, "cmd": "get_motors", "status": "ok",
   "payload": { "motors": [
-    { "id": 1, "groupId": 1, "subId": 1, "type": "Servo", "status": "Normal",
+    { "id": 1, "groupId": 1, "subId": 1, "type": "RC", "status": "Normal",
       "position": 2048, "velocity": 0.5,
       "minAngle": 0, "maxAngle": 180, "minRaw": 0, "maxRaw": 3072 }
   ] } }
@@ -419,14 +423,14 @@ Total: 17 bytes
 │  │  │  │  │  └──┘  └──┘  └──┘  └──┘  └──┘  └──┘
 │  │  │  │  │  pos   vel   minA  maxA  minR  maxR
 │  │  │  │  └ status=Normal(0x00)
-│  │  │  └ type=Servo(0x00)
+│  │  │  └ type=RC(0x01)
 │  │  └ sub_id=1
 │  └ group_id=1
 └ id=1       (pos=2048, vel=0.50, angle 0°~180°, raw 0~3072)
 02 01 02 01 01 00 03 64 00 00 00 08 07 00 00 00 0C  ← motor[1]
-                                                     (id=2, DC(0x01), Error(0x01), pos=768, vel=1.00)
+                                                     (id=2, AC(0x02), Error(0x01), pos=768, vel=1.00)
 03 02 01 02 00 00 00 14 00 7C FC 84 03 00 00 FF 0F  ← motor[2]
-                                                     (id=3, Stepper(0x02), Normal, pos=0, vel=0.20, angle -90°~90°)
+                                                     (id=3, DXL(0x05), Normal, pos=0, vel=0.20, angle -90°~90°)
 ```
 
 필드별 계산 근거 (VirtualDeviceManager 기준):

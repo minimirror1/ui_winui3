@@ -75,9 +75,9 @@ namespace AnimatronicsControlCenter.Infrastructure
             {
                 motors = new List<MotorState>
                 {
-                    new MotorState { Id = 1, GroupId = 1, SubId = 1, Position = 2048, Type = "Servo",   Status = "Normal", Velocity = 0.5, MinAngle = 0,   MaxAngle = 180, MinRaw = 0, MaxRaw = 3072 },
-                    new MotorState { Id = 2, GroupId = 1, SubId = 2, Position = 768,  Type = "DC",      Status = "Error",  Velocity = 1.0, MinAngle = 0,   MaxAngle = 180, MinRaw = 0, MaxRaw = 3072 },
-                    new MotorState { Id = 3, GroupId = 2, SubId = 1, Position = 0,    Type = "Stepper", Status = "Normal", Velocity = 0.2, MinAngle = -90, MaxAngle = 90,  MinRaw = 0, MaxRaw = 4095 }
+                    new MotorState { Id = 1, GroupId = 1, SubId = 1, Position = 2048, Type = "RC",  Status = "Normal", Velocity = 0.5, MinAngle = 0,   MaxAngle = 180, MinRaw = 0, MaxRaw = 3072 },
+                    new MotorState { Id = 2, GroupId = 1, SubId = 2, Position = 768,  Type = "AC",  Status = "Error",  Velocity = 1.0, MinAngle = 0,   MaxAngle = 180, MinRaw = 0, MaxRaw = 3072 },
+                    new MotorState { Id = 3, GroupId = 2, SubId = 1, Position = 0,    Type = "DXL", Status = "Normal", Velocity = 0.2, MinAngle = -90, MaxAngle = 90,  MinRaw = 0, MaxRaw = 4095 }
                 };
                 _deviceMotors[deviceId] = motors;
                 _deviceMotorTick[deviceId] = 0;

@@ -16,7 +16,7 @@ namespace AnimatronicsControlCenter.Core.Models
         private int subId;
 
         [ObservableProperty]
-        private string type = "Servo"; // Default type
+        private string type = "Null"; // Default type
 
         [ObservableProperty]
         private string status = "Normal"; // Default status

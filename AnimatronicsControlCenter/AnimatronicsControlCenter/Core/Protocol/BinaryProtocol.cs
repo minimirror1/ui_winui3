@@ -28,9 +28,13 @@ public enum ResponseStatus : byte
 // §3.3 MotorType (uint8)
 public enum BinaryMotorType : byte
 {
-    Servo   = 0x00,
-    DC      = 0x01,
-    Stepper = 0x02,
+    Null = 0x00,
+    RC   = 0x01,
+    AC   = 0x02,
+    BL   = 0x03,
+    ZER  = 0x04,
+    DXL  = 0x05,
+    AC2  = 0x06,
 }
 
 // §3.4 MotorStatus (uint8)

@@ -241,9 +241,13 @@ public static class BinaryDeserializer
 
     public static string DecodeMotorType(byte b) => b switch
     {
-        0x00 => "Servo",
-        0x01 => "DC",
-        0x02 => "Stepper",
+        0x00 => "Null",
+        0x01 => "RC",
+        0x02 => "AC",
+        0x03 => "BL",
+        0x04 => "ZER",
+        0x05 => "DXL",
+        0x06 => "AC2",
         _    => "Unknown",
     };
 
@@ -258,10 +262,14 @@ public static class BinaryDeserializer
 
     public static byte EncodeMotorType(string type) => type switch
     {
-        "Servo"   => 0x00,
-        "DC"      => 0x01,
-        "Stepper" => 0x02,
-        _         => 0x00,
+        "Null" => 0x00,
+        "RC"   => 0x01,
+        "AC"   => 0x02,
+        "BL"   => 0x03,
+        "ZER"  => 0x04,
+        "DXL"  => 0x05,
+        "AC2"  => 0x06,
+        _      => 0x00,
     };
 
     public static byte EncodeMotorStatus(string status) => status switch
