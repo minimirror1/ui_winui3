@@ -104,6 +104,18 @@ public class SettingsPageReorganizationTests
         Assert.AreEqual(0, CountOccurrences(xaml, "SelectedItem=\"{x:Bind ViewModel.SelectedPort"));
     }
 
+    [TestMethod]
+    public void SettingsViewModel_LoadsComPortsWithoutUsbMetadataScan()
+    {
+        string source = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "SettingsViewModel.cs"));
+
+        Assert.IsFalse(source.Contains("RefreshPortsAsync", StringComparison.Ordinal));
+        Assert.IsFalse(source.Contains("SerialPortDeviceInfoProvider.GetDeviceInfoByPort", StringComparison.Ordinal));
+        Assert.IsFalse(source.Contains("Task.Run", StringComparison.Ordinal));
+        StringAssert.Contains(source, "RefreshPorts();");
+        StringAssert.Contains(source, "SerialPortDisplay.CreateOption(portName, deviceInfo: null)");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

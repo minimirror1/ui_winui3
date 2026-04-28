@@ -286,15 +286,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private void RefreshPorts()
         {
             var portNames = SerialPort.GetPortNames();
-            var deviceInfoByPort = SerialPortDeviceInfoProvider.GetDeviceInfoByPort(portNames);
-
             AvailablePorts = portNames;
             AvailablePortOptions = portNames
-                .Select(portName => SerialPortDisplay.CreateOption(
-                    portName,
-                    deviceInfoByPort.TryGetValue(portName, out var deviceInfo) ? deviceInfo : null))
-                .OrderByDescending(option => option.IsLikelyXBee)
-                .ThenBy(option => option.PortName, StringComparer.OrdinalIgnoreCase)
+                .Select(portName => SerialPortDisplay.CreateOption(portName, deviceInfo: null))
+                .OrderBy(option => option.PortName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
             if (AvailablePortOptions.Any() &&
