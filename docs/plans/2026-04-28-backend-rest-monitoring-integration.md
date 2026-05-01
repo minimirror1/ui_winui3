@@ -10,7 +10,7 @@
 
 ## 구현 준비 상태
 
-이 문서는 구현 가능한 계획이다. 아래 API 계약과 구현 방향은 다음 레퍼런스를 기준으로 조사했으며, 문서 끝의 리뷰 질문은 구현 가정과 검증 작업으로 반영했다.
+이 문서는 구현 가능한 계획이다. 아래 API 계약과 구현 방향은 다음 레퍼런스를 기준으로 조사했으며, 문서 끝의 리뷰 질문은 확정된 구현 결정과 검증 작업으로 반영했다.
 
 - `references/iic-robot-monitor-frontend/api_doc.md`
 - `references/iic-robot-monitor-frontend/frontend/src/lib/api/client.ts`
@@ -113,7 +113,7 @@ Timeout: 15초
    - PC 자동 생성은 하지 않으며, 미리 생성된 `store_id`/`pc_id`에 대해 `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`로 `pc_name`과 `sw_version`만 갱신한다.
 
 8. PONG 전원 상태 wire format
-   - v1 구현 가정은 기존 PONG payload 끝에 전원 상태 1 byte를 선택적으로 추가하는 방식이다.
+   - v1 wire format은 기존 PONG payload 끝에 전원 상태 1 byte를 선택적으로 추가하는 방식으로 확정한다.
    - `0x01`은 `"ON"`, `0x00`은 `"OFF"`로 해석한다.
    - 기존 펌웨어처럼 추가 byte가 없는 PONG payload는 호환성을 위해 정상 파싱하고 `Device.PowerStatus = "OFF"` 기본값을 유지한다.
    - 알 수 없는 byte 값은 `"OFF"`로 처리하고, binary parser가 예외를 던지지 않게 한다.
@@ -273,7 +273,7 @@ private string powerStatus = "OFF"; // backend values: ON/OFF
 PONG payload 확장 구현:
 
 - 현재 저장소의 binary PONG payload에는 전원 상태 필드가 아직 보이지 않는다.
-- 전원 상태가 PONG payload에 추가될 예정이므로 `PongStatus`, `BinaryDeserializer.TryParsePongResponse`, `FirmwareStatusProjection.Apply`를 함께 확장한다.
+- 전원 상태는 기존 PONG payload 끝의 선택적 1 byte로 처리하므로 `PongStatus`, `BinaryDeserializer.TryParsePongResponse`, `FirmwareStatusProjection.Apply`를 함께 확장한다.
 - 기존 펌웨어와의 호환을 위해 전원 상태 필드가 없는 기존 길이의 PONG payload도 계속 파싱하고, 이 경우 `Device.PowerStatus = "OFF"` 기본값을 사용한다.
 
 ## 제안 인터페이스
@@ -1119,16 +1119,18 @@ public static BackendObjectLogRequest CreateObjectLog(Device device)
 
 **Step 4: 펌웨어 전원 상태 투영 구현**
 
-펌웨어가 전원 상태를 주는 정확한 응답/필드를 확인한 뒤 다음 중 해당 경로를 수정한다.
+확정된 v1 wire format에 맞춰 기존 PONG payload 끝의 선택적 1 byte를 전원 상태로 파싱한다.
 
-- PONG payload 확장인 경우:
-  - `Core/Protocol/PingTimeSettings.cs` 또는 `PongStatus` 정의 위치
-  - `Core/Protocol/BinaryDeserializer.cs`
-  - `Core/Models/FirmwareStatusProjection.cs`
-- 별도 status payload인 경우:
-  - 해당 deserializer와 `Device` 투영 경로
+- `Core/Protocol/PingTimeSettings.cs` 또는 `PongStatus` 정의 위치
+- `Core/Protocol/BinaryDeserializer.cs`
+- `Core/Models/FirmwareStatusProjection.cs`
 
-전원 상태를 읽을 수 없는 응답은 `PowerStatus = "OFF"`를 유지한다.
+파싱 규칙:
+
+- PONG payload가 기존 길이면 기존 방식대로 정상 파싱하고 `PowerStatus = "OFF"`를 유지한다.
+- 추가 byte가 `0x01`이면 `PowerStatus = "ON"`으로 투영한다.
+- 추가 byte가 `0x00`이면 `PowerStatus = "OFF"`로 투영한다.
+- 알 수 없는 추가 byte 값은 예외 없이 `PowerStatus = "OFF"`로 투영한다.
 
 **Step 5: GREEN 확인**
 
