@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**목표:** `ui_winui3` 앱에서 백엔드 REST API와 통신하여 매장/PC/오브제 식별 정보를 관리하고, 오브제 전원 상태와 상태 로그를 백엔드 서버로 송신할 수 있게 한다.
+**목표:** `ui_winui3` 앱에서 백엔드 REST API와 통신하여 매장/PC/오브제 식별 정보를 관리하고, 펌웨어에서 수신한 오브제 전원 상태와 상태 로그를 백엔드 서버로 보고할 수 있게 한다.
 
 **아키텍처:** `HttpClient` 기반의 작은 typed REST client 계층을 추가하고, 서버 주소/토큰/Store ID/PC ID/Object ID 매핑은 왼쪽 하단의 지구본/서버 아이콘으로 여는 전용 `BackendSettingsPage`에서 편집한다. 이 화면은 서버 조회 영역과 로컬 설정 영역을 2분할로 보여주고, 서버에서 조회한 값을 로컬 설정으로 복사하거나 비교할 수 있게 한다. 설정값은 프로그램 실행파일 경로의 JSON 설정 파일에 저장한다. 펌웨어/장치 모델과 백엔드 DTO는 분리하고, Dashboard에 스캔된 모든 장치 상태를 백엔드 요청 DTO로 명시적으로 변환해 전역 동기화 서비스가 주기적으로 송신한다. `references/iic-robot-monitor-frontend`는 빌드 대상이 아닌 참고용으로만 사용한다.
 
@@ -49,7 +49,9 @@
 - Store 생성/수정: `POST /v1/service/stores`, `PUT /v1/service/stores/{store_id}`
 - PC 생성/수정: `POST /v1/service/stores/{store_id}/pcs`, `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`
 - Object 생성/수정: `POST /v1/service/stores/{store_id}/pcs/{pc_id}/objects`, `PUT /v1/service/objects/{object_id}`
-- 전원 상태 송신: `POST /v1/service/objects/{object_id}/power`
+- 전원 제어 API: `POST /v1/service/objects/{object_id}/power`
+  - 이 프로그램은 전원 제어 명령을 내리는 주체가 아니므로 v1에서는 호출하지 않는다.
+  - 전원 상태 보고는 아래 상태/에러 로그 API의 `power_status` 필드로만 수행한다.
 - 상태/에러 로그 송신: `POST /v1/service/objects/{object_id}/logs`
 
 레퍼런스 프론트엔드의 기본 백엔드 URL:
@@ -70,7 +72,11 @@ Timeout: 15초
 
 1. 백엔드 식별 정보의 출처
    - `ui_winui3`는 Store/PC/Object를 자동 생성하지 않는다.
-   - 미리 생성된 백엔드 `store_id`, `pc_id`, `object_id`에 상태만 보낸다.
+   - 미리 생성된 백엔드 `store_id`, `pc_id`, `object_id`를 사용한다.
+   - `ui_winui3` 프로그램 인스턴스 1개는 백엔드 PC 1개와 1:1 대응한다.
+   - 같은 Store에 다른 PC가 있더라도, 해당 PC 정보는 그 PC에서 실행되는 다른 `ui_winui3` 인스턴스가 관리한다.
+   - 이 프로그램은 설정된 `BackendPcId`에 해당하는 PC 1개만 조회/비교/보고 대상으로 삼는다.
+   - Object에는 상태 로그만 보내고, PC에는 이 프로그램이 설치된 PC의 `pc_name`과 `sw_version` 메타데이터만 갱신한다.
 
 2. 오브제 매핑 방식
    - 스캔된 animatronics 장치 1개가 백엔드 Object 1개에 대응한다.
@@ -90,14 +96,21 @@ Timeout: 15초
    - 연결 상태로 추정하지 않는다.
    - 펌웨어가 PONG payload에 담아 제공할 전원 상태를 사용해 `"ON"` 또는 `"OFF"`로 보낸다.
    - 구현 시 PONG payload의 전원 상태 필드를 `Device.PowerStatus`로 투영한다.
+   - 백엔드 보고는 `POST /v1/service/objects/{object_id}/logs`의 `power_status` 필드로 수행한다.
+   - `POST /v1/service/objects/{object_id}/power`는 전원 제어 API이므로 이 프로그램에서는 호출하지 않는다.
    - ping 실패 시에는 연결 끊김으로 판단하고 `"OFF"` 로그를 보낸다.
+   - 실제 전원 OFF와 통신 실패 OFF를 구분하기 위해 ping 실패 로그에는 `error_data`에 `"Disconnected"`를 함께 포함한다.
 
 6. `error_data` 출처
    - 아래 “에러 매핑 제안”을 v1 기본값으로 사용한다.
+   - ping 실패처럼 장치 응답 자체가 없는 경우에는 연결 끊김 error_data를 추가한다.
 
 7. PC 기본값
    - `pc_name`: 기본값 `"pc_name_001"`, 전용 백엔드 설정 화면에서 수정 가능해야 한다.
-   - `sw_version`: 기본값 `"1.1.1.0"`, 전용 백엔드 설정 화면에서 수정 가능해야 한다.
+   - `sw_version`: 이 PC에 설치된 `ui_winui3` 프로그램 버전이다.
+   - `sw_version` 기본값은 `"1.1.1.0"`이고, 전용 백엔드 설정 화면에서 수정 가능해야 한다.
+   - 저장된 `sw_version`은 백엔드의 기존 PC 메타데이터에 보고한다.
+   - PC 자동 생성은 하지 않으며, 미리 생성된 `store_id`/`pc_id`에 대해 `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`로 `pc_name`과 `sw_version`만 갱신한다.
 
 ## 에러 매핑 제안
 
@@ -107,6 +120,10 @@ Timeout: 15초
   - `Status == "Normal"`이면 `error_data`에 포함하지 않는다.
 - 오류 상태만 송신한다.
   - `Status == "Error"`, `"Overload"`, `"Disconnected"`이면 `error_data`에 포함한다.
+- ping 실패/장치 무응답은 실제 전원 OFF와 구분하기 위해 별도 연결 끊김 오류로 송신한다.
+  - `boardId`: 로컬 장치 ID 문자열. 예: device 2 -> `"2"`.
+  - `boardType`: `"DEVICE"`.
+  - `errorCode`: `"Disconnected"`.
 - `boardId`
   - `GroupId`와 `SubId`가 있으면 `"{GroupId}-{SubId}"`로 보낸다. 예: group 1, sub 2 -> `"1-2"`.
   - 둘 중 하나가 없으면 `MotorState.Id`를 문자열로 보낸다.
@@ -155,6 +172,10 @@ public sealed record BackendPcCreateRequest(
     [property: JsonPropertyName("pc_name")] string PcName,
     [property: JsonPropertyName("sw_version")] string SwVersion);
 
+public sealed record BackendPcUpdateRequest(
+    [property: JsonPropertyName("pc_name")] string PcName,
+    [property: JsonPropertyName("sw_version")] string SwVersion);
+
 public sealed record BackendObjectCreateRequest(
     [property: JsonPropertyName("object_name")] string ObjectName,
     [property: JsonPropertyName("object_operation_time")] BackendTimeRange ObjectOperationTime,
@@ -170,9 +191,6 @@ public sealed record BackendFirmwareVersion(
     [property: JsonPropertyName("board_id")] string BoardId,
     [property: JsonPropertyName("board_type")] string BoardType,
     [property: JsonPropertyName("version")] string Version);
-
-public sealed record BackendObjectPowerRequest(
-    [property: JsonPropertyName("power_status")] string PowerStatus);
 
 public sealed record BackendObjectLogRequest(
     [property: JsonPropertyName("power_status")] string PowerStatus,
@@ -199,6 +217,7 @@ public sealed record BackendStoreDetailResponse(
 public sealed record BackendPcDetailResponse(
     [property: JsonPropertyName("pc_id")] string PcId,
     [property: JsonPropertyName("pc_name")] string? PcName,
+    [property: JsonPropertyName("sw_version")] string? SwVersion,
     [property: JsonPropertyName("objects")] IReadOnlyList<BackendObjectDetailResponse> Objects);
 
 public sealed record BackendObjectDetailResponse(
@@ -233,6 +252,17 @@ PONG payload 확장 구현:
 
 ## 제안 인터페이스
 
+생성 파일: `AnimatronicsControlCenter/Core/Interfaces/IBackendSettingsPathProvider.cs`
+
+```csharp
+namespace AnimatronicsControlCenter.Core.Interfaces;
+
+public interface IBackendSettingsPathProvider
+{
+    string BackendSettingsFilePath { get; }
+}
+```
+
 생성 파일: `AnimatronicsControlCenter/Core/Interfaces/IBackendMonitoringService.cs`
 
 ```csharp
@@ -243,7 +273,6 @@ namespace AnimatronicsControlCenter.Core.Interfaces;
 public interface IBackendMonitoringService
 {
     Task<BackendSendResult> SendObjectLogAsync(Device device, CancellationToken cancellationToken);
-    Task<BackendSendResult> SendObjectPowerAsync(string objectId, string powerStatus, CancellationToken cancellationToken);
 }
 
 public sealed record BackendSendResult(bool Success, int? StatusCode, string Message);
@@ -260,6 +289,12 @@ public interface IBackendServerCatalogClient
 {
     Task<BackendFetchResult<BackendStoreDetailResponse>> GetStoreDetailAsync(
         string storeId,
+        CancellationToken cancellationToken);
+
+    Task<BackendSendResult> UpdatePcMetadataAsync(
+        string storeId,
+        string pcId,
+        BackendPcUpdateRequest request,
         CancellationToken cancellationToken);
 }
 
@@ -310,7 +345,7 @@ string BackendStoreCountryCode { get; set; }     // 예: KR
 string BackendPcId { get; set; }
 string BackendPcName { get; set; }               // 기본값: pc_name_001
 string BackendSoftwareVersion { get; set; }      // 기본값: 1.1.1.0
-string BackendDeviceObjectMappingsJson { get; set; } // JSON dictionary: {"2":"obj-1"}
+Dictionary<int, string> BackendDeviceObjectMappings { get; set; } // 예: [2] = "obj-1"
 int BackendSyncIntervalSeconds { get; set; }     // 기본값: 5
 ```
 
@@ -319,6 +354,8 @@ int BackendSyncIntervalSeconds { get; set; }     // 기본값: 5
 - 기존 `SettingsService`의 `ApplicationData.Current.LocalSettings`에는 저장하지 않는다.
 - 백엔드 설정은 프로그램 실행파일 경로에 JSON 파일로 저장한다.
 - `IsBackendSyncEnabled`도 같은 JSON 파일에 저장하고 로드한다. 사용자가 활성/비활성 상태를 바꾸면 다음 프로그램 실행 시에도 그 상태를 유지한다.
+- `backendDeviceObjectMappings`는 설정 파일에서도 JSON object로 저장하고, `SettingsService`에서도 `Dictionary<int,string>`로 유지한다.
+- JSON 문자열은 설정 서비스의 핵심 타입으로 쓰지 않는다. 사용자가 textarea에서 직접 편집하는 경우에만 `BackendSettingsViewModel`의 임시 문자열 draft로 둔다.
 - 제안 파일명: `backend-settings.json`
 - 제안 경로: `Path.Combine(AppContext.BaseDirectory, "backend-settings.json")`
 - 실행파일 경로가 쓰기 불가능한 배포 형태라면 저장 실패를 사용자에게 보여준다. 단, 이번 요구사항의 기본 경로는 실행파일 경로로 고정한다.
@@ -327,12 +364,16 @@ int BackendSyncIntervalSeconds { get; set; }     // 기본값: 5
 
 - 백엔드 동기화는 기본 활성화.
 - 설정 파일이 없거나 `isBackendSyncEnabled` 값이 없으면 `IsBackendSyncEnabled == true`로 시작한다.
-- 사용자가 비활성화로 저장한 경우에는 다음 실행부터 `IsBackendSyncEnabled == false`로 로드하고 네트워크 호출을 하지 않는다.
+- `IsBackendSyncEnabled`는 Dashboard 전역 background 상태 송신만 제어한다.
+- 사용자가 비활성화로 저장한 경우에는 다음 실행부터 `IsBackendSyncEnabled == false`로 로드하고 Dashboard 자동 `/logs` 송신 loop를 돌리지 않는다.
+- 백엔드 설정 화면의 `서버 조회`, `서버 값 비교`, `저장 후 PC metadata 보고`는 사용자가 명시적으로 누르는 수동 REST 호출이므로 `IsBackendSyncEnabled`와 별개로 동작한다.
 - 장치에 대응하는 Object ID가 없으면 송신하지 않고 상태 메시지만 남긴다.
 - v1에서는 Store/PC/Object 자동 생성은 하지 않는다.
+- `ui_winui3` 인스턴스 1개는 `BackendPcId` 1개만 담당한다.
+- Store detail 응답의 다른 PC들은 조회 결과에 포함되어도 이 프로그램의 비교/보고 대상이 아니다.
 - Dashboard에 등록된 모든 스캔 장치가 동기화 대상이다.
 - `BackendPcName` 기본값은 `"pc_name_001"`이다.
-- `BackendSoftwareVersion` 기본값은 `"1.1.1.0"`이다.
+- `BackendSoftwareVersion` 기본값은 `"1.1.1.0"`이며, 이 PC에 설치된 `ui_winui3`의 `sw_version`으로 서버에 보고한다.
 - `BackendStoreCountryCode`는 서버 조회 결과에 `country_code`가 있으면 비교/복사 대상이고, 없으면 사용자가 직접 입력한다.
 
 ## 백엔드 설정 화면 제안
@@ -353,6 +394,8 @@ int BackendSyncIntervalSeconds { get; set; }     // 기본값: 5
 - 오른쪽 분할: 로컬 소프트웨어 설정 영역
   - 편집 항목: Store ID, Store Name, Store Country Code, PC ID, PC Name, Software Version, device/object mapping, sync enabled, sync interval.
   - `저장` 버튼은 실행파일 경로의 `backend-settings.json`에 저장하고 다음 실행 시 로드한다.
+  - `Software Version`은 이 PC에 설치된 `ui_winui3` 버전이며, 저장 후 기존 백엔드 PC의 `sw_version`으로 보고한다.
+  - PC 메타데이터 보고는 미리 생성된 PC에 대한 갱신만 수행한다. Store/PC/Object 자동 생성은 하지 않는다.
   - 비교 버튼명 제안: `서버 값 비교`.
   - 비교 결과는 오른쪽 입력창별로 표시한다. 같은 값은 상단 요약에만 포함하고, 다른 값은 해당 입력창 아래에 빨간 메시지로 표시한다.
 
@@ -408,11 +451,12 @@ public class BackendDtoSerializationTests
     }
 
     [TestMethod]
-    public void ObjectPowerRequest_UsesBackendJsonFieldNames()
+    public void PcUpdateRequest_UsesBackendJsonFieldNames()
     {
-        string json = JsonSerializer.Serialize(new BackendObjectPowerRequest("OFF"));
+        string json = JsonSerializer.Serialize(new BackendPcUpdateRequest("pc_name_001", "1.1.1.0"));
 
-        Assert.AreEqual("{\"power_status\":\"OFF\"}", json);
+        StringAssert.Contains(json, "\"pc_name\":\"pc_name_001\"");
+        StringAssert.Contains(json, "\"sw_version\":\"1.1.1.0\"");
     }
 
     [TestMethod]
@@ -427,6 +471,7 @@ public class BackendDtoSerializationTests
             {
               "pc_id": "pc-1",
               "pc_name": "Main PC",
+              "sw_version": "1.1.1.0",
               "objects": [
                 { "id": "obj-1", "object_name": "Robot A", "power_status": "ON", "error_data": [] }
               ]
@@ -440,6 +485,7 @@ public class BackendDtoSerializationTests
         Assert.AreEqual("store-1", response!.StoreId);
         Assert.AreEqual("KR", response.CountryCode);
         Assert.AreEqual("pc-1", response.Pcs[0].PcId);
+        Assert.AreEqual("1.1.1.0", response.Pcs[0].SwVersion);
         Assert.AreEqual("obj-1", response.Pcs[0].Objects[0].Id);
     }
 }
@@ -468,55 +514,98 @@ dotnet test .\AnimatronicsControlCenter\AnimatronicsControlCenter.Tests\Animatro
 ### Task 2: 실행파일 경로 JSON 기반 백엔드 설정 추가
 
 **파일:**
+- 생성: `AnimatronicsControlCenter/AnimatronicsControlCenter/Core/Interfaces/IBackendSettingsPathProvider.cs`
+- 생성: `AnimatronicsControlCenter/AnimatronicsControlCenter/Infrastructure/BackendSettingsPathProvider.cs`
 - 수정: `AnimatronicsControlCenter/AnimatronicsControlCenter/Core/Interfaces/ISettingsService.cs`
 - 수정: `AnimatronicsControlCenter/AnimatronicsControlCenter/Infrastructure/SettingsService.cs`
 - 테스트: `AnimatronicsControlCenter/AnimatronicsControlCenter.Tests/BackendSettingsSourceTests.cs`
 
-**Step 1: 소스 검사 실패 테스트 작성**
+**Step 1: 파일 roundtrip 실패 테스트 작성**
 
-기존 테스트 스타일에 맞춰 필요한 설정이 interface/service에 모두 있는지 확인한다.
+소스 문자열 검사가 아니라 실제 임시 파일에 저장하고 새 `SettingsService` 인스턴스로 다시 로드해 핵심 요구사항을 검증한다. 테스트는 실제 실행파일 폴더를 건드리지 않도록 fake `IBackendSettingsPathProvider`를 사용한다.
 
 ```csharp
-[TestMethod]
-public void SettingsService_ContainsBackendSyncSettings()
+private sealed class FakeBackendSettingsPathProvider : IBackendSettingsPathProvider
 {
-    string settings = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "Infrastructure", "SettingsService.cs"));
-    string contract = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "Core", "Interfaces", "ISettingsService.cs"));
-
-    foreach (string name in new[]
+    public FakeBackendSettingsPathProvider(string filePath)
     {
-        "IsBackendSyncEnabled",
-        "BackendBaseUrl",
-        "BackendBearerToken",
-        "BackendStoreId",
-        "BackendStoreName",
-        "BackendStoreCountryCode",
-        "BackendPcId",
-        "BackendPcName",
-        "BackendSoftwareVersion",
-        "BackendDeviceObjectMappingsJson",
-        "BackendSyncIntervalSeconds",
-    })
-    {
-        StringAssert.Contains(contract, name);
-        StringAssert.Contains(settings, name);
+        BackendSettingsFilePath = filePath;
     }
 
-    StringAssert.Contains(settings, "https://robot-monitor-api-dev.innergm.com");
-    StringAssert.Contains(settings, "pc_name_001");
-    StringAssert.Contains(settings, "1.1.1.0");
-    StringAssert.Contains(settings, "backend-settings.json");
-    StringAssert.Contains(settings, "AppContext.BaseDirectory");
+    public string BackendSettingsFilePath { get; }
+}
+
+private static string CreateTempSettingsPath()
+{
+    string directory = Path.Combine(Path.GetTempPath(), "ui_winui3_backend_settings_tests", Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(directory);
+    return Path.Combine(directory, "backend-settings.json");
+}
+
+[TestMethod]
+public void BackendSettings_LoadsDefaultsWhenFileIsMissing()
+{
+    var settings = new SettingsService(new FakeBackendSettingsPathProvider(CreateTempSettingsPath()));
+
+    settings.Load();
+
+    Assert.IsTrue(settings.IsBackendSyncEnabled);
+    Assert.AreEqual("pc_name_001", settings.BackendPcName);
+    Assert.AreEqual("1.1.1.0", settings.BackendSoftwareVersion);
+    Assert.AreEqual(0, settings.BackendDeviceObjectMappings.Count);
+}
+
+[TestMethod]
+public void BackendSettings_SaveAndLoad_RoundTripsValues()
+{
+    string path = CreateTempSettingsPath();
+    var first = new SettingsService(new FakeBackendSettingsPathProvider(path))
+    {
+        IsBackendSyncEnabled = false,
+        BackendBaseUrl = "https://example.invalid",
+        BackendStoreId = "store-1",
+        BackendPcId = "pc-1",
+        BackendPcName = "Main PC",
+        BackendSoftwareVersion = "1.2.3.4",
+        BackendDeviceObjectMappings = new Dictionary<int, string> { [2] = "obj-1" },
+    };
+
+    first.Save();
+
+    var second = new SettingsService(new FakeBackendSettingsPathProvider(path));
+    second.Load();
+
+    Assert.IsFalse(second.IsBackendSyncEnabled);
+    Assert.AreEqual("https://example.invalid", second.BackendBaseUrl);
+    Assert.AreEqual("store-1", second.BackendStoreId);
+    Assert.AreEqual("pc-1", second.BackendPcId);
+    Assert.AreEqual("Main PC", second.BackendPcName);
+    Assert.AreEqual("1.2.3.4", second.BackendSoftwareVersion);
+    Assert.AreEqual("obj-1", second.BackendDeviceObjectMappings[2]);
+}
+
+[TestMethod]
+public void BackendSettings_InvalidJson_FallsBackToDefaults()
+{
+    string path = CreateTempSettingsPath();
+    File.WriteAllText(path, "{bad json");
+
+    var settings = new SettingsService(new FakeBackendSettingsPathProvider(path));
+    settings.Load();
+
+    Assert.IsTrue(settings.IsBackendSyncEnabled);
+    Assert.AreEqual("pc_name_001", settings.BackendPcName);
+    Assert.AreEqual("1.1.1.0", settings.BackendSoftwareVersion);
 }
 ```
 
 **Step 2: RED 확인**
 
 ```powershell
-dotnet test .\AnimatronicsControlCenter\AnimatronicsControlCenter.Tests\AnimatronicsControlCenter.Tests.csproj --filter SettingsService_ContainsBackendSyncSettings
+dotnet test .\AnimatronicsControlCenter\AnimatronicsControlCenter.Tests\AnimatronicsControlCenter.Tests.csproj --filter BackendSettings
 ```
 
-예상: 설정이 없어서 실패.
+예상: `IBackendSettingsPathProvider`, 백엔드 설정 property, 파일 저장/로드 구현이 없어서 실패.
 
 **Step 3: 설정 구현**
 
@@ -525,13 +614,18 @@ dotnet test .\AnimatronicsControlCenter\AnimatronicsControlCenter.Tests\Animatro
 구현 방향:
 
 - `SettingsService`에 백엔드 설정 property를 추가한다.
+- `SettingsService` 생성자는 `IBackendSettingsPathProvider`를 받는다.
+- 운영용 `BackendSettingsPathProvider`는 `Path.Combine(AppContext.BaseDirectory, "backend-settings.json")`을 반환한다.
+- 테스트는 fake provider로 임시 파일 경로를 주입한다.
 - `IsBackendSyncEnabled`의 기본값은 `true`로 둔다.
 - `Save()`는 기존 일반 설정은 계속 `ApplicationData.Current.LocalSettings`에 저장한다.
 - 백엔드 설정은 별도 private method `SaveBackendSettingsFile()`에서 JSON 파일로 저장한다.
 - `Load()`는 기존 일반 설정을 로드한 뒤 `LoadBackendSettingsFile()`로 백엔드 설정 파일을 읽는다.
 - 파일이 없으면 기본값을 사용한다.
 - 파일에 `isBackendSyncEnabled`가 있으면 그 값을 그대로 사용해 활성/비활성 상태를 유지한다.
-- JSON이 깨져 있으면 기본값을 사용하고 앱이 죽지 않게 한다.
+- 설정 파일 JSON이 깨져 있으면 기본값을 사용하고 앱이 죽지 않게 한다.
+- `backendDeviceObjectMappings`는 파일에서 `Dictionary<int,string>`로 역직렬화한다. 키가 문자열 숫자(`"2"`)로 저장되어도 로드 후 앱 내부에서는 `int` 키로 다룬다.
+- ViewModel의 textarea 편집용 JSON 문자열은 저장 버튼에서만 파싱한다. 파싱 실패 시 `SettingsService`에 반영하지 않고 사용자에게 오류를 표시한다.
 
 제안 JSON 형식:
 
@@ -566,7 +660,7 @@ filtered test 재실행. 예상: PASS.
 
 **Step 1: 실패 테스트 작성**
 
-정상 매핑, 누락 매핑, 잘못된 JSON을 테스트한다.
+정상 매핑과 누락 매핑을 테스트한다. Resolver는 JSON 파싱 책임을 갖지 않고, `SettingsService.BackendDeviceObjectMappings` 딕셔너리만 읽는다.
 
 ```csharp
 [TestMethod]
@@ -574,7 +668,10 @@ public void ResolveObjectId_ReturnsMappedObjectId()
 {
     var settings = new FakeSettingsService
     {
-        BackendDeviceObjectMappingsJson = "{\"2\":\"obj-1\"}"
+        BackendDeviceObjectMappings = new Dictionary<int, string>
+        {
+            [2] = "obj-1"
+        }
     };
     var resolver = new BackendObjectIdResolver(settings);
 
@@ -582,11 +679,11 @@ public void ResolveObjectId_ReturnsMappedObjectId()
 }
 
 [TestMethod]
-public void ResolveObjectId_ReturnsNullForMissingOrInvalidMapping()
+public void ResolveObjectId_ReturnsNullForMissingMapping()
 {
     var settings = new FakeSettingsService
     {
-        BackendDeviceObjectMappingsJson = "{bad json"
+        BackendDeviceObjectMappings = new Dictionary<int, string>()
     };
     var resolver = new BackendObjectIdResolver(settings);
 
@@ -600,7 +697,7 @@ public void ResolveObjectId_ReturnsNullForMissingOrInvalidMapping()
 
 **Step 3: Resolver 구현**
 
-`System.Text.Json`으로 `Dictionary<string,string>`을 파싱한다. JSON 오류는 catch하고 null을 반환한다.
+`settings.BackendDeviceObjectMappings.TryGetValue(deviceId, out var objectId)`로 바로 조회한다. JSON 파싱은 Resolver에서 하지 않는다.
 
 **Step 4: GREEN 확인**
 
@@ -620,11 +717,19 @@ resolver 테스트 실행.
 검증 항목:
 
 - `GetStoreDetailAsync("store-1")`이 `GET /v1/service/stores/store-1/detail`을 호출한다.
-- store detail 응답의 `store_id`, `store_name`, `country_code`, `pcs[*].pc_id`, `pcs[*].objects[*].id`를 DTO로 역직렬화한다.
-- `SendObjectPowerAsync("obj-1", "ON")`이 `POST /v1/service/objects/obj-1/power`를 보낸다.
-- request body가 `{"power_status":"ON"}`이다.
+- `IsBackendSyncEnabled == false`여도 `GetStoreDetailAsync`는 호출된다.
+- store detail 응답의 `store_id`, `store_name`, `country_code`, `pcs[*].pc_id`, `pcs[*].sw_version`, `pcs[*].objects[*].id`를 DTO로 역직렬화한다.
+- `UpdatePcMetadataAsync("store-1", "pc-1", request)`가 `PUT /v1/service/stores/store-1/pcs/pc-1`을 호출한다.
+- `IsBackendSyncEnabled == false`여도 `UpdatePcMetadataAsync`는 호출된다.
+- PC metadata update request body에 `pc_name`과 `sw_version`이 포함된다.
+- `SendObjectLogAsync(device)`가 `POST /v1/service/objects/{object_id}/logs`를 보낸다.
+- `IsBackendSyncEnabled == false`인 자동 동기화 경로에서는 `SendObjectLogAsync`를 호출하지 않거나, 호출되더라도 네트워크 요청 없이 `"Backend sync disabled."`를 반환한다.
+- log request body에 `power_status`, `operation_status`, `error_data`가 포함된다.
+- `/v1/service/objects/{object_id}/power`는 호출하지 않는다.
 - token이 있으면 `Authorization: Bearer ...`가 포함된다.
 - token이 비어 있으면 Authorization 헤더를 보내지 않는다.
+- `HttpClient.BaseAddress`를 설정하지 않고, 요청마다 `BackendBaseUrl`에서 absolute URI를 만들어 전송한다.
+- 동적 token은 `HttpClient.DefaultRequestHeaders`에 넣지 않고, 요청마다 `HttpRequestMessage.Headers.Authorization`에 설정한다.
 - non-2xx 응답은 `BackendSendResult(false, status, message)`로 반환한다.
 
 **Step 2: RED 확인**
@@ -644,14 +749,21 @@ public BackendMonitoringService(
 
 규칙:
 
-- `BackendServerCatalogClient`는 `IBackendServerCatalogClient`를 구현하고 `GET /v1/service/stores/{store_id}/detail`만 담당한다.
-- 백엔드 동기화가 꺼져 있으면 `"Backend sync disabled."` 결과 반환.
-- `BackendBaseUrl`을 `HttpClient.BaseAddress`로 사용한다.
-- token이 비어 있지 않으면 요청마다 Authorization 헤더 추가.
+- `BackendServerCatalogClient`는 `IBackendServerCatalogClient`를 구현하고 store detail 조회와 기존 PC metadata 갱신을 담당한다.
+- PC metadata 갱신은 `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`로 수행하고, payload는 `{ "pc_name": "...", "sw_version": "..." }`이다.
+- 이 갱신은 기존 PC에 대한 보고이며, Store/PC/Object 생성 API를 호출하지 않는다.
+- `BackendServerCatalogClient.GetStoreDetailAsync`와 `UpdatePcMetadataAsync`는 수동 설정 화면 동작이므로 `IsBackendSyncEnabled`가 false여도 호출할 수 있다.
+- `BackendMonitoringService.SendObjectLogAsync`는 자동 background sync 송신용이다. 정상 실행 경로에서는 `BackendDashboardSyncService`가 `IsBackendSyncEnabled`를 확인한 뒤에만 호출한다.
+- 방어적으로 `BackendMonitoringService.SendObjectLogAsync` 내부에서도 `IsBackendSyncEnabled == false`이면 `"Backend sync disabled."` 결과를 반환해도 된다. 단, 이 규칙을 `BackendServerCatalogClient`에는 적용하지 않는다.
+- `HttpClient`는 singleton으로 재사용하되 `BaseAddress`를 설정하거나 요청 중 변경하지 않는다.
+- `BackendBaseUrl`은 요청 시점마다 `ISettingsService`에서 읽고, endpoint path와 결합해 absolute URI를 만든다.
+- token이 비어 있지 않으면 `HttpRequestMessage`마다 Authorization 헤더를 추가한다.
+- `HttpClient.DefaultRequestHeaders.Authorization`에는 동적 token을 저장하지 않는다.
 - JSON은 `JsonSerializerDefaults.Web` 기준으로 직렬화.
 - DI 등록 시 timeout은 15초로 설정.
 - `SendObjectLogAsync(Device device, ...)`는 `IBackendObjectIdResolver.ResolveObjectId(device.Id)` 결과가 없으면 네트워크 호출 없이 실패 결과를 반환한다.
 - `SendObjectLogAsync`는 `BackendDeviceMapper.CreateObjectLog(device)` 결과를 `/v1/service/objects/{object_id}/logs`로 보낸다.
+- `BackendMonitoringService`에는 전원 제어 메서드를 만들지 않는다. 이 프로그램은 백엔드에서 전원 명령을 받는 주체이며, 백엔드에 전원 제어 명령을 보내지 않는다.
 
 **Step 4: GREEN 확인**
 
@@ -669,6 +781,8 @@ public BackendMonitoringService(
 
 비교 결과가 필드별로 같은지/다른지와 이유를 제공하는지 테스트한다.
 
+`BackendServerSnapshot`은 Store 전체 PC 목록이 아니라, 서버 Store detail 응답에서 현재 `BackendPcId`와 일치하는 PC 1개를 선택해 만든 현재 프로그램 전용 snapshot이다.
+
 ```csharp
 [TestMethod]
 public void Compare_ReturnsFieldLevelMismatchReasons()
@@ -679,6 +793,7 @@ public void Compare_ReturnsFieldLevelMismatchReasons()
         StoreCountryCode: "KR",
         PcId: "pc-1",
         PcName: "Main PC",
+        SwVersion: "1.1.1.0",
         Objects: new[] { new BackendServerObjectSnapshot("obj-1", "Robot A") });
 
     var local = new BackendLocalSettingsSnapshot(
@@ -687,6 +802,7 @@ public void Compare_ReturnsFieldLevelMismatchReasons()
         StoreCountryCode: "JP",
         PcId: "pc-2",
         PcName: "pc_name_001",
+        SwVersion: "1.1.2.0",
         DeviceObjectMappings: new Dictionary<int, string> { [2] = "obj-missing" });
 
     var result = BackendSettingsComparison.Compare(server, local);
@@ -694,6 +810,7 @@ public void Compare_ReturnsFieldLevelMismatchReasons()
     Assert.IsTrue(result.Fields.Single(x => x.FieldName == "StoreId").IsMatch);
     Assert.IsFalse(result.Fields.Single(x => x.FieldName == "StoreCountryCode").IsMatch);
     StringAssert.Contains(result.Fields.Single(x => x.FieldName == "StoreCountryCode").Message, "서버 값");
+    StringAssert.Contains(result.Fields.Single(x => x.FieldName == "SwVersion").Message, "sw_version");
     StringAssert.Contains(result.Fields.Single(x => x.FieldName == "PcId").Message, "PC ID");
     StringAssert.Contains(result.Fields.Single(x => x.FieldName == "DeviceObjectMappings").Message, "Object ID");
 }
@@ -714,6 +831,7 @@ public sealed record BackendServerSnapshot(
     string? StoreCountryCode,
     string? PcId,
     string? PcName,
+    string? SwVersion,
     IReadOnlyList<BackendServerObjectSnapshot> Objects);
 
 public sealed record BackendServerObjectSnapshot(string ObjectId, string? ObjectName);
@@ -724,6 +842,7 @@ public sealed record BackendLocalSettingsSnapshot(
     string? StoreCountryCode,
     string PcId,
     string PcName,
+    string SwVersion,
     IReadOnlyDictionary<int, string> DeviceObjectMappings);
 
 public sealed record BackendFieldComparison(
@@ -739,10 +858,15 @@ public sealed record BackendSettingsComparisonResult(
 
 구현 규칙:
 
+- Store detail 응답에 여러 PC가 있어도 이 프로그램은 설정된 `BackendPcId`와 일치하는 PC 1개만 선택한다.
+- 선택된 PC로 `BackendServerSnapshot`을 만들며, 다른 PC는 다른 장비/프로그램 인스턴스의 소유로 보고 비교하지 않는다.
+- Store detail 응답에서 `BackendPcId`와 일치하는 PC를 찾지 못하면 `CanCompare == false` 또는 `PcId` 필드 불일치로 표시하고, `서버 Store 아래에 이 PC ID가 없습니다.` 메시지를 반환한다.
 - 서버 조회 결과가 없으면 `CanCompare == false`와 `서버 값을 먼저 조회해야 비교할 수 있습니다.` 메시지를 반환한다.
 - 같은 값은 `IsMatch == true`, 빈 메시지 또는 중립 메시지로 둔다.
 - 다른 값은 `IsMatch == false`이고 오른쪽 입력창 아래에 표시할 빨간 메시지를 포함한다.
-- `PcId`는 조회한 Store의 PC 목록에 존재하는지 확인한다.
+- `PcId`는 선택된 현재 PC의 ID와 로컬 `BackendPcId`를 비교한다.
+- `SwVersion`은 선택된 현재 PC의 `sw_version`과 로컬 `BackendSoftwareVersion`을 비교한다.
+- 로컬 `SwVersion`은 이 PC에 설치된 `ui_winui3` 버전이며, 서버 값과 다르면 오른쪽 Software Version 입력 아래에 불일치 메시지를 표시한다.
 - Object ID 매핑은 선택된 PC의 object 목록에 존재하는지 확인한다.
 
 **Step 4: GREEN 확인**
@@ -785,6 +909,20 @@ comparison 테스트 실행.
 **Step 4: 페이지 shell 생성**
 
 `BackendSettingsPage.xaml`은 우선 빈 ViewModel 바인딩 가능한 shell만 만든다. 실제 입력 컨트롤은 Task 7에서 추가한다.
+`BackendSettingsPage.xaml.cs`는 기존 `SettingsPage` 패턴을 따른다. Page는 `Frame.Navigate(typeof(BackendSettingsPage))`로 WinUI가 생성하고, 생성자에서 `App.Current.Services.GetRequiredService<BackendSettingsViewModel>()`로 ViewModel만 DI에서 가져온다.
+
+```csharp
+public sealed partial class BackendSettingsPage : Page
+{
+    public BackendSettingsViewModel ViewModel { get; }
+
+    public BackendSettingsPage()
+    {
+        InitializeComponent();
+        ViewModel = App.Current.Services.GetRequiredService<BackendSettingsViewModel>();
+    }
+}
+```
 
 **Step 5: GREEN 확인**
 
@@ -805,9 +943,15 @@ navigation 테스트 실행.
 
 - 생성 시 `backend-settings.json` 값을 로드하고, 파일이 없으면 기본값을 사용한다.
 - `FetchServerCommand`는 `IBackendServerCatalogClient.GetStoreDetailAsync(StoreId)`를 호출하고 서버 snapshot을 만든다.
+- Store detail 응답에 여러 PC가 있어도 `BackendPcId`와 일치하는 PC 1개만 snapshot으로 만든다.
+- `BackendPcId`와 일치하는 PC가 없으면 다른 PC를 대신 선택하지 않고, 비교/적용 불가 메시지를 표시한다.
 - `ApplyServerValuesCommand`는 서버 snapshot의 Store/PC/Object 값을 오른쪽 로컬 draft에 복사하지만 저장하지 않는다.
 - `CompareWithServerCommand`는 비교 결과를 필드별 메시지로 노출한다.
 - `SaveCommand`는 오른쪽 로컬 draft를 설정 파일에 저장한다.
+- device/object mapping textarea는 ViewModel의 `BackendDeviceObjectMappingsText` 같은 임시 문자열 속성으로만 둔다.
+- 저장 시 `BackendDeviceObjectMappingsText`를 `Dictionary<int,string>`로 파싱하고, 성공한 경우에만 `SettingsService.BackendDeviceObjectMappings`에 반영한다.
+- mapping JSON 파싱에 실패하면 설정 파일 저장과 서버 보고를 중단하고 해당 입력 아래에 빨간 오류 메시지를 표시한다.
+- `SaveCommand` 이후 기존 백엔드 PC에 `pc_name`과 `sw_version`을 보고한다. 서버 보고 실패 시 설정 파일 저장은 유지하고, 실패 메시지를 오른쪽 화면에 표시한다.
 
 **Step 2: XAML 소스 검사 실패 테스트 작성**
 
@@ -830,6 +974,10 @@ navigation 테스트 실행.
 - page 진입은 즉시 끝나야 한다. 생성자에서 네트워크 호출을 하지 않는다.
 - 서버 조회는 명시적으로 `서버 조회` 버튼을 눌렀을 때만 수행한다.
 - 파일 저장은 `저장` 버튼에서만 수행한다.
+- device/object mapping은 UI에서는 JSON 문자열로 보여주되, 저장 전에는 반드시 `Dictionary<int,string>`로 변환한다.
+- 변환 실패 시 기존 설정 딕셔너리를 덮어쓰지 않는다.
+- `저장` 후 `Store ID`와 `PC ID`가 있으면 `IBackendServerCatalogClient.UpdatePcMetadataAsync`로 `pc_name`과 `sw_version`을 보고한다.
+- PC metadata 보고는 사용자가 비활성화한 background sync 상태와 별개로, 명시적인 저장 동작에 대한 수동 REST 호출로 취급한다.
 - 서버 값 적용은 local draft만 바꾸며, 저장 여부는 사용자에게 맡긴다.
 - 비교는 마지막 서버 조회 결과와 현재 local draft를 기준으로 한다.
 - 서버 조회 실패 메시지는 왼쪽 서버 영역에 표시하고, 오른쪽 필드 오류와 섞지 않는다.
@@ -953,13 +1101,18 @@ mapper 테스트 실행.
 
 ```csharp
 services.AddSingleton<IBackendObjectIdResolver, BackendObjectIdResolver>();
+services.AddSingleton<IBackendSettingsPathProvider, BackendSettingsPathProvider>();
 services.AddSingleton<IBackendMonitoringService, BackendMonitoringService>();
 services.AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>();
 services.AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>();
 services.AddSingleton<HttpClient>();
+services.AddTransient<BackendSettingsViewModel>();
 ```
 
 실제 `HttpClient` 등록은 factory로 `Timeout = TimeSpan.FromSeconds(15)`를 지정해도 된다.
+`HttpClient.BaseAddress`와 `DefaultRequestHeaders.Authorization`은 등록 시점에 설정하지 않는다. 서버 URL과 token은 사용자 설정에서 런타임에 바뀔 수 있으므로 요청마다 `HttpRequestMessage`에 적용한다.
+`IBackendSettingsPathProvider`는 운영 환경에서 실행파일 경로의 `backend-settings.json`을 반환한다. 테스트에서는 fake provider로 임시 파일 경로를 주입한다.
+`BackendSettingsPage`는 `Frame.Navigate(typeof(BackendSettingsPage))`로 WinUI가 직접 생성하므로 Page 자체는 DI에 등록하지 않는다. `BackendSettingsPage` 생성자가 `GetRequiredService<BackendSettingsViewModel>()`로 ViewModel을 가져오도록 `BackendSettingsViewModel`만 transient로 등록한다.
 
 **Step 2: RED 확인**
 
@@ -973,9 +1126,11 @@ services.AddSingleton<HttpClient>(_ => new HttpClient
     Timeout = TimeSpan.FromSeconds(15)
 });
 services.AddSingleton<IBackendObjectIdResolver, BackendObjectIdResolver>();
+services.AddSingleton<IBackendSettingsPathProvider, BackendSettingsPathProvider>();
 services.AddSingleton<IBackendMonitoringService, BackendMonitoringService>();
 services.AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>();
 services.AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>();
+services.AddTransient<BackendSettingsViewModel>();
 ```
 
 **Step 4: GREEN 확인**
@@ -996,7 +1151,7 @@ DI 소스 검사 테스트 실행.
 - `BackendDashboardSyncService.ReplaceDevices(devices)`가 동기화 대상 장치 목록을 교체한다.
 - `Start()` 후 interval tick에서 모든 장치에 대해 `ISerialService.PingDeviceAsync(device.Id)`를 호출한다.
 - ping 결과가 있으면 해당 `Device` 상태를 갱신하고 `IBackendMonitoringService.SendObjectLogAsync(device, token)`를 호출한다.
-- ping 실패 장치는 backend 호출을 생략하거나 `PowerStatus = "OFF"` 로그 정책을 적용한다. v1 기본값은 “ping 실패 시 OFF 로그 송신”으로 한다.
+- ping 실패 장치는 `PowerStatus = "OFF"` 로그를 송신하고, `error_data`에 `{ boardId: "<deviceId>", boardType: "DEVICE", errorCode: "Disconnected" }`를 포함한다.
 - backend 실패가 sync loop를 중단하지 않는다.
 - `Stop()`이 loop를 취소한다.
 
@@ -1049,26 +1204,34 @@ dotnet build .\AnimatronicsControlCenter\AnimatronicsControlCenter.sln -p:Platfo
 ## 완료 기준
 
 - 백엔드 동기화는 기본 활성화이며, 활성/비활성 상태는 `backend-settings.json`에 저장되고 다음 프로그램 실행 시 그대로 로드된다.
-- 사용자가 백엔드 동기화를 비활성화한 경우에는 네트워크 호출을 하지 않는다.
+- 백엔드 설정 저장/로드는 `IBackendSettingsPathProvider`로 경로를 주입받아 구현하며, 테스트는 임시 파일 roundtrip으로 기본값/저장 후 재로드/깨진 JSON fallback을 검증한다.
+- 사용자가 백엔드 동기화를 비활성화한 경우에는 Dashboard 자동 상태 송신 loop가 `/logs` 네트워크 호출을 하지 않는다.
+- 백엔드 설정 화면의 `서버 조회`, `서버 값 비교`, `저장 후 PC metadata 보고`는 수동 REST 호출이므로 동기화 비활성화 상태에서도 동작한다.
 - 백엔드 설정은 왼쪽 하단 지구본/서버 아이콘으로 여는 전용 화면에서 편집할 수 있고, 프로그램 실행파일 경로의 `backend-settings.json`에 저장된다.
+- `BackendSettingsPage`는 기존 페이지 패턴처럼 ViewModel만 DI에서 가져오며, `BackendSettingsViewModel`은 `App.xaml.cs`에 transient로 등록된다.
 - 전용 화면은 서버 조회 영역과 로컬 설정 영역을 2분할로 보여주며, `서버 값 적용` 버튼으로 조회 값을 로컬 draft에 복사할 수 있다.
 - `서버 값 비교` 버튼은 서버 값과 로컬 설정의 같은/다른 값을 비교하고, 다른 값의 이유를 오른쪽 입력창 아래 빨간 메시지로 표시한다.
 - 백엔드 설정 화면 진입 시 네트워크 조회나 USB/COM 포트 조회를 수행하지 않아 화면 전환을 지연시키지 않는다.
+- 백엔드 REST 호출은 singleton `HttpClient`를 재사용하되, `BaseAddress`와 `DefaultRequestHeaders.Authorization`를 사용하지 않는다. 모든 요청은 현재 설정의 `BackendBaseUrl`로 absolute URI를 만들고, token은 요청별 header로 설정한다.
+- 장치/Object ID 매핑은 설정 파일과 `SettingsService` 내부에서 `Dictionary<int,string>`로 유지한다. JSON 문자열은 백엔드 설정 화면의 textarea 편집용 임시 값으로만 사용한다.
 - REST 요청 JSON 필드명이 백엔드 계약과 정확히 일치한다: `power_status`, `operation_status`, `error_data` 등.
-- 전원 상태는 `POST /v1/service/objects/{object_id}/power`로 보낸다.
+- 전원 상태 보고는 `POST /v1/service/objects/{object_id}/logs`의 `power_status` 필드로 보낸다.
 - 상태 로그는 `POST /v1/service/objects/{object_id}/logs`로 보낸다.
+- `POST /v1/service/objects/{object_id}/power`는 전원 제어 API이므로 호출하지 않는다.
 - Store/PC/Object 자동 생성 API는 호출하지 않는다.
 - Dashboard에 스캔된 모든 장치가 전역 동기화 대상이다.
 - Object ID 매핑이 없어도 device polling이 실패하지 않는다.
 - `Paused`는 `"STOP"`으로 송신된다.
 - `pc_name` 기본값은 `"pc_name_001"`, `sw_version` 기본값은 `"1.1.1.0"`이며 전용 백엔드 설정 화면에서 수정 가능하다.
+- `sw_version`은 이 PC에 설치된 `ui_winui3`의 버전으로 취급하며, `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`를 통해 기존 PC metadata에 보고된다.
 - `error_data`는 모터 오류 상태를 `{ boardId, boardType, errorCode }`로 변환하고, `errorCode`는 문자열로 보낸다.
 - PONG payload의 전원 상태 필드를 `Device.PowerStatus`로 투영한다.
 - ping 실패 시 해당 오브제에 `"OFF"` 로그를 보낸다.
+- ping 실패 로그에는 실제 전원 OFF와 구분할 수 있도록 `error_data`에 `"Disconnected"`를 함께 보낸다.
 - 백엔드 오류가 serial/XBee 장치 통신을 깨지 않는다.
 - reference repository는 계속 ignore 상태이고 빌드에 포함되지 않는다.
 
 ## 남은 리뷰 질문
 
 1. PONG payload의 전원 상태 필드 위치와 wire format은 어떻게 확정할 것인가? 예: 기존 PONG payload 뒤에 `power_status` 1 byte 추가.
-2. ping 실패 시 `"OFF"` 로그를 보내는 동시에 별도 backend error_data도 추가해야 하는가?
+2. `POST /v1/service/objects/{object_id}/logs`의 `power_status`가 `GET /v1/service/stores/{store_id}/detail` 응답의 최신 `power_status`를 갱신하는지 실제 서버에서 확인해야 한다.
