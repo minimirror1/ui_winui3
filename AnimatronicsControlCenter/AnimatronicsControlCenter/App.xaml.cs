@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net.Http;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
@@ -51,12 +52,23 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
             services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<HttpClient>(_ => new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(15)
+            });
+            services.AddSingleton<IBackendSettingsPathProvider, BackendSettingsPathProvider>();
+            services.AddSingleton<IBackendObjectIdResolver, BackendObjectIdResolver>();
+            services.AddSingleton<IBackendMonitoringService, BackendMonitoringService>();
+            services.AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>();
+            services.AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
+
 
             // ViewModels
             services.AddSingleton<DashboardViewModel>();
-            services.AddSingleton<SettingsViewModel>();
+            services.AddTransient<SettingsViewModel>();
             services.AddTransient<DeviceDetailViewModel>();
+            services.AddTransient<BackendSettingsViewModel>();
             services.AddTransient<ScanDialogViewModel>();
             services.AddTransient<SerialMonitorViewModel>();
 

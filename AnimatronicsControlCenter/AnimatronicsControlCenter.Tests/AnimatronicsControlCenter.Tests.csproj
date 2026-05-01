@@ -43,6 +43,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendMonitoringService.cs" Link="Core\Interfaces\IBackendMonitoringService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendServerCatalogClient.cs" Link="Core\Interfaces\IBackendServerCatalogClient.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendDashboardSyncService.cs" Link="Core\Interfaces\IBackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />
@@ -50,6 +51,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendHttpRequest.cs" Link="Infrastructure\BackendHttpRequest.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendMonitoringService.cs" Link="Infrastructure\BackendMonitoringService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendServerCatalogClient.cs" Link="Infrastructure\BackendServerCatalogClient.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendDashboardSyncService.cs" Link="Infrastructure\BackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
