@@ -44,6 +44,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendMonitoringService.cs" Link="Core\Interfaces\IBackendMonitoringService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendServerCatalogClient.cs" Link="Core\Interfaces\IBackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendDashboardSyncService.cs" Link="Core\Interfaces\IBackendDashboardSyncService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialService.cs" Link="Core\Interfaces\ISerialService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />

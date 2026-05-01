@@ -14,6 +14,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
     public partial class DashboardViewModel : ObservableObject
     {
         private readonly ISerialService _serialService;
+        private readonly IBackendDashboardSyncService _backendDashboardSyncService;
         private readonly DispatcherQueue _dispatcherQueue;
 
         [ObservableProperty]
@@ -21,9 +22,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public ObservableCollection<Device> Devices { get; } = new();
 
-        public DashboardViewModel(ISerialService serialService)
+        public DashboardViewModel(ISerialService serialService, IBackendDashboardSyncService backendDashboardSyncService)
         {
             _serialService = serialService;
+            _backendDashboardSyncService = backendDashboardSyncService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         }
 
@@ -50,6 +52,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 {
                     Devices.Add(device);
                 }
+
+                _backendDashboardSyncService.ReplaceDevices(Devices);
+                _backendDashboardSyncService.Start();
             }
             finally
             {
