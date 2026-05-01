@@ -5,7 +5,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:AnimatronicsControlCenter.Core.Models"
+    xmlns:cv="using:AnimatronicsControlCenter.UI.Converters"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -24,11 +29,64 @@
                   IsItemClickEnabled="True" ItemClick="GridView_ItemClick">
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="models:Device">
-                    <Grid Width="200" Height="150" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="12" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="{x:Bind Id}" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                            <TextBlock Text="{x:Bind StatusMessage}" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
-                        </StackPanel>
+                    <Grid Width="220" MinHeight="160"
+                          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                          CornerRadius="8" Padding="16"
+                          BorderThickness="1"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 헤더: 장치 아이콘 + ID + 연결 상태 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="20"
+                                          Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBlock Text="{x:Bind Id}"
+                                           Style="{StaticResource SubtitleTextBlockStyle}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Ellipse Grid.Column="1"
+                                     Width="10" Height="10"
+                                     VerticalAlignment="Center"
+                                     Fill="{x:Bind IsConnected, Mode=OneWay, Converter={StaticResource ConnectionColorConverter}}"/>
+                        </Grid>
+
+                        <!-- 모션 상태 -->
+                        <TextBlock Grid.Row="1"
+                                   Text="{x:Bind MotionState, Mode=OneWay}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Margin="0,12,0,0"/>
+
+                        <!-- 하단: 모터 수 배지 + 상태 메시지 -->
+                        <Grid Grid.Row="2" Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                                    CornerRadius="4" Padding="8,2">
+                                <TextBlock Style="{StaticResource CaptionTextBlockStyle}">
+                                    <Run Text="{x:Bind Motors.Count, Mode=OneWay}"/>
+                                    <Run Text=" M"/>
+                                </TextBlock>
+                            </Border>
+                            <TextBlock Grid.Column="1"
+                                       Text="{x:Bind StatusMessage, Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxLines="1"/>
+                        </Grid>
                     </Grid>
                 </DataTemplate>
             </GridView.ItemTemplate>

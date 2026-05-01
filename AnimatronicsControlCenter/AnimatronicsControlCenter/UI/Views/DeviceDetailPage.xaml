@@ -23,7 +23,7 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel Orientation="Horizontal" Spacing="12">
-                <FontIcon Glyph="&#xE966;" FontFamily="Segoe MDL2 Assets" FontSize="24"/>
+                <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="24"/>
                 <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Id, FallbackValue='Device #0', Mode=OneWay}" 
                            Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center"/>
             </StackPanel>
@@ -91,13 +91,13 @@
                             <!-- Controls -->
                             <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
                                 <Button Command="{x:Bind ViewModel.StopMotionCommand}" Padding="12" CornerRadius="20" ToolTipService.ToolTip="Stop">
-                                    <FontIcon Glyph="&#xE71A;" FontFamily="Segoe MDL2 Assets"/>
+                                    <FontIcon Glyph="&#xE71A;" FontFamily="Segoe Fluent Icons"/>
                                 </Button>
                                 <Button Command="{x:Bind ViewModel.PlayMotionCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16" CornerRadius="30" ToolTipService.ToolTip="Play">
-                                    <FontIcon Glyph="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                                    <FontIcon Glyph="&#xE768;" FontFamily="Segoe Fluent Icons" FontSize="20"/>
                                 </Button>
                                 <Button Command="{x:Bind ViewModel.PauseMotionCommand}" Padding="12" CornerRadius="20" ToolTipService.ToolTip="Pause">
-                                    <FontIcon Glyph="&#xE769;" FontFamily="Segoe MDL2 Assets"/>
+                                    <FontIcon Glyph="&#xE769;" FontFamily="Segoe Fluent Icons"/>
                                 </Button>
                             </StackPanel>
                         </Grid>
@@ -197,7 +197,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <FontIcon Glyph="&#xE966;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                                <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 <TextBlock Text="{x:Bind DisplayId}" FontWeight="SemiBold"/>
                                             </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{x:Bind Status}" FontSize="12" 
@@ -261,7 +261,7 @@
                                     <DataTemplate x:DataType="models:FileSystemItem">
                                         <TreeViewItem ItemsSource="{x:Bind Children}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="{x:Bind Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                                <FontIcon Glyph="{x:Bind Icon}" FontFamily="Segoe Fluent Icons" FontSize="16"/>
                                                 <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </TreeViewItem>
