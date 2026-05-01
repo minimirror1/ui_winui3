@@ -52,5 +52,6 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendSettingsViewModel.cs" Link="UI\ViewModels\BackendSettingsViewModel.cs" />
   </ItemGroup>
 </Project>
