@@ -38,11 +38,7 @@ public sealed class BackendMonitoringService : IBackendMonitoringService
             return new BackendSendResult(false, null, message);
         }
 
-        var log = new BackendObjectLogRequest(
-            PowerStatus: "OFF",
-            OperationStatus: device.MotionState == MotionState.Playing ? "PLAY" : "STOP",
-            PowerConsumption: null,
-            ErrorData: Array.Empty<BackendErrorData>());
+        BackendObjectLogRequest log = BackendDeviceMapper.CreateObjectLog(device);
 
         try
         {

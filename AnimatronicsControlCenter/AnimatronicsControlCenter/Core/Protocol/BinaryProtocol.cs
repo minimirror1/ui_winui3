@@ -99,6 +99,6 @@ public record struct RequestHeader(byte SrcId, byte TarId, BinaryCommand Cmd, us
 // 응답 헤더 (parsed)
 public record struct ResponseHeader(byte SrcId, byte TarId, BinaryCommand Cmd, ResponseStatus Status, ushort PayloadLen);
 
-public readonly record struct PongStatus(BinaryPingState State, byte InitState, uint CurrentMs, uint TotalMs);
+public readonly record struct PongStatus(BinaryPingState State, byte InitState, uint CurrentMs, uint TotalMs, string PowerStatus = "OFF");
 
 public readonly record struct PingTimePayload(string CountryCode, DateTimeOffset Timestamp);

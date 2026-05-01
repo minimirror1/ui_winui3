@@ -43,14 +43,29 @@ public static class BinaryDeserializer
     public static bool TryParsePongResponse(ReadOnlySpan<byte> payload, out PongStatus status)
     {
         status = default;
-        if (payload.Length != BinaryProtocolConst.PongPayloadSize) return false;
+        if (payload.Length != BinaryProtocolConst.PongPayloadSize &&
+            payload.Length != BinaryProtocolConst.PongPayloadSize + 1)
+        {
+            return false;
+        }
 
         status = new PongStatus(
             State: (BinaryPingState)payload[0],
             InitState: payload[1],
             CurrentMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[2..]),
-            TotalMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[6..]));
+            TotalMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[6..]),
+            PowerStatus: DecodePowerStatus(payload));
         return true;
+    }
+
+    private static string DecodePowerStatus(ReadOnlySpan<byte> payload)
+    {
+        if (payload.Length <= BinaryProtocolConst.PongPayloadSize)
+        {
+            return "OFF";
+        }
+
+        return payload[BinaryProtocolConst.PongPayloadSize] == 0x01 ? "ON" : "OFF";
     }
 
     public static PongStatus ParsePongResponse(ReadOnlySpan<byte> payload)

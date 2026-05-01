@@ -41,6 +41,9 @@ namespace AnimatronicsControlCenter.Core.Models
         [ObservableProperty]
         private ulong address64;
 
+        [ObservableProperty]
+        private string powerStatus = "OFF";
+
         public ObservableCollection<MotorState> Motors { get; } = new();
 
         public Device(int id)

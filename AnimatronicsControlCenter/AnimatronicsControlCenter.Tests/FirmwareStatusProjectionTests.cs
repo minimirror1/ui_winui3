@@ -39,6 +39,42 @@ public class FirmwareStatusProjectionTests
     }
 
     [TestMethod]
+    public void TryParsePongResponse_ReadsOptionalPowerStatusByte()
+    {
+        byte[] payload = new byte[11];
+        payload[0] = (byte)BinaryPingState.Stopped;
+        payload[10] = 0x01;
+
+        bool parsed = BinaryDeserializer.TryParsePongResponse(payload, out var status);
+
+        Assert.IsTrue(parsed);
+        Assert.AreEqual("ON", status.PowerStatus);
+    }
+
+    [TestMethod]
+    public void TryParsePongResponse_MissingPowerStatusByte_DefaultsOff()
+    {
+        byte[] payload = new byte[10];
+        payload[0] = (byte)BinaryPingState.Stopped;
+
+        bool parsed = BinaryDeserializer.TryParsePongResponse(payload, out var status);
+
+        Assert.IsTrue(parsed);
+        Assert.AreEqual("OFF", status.PowerStatus);
+    }
+
+    [TestMethod]
+    public void Apply_ProjectsPowerStatus()
+    {
+        var device = new Device(7);
+        var status = new PongStatus(BinaryPingState.Stopped, InitState: 0, CurrentMs: 0, TotalMs: 0, PowerStatus: "ON");
+
+        FirmwareStatusProjection.Apply(device, status, address64: 0);
+
+        Assert.AreEqual("ON", device.PowerStatus);
+    }
+
+    [TestMethod]
     public void VirtualDeviceManager_PingResponse_IsFirmwareShaped()
     {
         var manager = new VirtualDeviceManager();
