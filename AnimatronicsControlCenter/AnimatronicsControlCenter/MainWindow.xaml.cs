@@ -150,6 +150,11 @@ namespace AnimatronicsControlCenter
             _serialMonitorWindowHost.Show();
         }
 
+        private void BackendSettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ContentFrame.Navigate(typeof(BackendSettingsPage));
+        }
+
         private void SerialTrafficTap_EntryRecorded(object? sender, SerialTrafficEntry entry)
         {
             lock (_serialTrafficIndicatorLock)

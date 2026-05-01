@@ -40,7 +40,21 @@
             </NavigationView.MenuItems>
 
             <NavigationView.PaneFooter>
-                <StackPanel Width="48" HorizontalAlignment="Left" Margin="0,0,0,12" Spacing="4">
+                <StackPanel Width="48"
+                            HorizontalAlignment="Left"
+                            Margin="0,0,0,12"
+                            Spacing="4">
+                    <Button x:Name="BackendSettingsButton"
+                            Click="BackendSettingsButton_Click"
+                            Width="36"
+                            Height="36"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            ToolTipService.ToolTip="Backend settings">
+                        <FontIcon Glyph="&#xE774;" FontSize="16" />
+                    </Button>
 
                     <!-- 연결 상태 버튼: 클릭 시 포트 선택 + 연결 Flyout -->
                     <Button x:Name="ConnectionButton"
@@ -94,7 +108,9 @@
                     </Button>
 
                     <!-- 시리얼 트래픽 인디케이터 -->
-                    <Grid x:Name="SerialTrafficFooterHost" Width="48" HorizontalAlignment="Left">
+                    <Grid x:Name="SerialTrafficFooterHost"
+                          Width="48"
+                          HorizontalAlignment="Left">
                         <Button x:Name="SerialTrafficButton"
                                 Click="SerialTrafficButton_Click"
                                 Width="36"
