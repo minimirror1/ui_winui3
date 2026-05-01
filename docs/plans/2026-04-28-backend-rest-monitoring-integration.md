@@ -8,9 +8,9 @@
 
 **기술 스택:** WinUI 3, .NET `HttpClient`, `System.Text.Json`, 기존 `Microsoft.Extensions.DependencyInjection`, 기존 `SettingsService`, CommunityToolkit.Mvvm, MSTest.
 
-## 초안 상태
+## 구현 준비 상태
 
-이 문서는 검토용 초안이다. 아래 API 계약과 구현 방향은 다음 레퍼런스를 기준으로 조사했다.
+이 문서는 구현 가능한 계획이다. 아래 API 계약과 구현 방향은 다음 레퍼런스를 기준으로 조사했으며, 문서 끝의 리뷰 질문은 구현 가정과 검증 작업으로 반영했다.
 
 - `references/iic-robot-monitor-frontend/api_doc.md`
 - `references/iic-robot-monitor-frontend/frontend/src/lib/api/client.ts`
@@ -112,6 +112,17 @@ Timeout: 15초
    - 저장된 `sw_version`은 백엔드의 기존 PC 메타데이터에 보고한다.
    - PC 자동 생성은 하지 않으며, 미리 생성된 `store_id`/`pc_id`에 대해 `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`로 `pc_name`과 `sw_version`만 갱신한다.
 
+8. PONG 전원 상태 wire format
+   - v1 구현 가정은 기존 PONG payload 끝에 전원 상태 1 byte를 선택적으로 추가하는 방식이다.
+   - `0x01`은 `"ON"`, `0x00`은 `"OFF"`로 해석한다.
+   - 기존 펌웨어처럼 추가 byte가 없는 PONG payload는 호환성을 위해 정상 파싱하고 `Device.PowerStatus = "OFF"` 기본값을 유지한다.
+   - 알 수 없는 byte 값은 `"OFF"`로 처리하고, binary parser가 예외를 던지지 않게 한다.
+
+9. 실제 서버 검증 범위
+   - `POST /v1/service/objects/{object_id}/logs`가 성공하더라도 서버 detail 응답의 최신 `power_status` 반영 여부는 서버 동작에 의존한다.
+   - 구현은 `/logs` 계약에 맞춰 완료하고, 실제 반영 여부는 Task 11의 수동 스모크 테스트에서 확인한다.
+   - 스모크 테스트 실패는 REST 클라이언트 구현 실패와 서버 계약/환경 문제를 구분해 기록한다.
+
 ## 에러 매핑 제안
 
 현재 앱의 `MotorState`에는 `GroupId`, `SubId`, `Type`, `Status`가 있다. 백엔드 `error_data`는 `{ boardId, boardType, errorCode }` 형태이므로 v1에서는 모터 상태를 아래처럼 변환한다.
@@ -144,6 +155,21 @@ Timeout: 15초
 ```
 
 이 방식의 장점은 현재 앱 모델만으로 구현할 수 있고, 사람이 보기에 원인을 바로 추적할 수 있다는 점이다. 나중에 펌웨어가 숫자형 board error code를 제공하면 `errorCode`만 펌웨어 코드로 교체한다.
+
+## HTTP 공통 처리 규칙
+
+- 모든 REST 요청은 현재 `ISettingsService.BackendBaseUrl`을 읽어 absolute URI로 만든다.
+- `BackendBaseUrl` 앞뒤 공백은 제거하고, 끝의 `/`는 endpoint path와 중복되지 않게 처리한다.
+- `BackendBaseUrl`이 비어 있거나 absolute URI가 아니면 네트워크 호출 없이 실패 결과를 반환한다.
+- token은 요청마다 `HttpRequestMessage.Headers.Authorization`에 설정한다.
+- token이 비어 있거나 공백이면 Authorization 헤더를 보내지 않는다.
+- `HttpClient.BaseAddress`와 `HttpClient.DefaultRequestHeaders.Authorization`은 사용하지 않는다.
+- JSON 직렬화/역직렬화는 `JsonSerializerDefaults.Web` 옵션을 사용한다.
+- 성공 판정은 HTTP 2xx다.
+- non-2xx 응답은 status code와 응답 body 일부를 `BackendSendResult` 또는 `BackendFetchResult<T>`의 message에 담는다.
+- `HttpRequestException`, `TaskCanceledException`, `JsonException`, 잘못된 설정 값은 호출자를 중단시키지 않고 실패 결과로 변환한다.
+- 백엔드 실패는 serial/XBee 통신, Dashboard polling, UI navigation을 중단시키지 않는다.
+- 응답 body가 비어 있는 성공 응답은 송신 계열에서는 성공으로 처리하고, 조회 계열에서는 데이터 없음 실패로 처리한다.
 
 ## 제안 DTO
 
@@ -412,6 +438,24 @@ int BackendSyncIntervalSeconds { get; set; }     // 기본값: 5
 이 화면은 백엔드 설정 파일과 REST 조회 클라이언트가 있어야 의미 있게 동작하므로, 구현 순서는 `DTO/설정 파일/HTTP 조회 클라이언트/비교 모델` 다음, `Dashboard 전역 동기화` 이전에 둔다.
 
 ## 구현 태스크
+
+아래 순서대로 실행한다. 각 Task는 RED 확인, 최소 구현, GREEN 확인 후 커밋한다. 앞 Task의 public contract를 뒤 Task가 사용하므로 순서를 바꾸지 않는다.
+
+권장 커밋 단위:
+
+- Task 1: `test: add backend DTO serialization coverage` + `feat: add backend DTO contracts`
+- Task 2: `feat: persist backend settings to executable path json`
+- Task 3: `feat: resolve backend object ids from device mappings`
+- Task 4: `feat: add backend REST clients`
+- Task 5: `feat: compare backend server and local settings`
+- Task 6: `feat: add backend settings navigation entry`
+- Task 7: `feat: add backend settings page`
+- Task 8: `feat: map device status to backend logs`
+- Task 9: `chore: register backend services`
+- Task 10: `feat: sync dashboard devices to backend`
+- Task 11: `test: document backend server smoke verification`
+
+각 커밋 전에는 해당 Task의 filtered test를 먼저 실행하고, 마지막에는 전체 테스트와 x64 build를 실행한다.
 
 ### Task 1: 백엔드 DTO 직렬화 테스트 추가
 
@@ -1187,6 +1231,58 @@ _backendDashboardSyncService.Start();
 
 sync service 테스트와 Dashboard 관련 테스트를 실행한다.
 
+### Task 11: 실제 서버 수동 스모크 테스트 기록
+
+**파일:**
+- 생성: `docs/backend-rest-smoke-test.md`
+
+**Step 1: 스모크 테스트 문서 작성**
+
+다음 항목을 기록할 수 있는 체크리스트 문서를 만든다.
+
+```markdown
+# Backend REST Smoke Test
+
+## Environment
+
+- BackendBaseUrl:
+- Store ID:
+- PC ID:
+- Object ID:
+- Test date:
+
+## Checks
+
+- [ ] Store detail 조회 성공: `GET /v1/service/stores/{store_id}/detail`
+- [ ] 현재 `BackendPcId`와 일치하는 PC가 응답에 존재함
+- [ ] PC metadata 갱신 성공: `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`
+- [ ] Object log 송신 성공: `POST /v1/service/objects/{object_id}/logs`
+- [ ] `/logs` 송신 후 store detail의 `power_status` 반영 여부 확인
+- [ ] `/v1/service/objects/{object_id}/power`가 호출되지 않았음
+
+## Result
+
+- Passed:
+- Notes:
+```
+
+**Step 2: 실제 서버 연결 전 안전 확인**
+
+- 테스트용 Store/PC/Object ID를 사용한다.
+- 운영 데이터에 영향이 있는지 모르면 실행하지 않고 문서에 `Blocked`로 기록한다.
+- token이 필요한 환경이면 token은 문서에 저장하지 않는다.
+
+**Step 3: 앱에서 수동 검증**
+
+- Backend Settings 화면에서 서버 조회를 실행한다.
+- 서버 값 비교가 현재 PC 기준으로 동작하는지 확인한다.
+- 저장 후 PC metadata 보고 결과를 확인한다.
+- Dashboard에 테스트 장치를 등록하고 `/logs` 송신이 성공하는지 확인한다.
+
+**Step 4: 결과 기록**
+
+`docs/backend-rest-smoke-test.md`에 성공/실패와 서버 반영 여부를 기록한다. 서버가 `/logs`는 받지만 detail의 `power_status`를 갱신하지 않는다면, 앱 구현 실패가 아니라 서버 계약 확인 필요 항목으로 기록한다.
+
 ## 검증 명령
 
 구현 완료 후 실행:
@@ -1225,13 +1321,14 @@ dotnet build .\AnimatronicsControlCenter\AnimatronicsControlCenter.sln -p:Platfo
 - `pc_name` 기본값은 `"pc_name_001"`, `sw_version` 기본값은 `"1.1.1.0"`이며 전용 백엔드 설정 화면에서 수정 가능하다.
 - `sw_version`은 이 PC에 설치된 `ui_winui3`의 버전으로 취급하며, `PUT /v1/service/stores/{store_id}/pcs/{pc_id}`를 통해 기존 PC metadata에 보고된다.
 - `error_data`는 모터 오류 상태를 `{ boardId, boardType, errorCode }`로 변환하고, `errorCode`는 문자열로 보낸다.
-- PONG payload의 전원 상태 필드를 `Device.PowerStatus`로 투영한다.
+- PONG payload 끝의 선택적 1 byte 전원 상태 필드를 `Device.PowerStatus`로 투영한다. `0x01`은 `"ON"`, `0x00` 또는 누락/알 수 없는 값은 `"OFF"`로 처리한다.
 - ping 실패 시 해당 오브제에 `"OFF"` 로그를 보낸다.
 - ping 실패 로그에는 실제 전원 OFF와 구분할 수 있도록 `error_data`에 `"Disconnected"`를 함께 보낸다.
 - 백엔드 오류가 serial/XBee 장치 통신을 깨지 않는다.
+- Task 11의 실제 서버 스모크 테스트 문서를 작성하고, `/logs` 송신 후 detail 응답의 `power_status` 반영 여부를 기록한다.
 - reference repository는 계속 ignore 상태이고 빌드에 포함되지 않는다.
 
-## 남은 리뷰 질문
+## 구현 후 확인 항목
 
-1. PONG payload의 전원 상태 필드 위치와 wire format은 어떻게 확정할 것인가? 예: 기존 PONG payload 뒤에 `power_status` 1 byte 추가.
-2. `POST /v1/service/objects/{object_id}/logs`의 `power_status`가 `GET /v1/service/stores/{store_id}/detail` 응답의 최신 `power_status`를 갱신하는지 실제 서버에서 확인해야 한다.
+- 실제 서버에서 `/logs` 송신이 성공하지만 detail 응답의 `power_status`가 갱신되지 않으면 백엔드 계약 확인 이슈로 분리한다.
+- 테스트용 Store/PC/Object ID와 token이 준비되지 않으면 Task 11은 `Blocked`로 기록하고, 앱 구현 완료 여부는 자동화 테스트와 build 결과로 판단한다.
