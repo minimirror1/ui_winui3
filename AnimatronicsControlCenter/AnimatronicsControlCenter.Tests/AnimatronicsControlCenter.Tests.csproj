@@ -20,6 +20,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\MotorState.cs" Link="Core\Models\MotorState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\SerialTrafficEntry.cs" Link="Core\Models\SerialTrafficEntry.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\FileSystemItem.cs" Link="Core\Models\FileSystemItem.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Backend\BackendDtos.cs" Link="Core\Backend\BackendDtos.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStatePatch.cs" Link="Core\Motors\MotorStatePatch.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStateMerger.cs" Link="Core\Motors\MotorStateMerger.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryProtocol.cs" Link="Core\Protocol\BinaryProtocol.cs" />
