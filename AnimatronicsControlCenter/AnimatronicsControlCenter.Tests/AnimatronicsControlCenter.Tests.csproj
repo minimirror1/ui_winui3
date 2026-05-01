@@ -36,7 +36,11 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\DeviceStatusRefreshPolicy.cs" Link="Core\Utilities\DeviceStatusRefreshPolicy.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialTrafficIndicatorState.cs" Link="Core\Utilities\SerialTrafficIndicatorState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialPortDisplay.cs" Link="Core\Utilities\SerialPortDisplay.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
   </ItemGroup>

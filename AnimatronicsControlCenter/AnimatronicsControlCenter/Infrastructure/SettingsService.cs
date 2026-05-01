@@ -1,6 +1,9 @@
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Utilities;
+#if WINDOWS
 using Windows.Storage;
+#endif
+using System.Text.Json;
 
 namespace AnimatronicsControlCenter.Infrastructure
 {
@@ -16,6 +19,21 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyPingIntervalSeconds = "PingIntervalSeconds";
         private const string KeyPingCountryCode = "PingCountryCode";
         private const string KeyPingUtcOffsetMinutes = "PingUtcOffsetMinutes";
+        private readonly IBackendSettingsPathProvider _backendSettingsPathProvider;
+        private static readonly JsonSerializerOptions BackendJsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        };
+
+        public SettingsService()
+            : this(new BackendSettingsPathProvider())
+        {
+        }
+
+        public SettingsService(IBackendSettingsPathProvider backendSettingsPathProvider)
+        {
+            _backendSettingsPathProvider = backendSettingsPathProvider;
+        }
 
         public string LastComPort { get; set; } = "COM1";
         public int LastBaudRate { get; set; } = 115200;
@@ -27,9 +45,21 @@ namespace AnimatronicsControlCenter.Infrastructure
         public int PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
+        public bool IsBackendSyncEnabled { get; set; } = true;
+        public string BackendBaseUrl { get; set; } = "https://robot-monitor-api-dev.innergm.com";
+        public string BackendBearerToken { get; set; } = string.Empty;
+        public string BackendStoreId { get; set; } = string.Empty;
+        public string BackendStoreName { get; set; } = string.Empty;
+        public string BackendStoreCountryCode { get; set; } = string.Empty;
+        public string BackendPcId { get; set; } = string.Empty;
+        public string BackendPcName { get; set; } = "pc_name_001";
+        public string BackendSoftwareVersion { get; set; } = "1.1.1.0";
+        public Dictionary<int, string> BackendDeviceObjectMappings { get; set; } = new();
+        public int BackendSyncIntervalSeconds { get; set; } = 5;
 
         public void Save()
         {
+#if WINDOWS
             try
             {
                 var localSettings = ApplicationData.Current.LocalSettings;
@@ -47,10 +77,14 @@ namespace AnimatronicsControlCenter.Infrastructure
             catch
             {
             }
+#endif
+
+            SaveBackendSettings();
         }
 
         public void Load()
         {
+#if WINDOWS
             try
             {
                 var localSettings = ApplicationData.Current.LocalSettings;
@@ -71,6 +105,86 @@ namespace AnimatronicsControlCenter.Infrastructure
             catch
             {
             }
+#endif
+
+            LoadBackendSettings();
         }
+
+        private void SaveBackendSettings()
+        {
+            try
+            {
+                string? directory = Path.GetDirectoryName(_backendSettingsPathProvider.BackendSettingsFilePath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                var settings = new BackendSettingsFile(
+                    IsBackendSyncEnabled,
+                    BackendBaseUrl,
+                    BackendBearerToken,
+                    BackendStoreId,
+                    BackendStoreName,
+                    BackendStoreCountryCode,
+                    BackendPcId,
+                    BackendPcName,
+                    BackendSoftwareVersion,
+                    BackendDeviceObjectMappings,
+                    BackendSyncIntervalSeconds);
+
+                string json = JsonSerializer.Serialize(settings, BackendJsonOptions);
+                File.WriteAllText(_backendSettingsPathProvider.BackendSettingsFilePath, json);
+            }
+            catch
+            {
+            }
+        }
+
+        private void LoadBackendSettings()
+        {
+            try
+            {
+                if (!File.Exists(_backendSettingsPathProvider.BackendSettingsFilePath))
+                {
+                    return;
+                }
+
+                string json = File.ReadAllText(_backendSettingsPathProvider.BackendSettingsFilePath);
+                var settings = JsonSerializer.Deserialize<BackendSettingsFile>(json, BackendJsonOptions);
+                if (settings is null)
+                {
+                    return;
+                }
+
+                IsBackendSyncEnabled = settings.IsBackendSyncEnabled;
+                BackendBaseUrl = settings.BackendBaseUrl ?? BackendBaseUrl;
+                BackendBearerToken = settings.BackendBearerToken ?? BackendBearerToken;
+                BackendStoreId = settings.BackendStoreId ?? BackendStoreId;
+                BackendStoreName = settings.BackendStoreName ?? BackendStoreName;
+                BackendStoreCountryCode = settings.BackendStoreCountryCode ?? BackendStoreCountryCode;
+                BackendPcId = settings.BackendPcId ?? BackendPcId;
+                BackendPcName = settings.BackendPcName ?? BackendPcName;
+                BackendSoftwareVersion = settings.BackendSoftwareVersion ?? BackendSoftwareVersion;
+                BackendDeviceObjectMappings = settings.BackendDeviceObjectMappings ?? new Dictionary<int, string>();
+                BackendSyncIntervalSeconds = settings.BackendSyncIntervalSeconds;
+            }
+            catch
+            {
+            }
+        }
+
+        private sealed record BackendSettingsFile(
+            bool IsBackendSyncEnabled,
+            string BackendBaseUrl,
+            string BackendBearerToken,
+            string BackendStoreId,
+            string BackendStoreName,
+            string BackendStoreCountryCode,
+            string BackendPcId,
+            string BackendPcName,
+            string BackendSoftwareVersion,
+            Dictionary<int, string> BackendDeviceObjectMappings,
+            int BackendSyncIntervalSeconds);
     }
 }
