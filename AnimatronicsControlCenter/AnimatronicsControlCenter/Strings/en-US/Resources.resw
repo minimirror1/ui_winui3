@@ -241,4 +241,70 @@
   <data name="PingPreview_Header.Header" xml:space="preserve">
     <value>Payload Preview</value>
   </data>
+  <data name="DeviceDetail_Tab_Overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="DeviceDetail_Tab_Files" xml:space="preserve">
+    <value>Files</value>
+  </data>
+  <data name="DeviceDetail_Tab_Terminal" xml:space="preserve">
+    <value>Terminal</value>
+  </data>
+  <data name="DeviceDetail_MotionControl" xml:space="preserve">
+    <value>Motion Control</value>
+  </data>
+  <data name="DeviceDetail_StatusLabel" xml:space="preserve">
+    <value>Status:</value>
+  </data>
+  <data name="DeviceDetail_FileInfo" xml:space="preserve">
+    <value>File Information</value>
+  </data>
+  <data name="DeviceDetail_TotalDuration" xml:space="preserve">
+    <value>Total Duration</value>
+  </data>
+  <data name="DeviceDetail_DataPoints" xml:space="preserve">
+    <value>Data Points</value>
+  </data>
+  <data name="DeviceDetail_CreatedAt" xml:space="preserve">
+    <value>Created At</value>
+  </data>
+  <data name="DeviceDetail_Motors" xml:space="preserve">
+    <value>Motors</value>
+  </data>
+  <data name="DeviceDetail_Polling" xml:space="preserve">
+    <value>Polling</value>
+  </data>
+  <data name="DeviceDetail_IntervalMs" xml:space="preserve">
+    <value>Interval (ms)</value>
+  </data>
+  <data name="DeviceDetail_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="DeviceDetail_Verify" xml:space="preserve">
+    <value>Verify</value>
+  </data>
+  <data name="DeviceDetail_SaveToDevice" xml:space="preserve">
+    <value>Save to Device</value>
+  </data>
+  <data name="DeviceDetail_VerifyDialogTitle" xml:space="preserve">
+    <value>Verification Result</value>
+  </data>
+  <data name="DeviceDetail_VerifyDialogOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ScanDialog_Title" xml:space="preserve">
+    <value>Scan Devices</value>
+  </data>
+  <data name="ScanDialog_StartId" xml:space="preserve">
+    <value>Start ID</value>
+  </data>
+  <data name="ScanDialog_EndId" xml:space="preserve">
+    <value>End ID</value>
+  </data>
+  <data name="ScanDialog_StartScan" xml:space="preserve">
+    <value>Start Scan</value>
+  </data>
+  <data name="ScanDialog_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
 </root>

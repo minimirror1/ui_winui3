@@ -29,7 +29,7 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="Status:" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
+                <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_StatusLabel', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
                 <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8,4">
                     <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='Unknown', Mode=OneWay}" 
                                Style="{StaticResource CaptionTextBlockStyle}"/>
@@ -45,7 +45,7 @@
                    TextWrapping="Wrap"/>
 
         <Pivot x:Name="MainPivot" Grid.Row="2" SelectionChanged="MainPivot_SelectionChanged">
-            <PivotItem Header="Overview" Margin="0,12,0,0">
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('DeviceDetail_Tab_Overview', ViewModel.Strings.Code), Mode=OneWay}" Margin="0,12,0,0">
                 <Grid ColumnSpacing="24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="400" MaxWidth="500"/>
@@ -63,7 +63,7 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Spacing="4">
-                                <TextBlock Text="Motion Control" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_MotionControl', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}"/>
                                 <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionState, Mode=OneWay}" 
                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                             </StackPanel>
@@ -109,7 +109,7 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
-                            <TextBlock Text="File Information" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_FileInfo', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}"/>
                             
                             <Grid Grid.Row="1" ColumnSpacing="16" RowSpacing="16">
                                 <Grid.ColumnDefinitions>
@@ -122,17 +122,17 @@
                                 </Grid.RowDefinitions>
 
                                 <StackPanel>
-                                    <TextBlock Text="Total Duration" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_TotalDuration', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                     <TextBlock Text="{x:Bind ViewModel.MotionTotalTimeDisplay, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Data Points" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_DataPoints', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                     <TextBlock Text="{x:Bind ViewModel.MotionDataCountDisplay, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
-                                    <TextBlock Text="Created At" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_CreatedAt', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                     <TextBlock Text="{x:Bind ViewModel.MotionCreatedAtDisplay, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}"/>
                                 </StackPanel>
                             </Grid>
@@ -154,7 +154,7 @@
 
                             <StackPanel Spacing="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Motors" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_Motors', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}"/>
                                     <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="10" Padding="8,0" VerticalAlignment="Center">
                                         <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Motors.Count, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
                                     </Border>
@@ -167,16 +167,17 @@
 
                             <!-- Polling controls -->
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                <ToggleSwitch Header="Polling" IsOn="{x:Bind ViewModel.IsMotorPollingEnabled, Mode=TwoWay}" />
+                                <ToggleSwitch Header="{x:Bind ViewModel.Strings.Get('DeviceDetail_Polling', ViewModel.Strings.Code), Mode=OneWay}" IsOn="{x:Bind ViewModel.IsMotorPollingEnabled, Mode=TwoWay}" />
 
                                 <StackPanel>
-                                    <TextBlock Text="Interval (ms)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_IntervalMs', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                     <ComboBox ItemsSource="{x:Bind ViewModel.MotorPollingIntervals}"
                                               SelectedItem="{x:Bind ViewModel.MotorPollingIntervalMs, Mode=TwoWay}"
+                                              IsEnabled="{x:Bind ViewModel.IsMotorPollingEnabled, Mode=OneWay}"
                                               MinWidth="120"/>
                                 </StackPanel>
 
-                                <Button Content="Refresh" Command="{x:Bind ViewModel.RefreshMotorsCommand}" />
+                                <Button Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_Refresh', ViewModel.Strings.Code), Mode=OneWay}" Command="{x:Bind ViewModel.RefreshMotorsCommand}" />
                             </StackPanel>
                         </Grid>
 
@@ -228,7 +229,7 @@
                 </Grid>
             </PivotItem>
             
-            <PivotItem Header="Files">
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('DeviceDetail_Tab_Files', ViewModel.Strings.Code), Mode=OneWay}">
                 <Grid ColumnSpacing="20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="300"/>
@@ -284,8 +285,8 @@
                                  ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
 
                         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                            <Button Content="Verify" Command="{x:Bind ViewModel.VerifyFileCommand}"/>
-                            <Button Content="Save to Device" Command="{x:Bind ViewModel.SaveFileCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                            <Button Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_Verify', ViewModel.Strings.Code), Mode=OneWay}" Command="{x:Bind ViewModel.VerifyFileCommand}"/>
+                            <Button Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_SaveToDevice', ViewModel.Strings.Code), Mode=OneWay}" Command="{x:Bind ViewModel.SaveFileCommand}" Style="{StaticResource AccentButtonStyle}"/>
                         </StackPanel>
                     </Grid>
                     
@@ -293,13 +294,16 @@
                 </Grid>
             </PivotItem>
             
-            <PivotItem Header="Terminal">
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('DeviceDetail_Tab_Terminal', ViewModel.Strings.Code), Mode=OneWay}"
+                       Visibility="Collapsed">
                 <TextBlock Text="Terminal Placeholder"/>
             </PivotItem>
         </Pivot>
 
-        <ContentDialog x:Name="VerificationDialog" Title="Verification Result" PrimaryButtonText="OK" 
-                       IsPrimaryButtonEnabled="True" CloseButtonText="Close">
+        <ContentDialog x:Name="VerificationDialog"
+                       Title="{x:Bind ViewModel.Strings.Get('DeviceDetail_VerifyDialogTitle', ViewModel.Strings.Code), Mode=OneWay}"
+                       PrimaryButtonText="{x:Bind ViewModel.Strings.Get('DeviceDetail_VerifyDialogOK', ViewModel.Strings.Code), Mode=OneWay}"
+                       IsPrimaryButtonEnabled="True">
             <StackPanel>
                 <TextBlock Text="{x:Bind ViewModel.VerificationResult, Mode=OneWay}"/>
             </StackPanel>

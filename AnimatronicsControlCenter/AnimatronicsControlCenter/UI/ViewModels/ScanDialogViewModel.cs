@@ -5,12 +5,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.UI.Helpers;
 
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
     public partial class ScanDialogViewModel : ObservableObject
     {
         private readonly ISerialService _serialService;
+
+        public LocalizedStrings Strings { get; }
 
         [ObservableProperty]
         private int startId = 1;
@@ -31,9 +34,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public event Action? RequestClose;
 
-        public ScanDialogViewModel(ISerialService serialService)
+        public ScanDialogViewModel(ISerialService serialService, ILocalizationService localizationService)
         {
             _serialService = serialService;
+            Strings = new LocalizedStrings(localizationService);
         }
 
         [RelayCommand]

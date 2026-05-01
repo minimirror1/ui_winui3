@@ -5,6 +5,7 @@ using AnimatronicsControlCenter.Core.Models;
 using AnimatronicsControlCenter.Core.Motors;
 using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Core.Utilities;
+using AnimatronicsControlCenter.UI.Helpers;
 using Microsoft.UI.Dispatching;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ISerialService _serialService;
         private readonly ISettingsService _settingsService;
         private readonly DispatcherQueue _dispatcherQueue;
+
+        public LocalizedStrings Strings { get; }
 
         private bool _isMotorsPollingAllowed;
         private CancellationTokenSource? _motorsPollingCts;
@@ -81,11 +84,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 ? "Unavailable"
                 : SelectedDevice.MotionCreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
-        public DeviceDetailViewModel(ISerialService serialService, ISettingsService settingsService)
+        public DeviceDetailViewModel(ISerialService serialService, ISettingsService settingsService, ILocalizationService localizationService)
         {
             _serialService = serialService;
             _settingsService = settingsService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+            Strings = new LocalizedStrings(localizationService);
         }
 
         partial void OnSelectedDeviceChanged(Device? value)

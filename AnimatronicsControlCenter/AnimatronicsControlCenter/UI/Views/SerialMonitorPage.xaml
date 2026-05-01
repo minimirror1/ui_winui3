@@ -24,7 +24,6 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <Button Grid.Column="0"
@@ -67,14 +66,10 @@
             </StackPanel>
 
             <Button Grid.Column="6"
-                    Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_CopySelected', ViewModel.Strings.Code), Mode=OneWay}"
-                    Visibility="Collapsed"/>
-
-            <Button Grid.Column="7"
                     Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_CopyAll', ViewModel.Strings.Code), Mode=OneWay}"
                     Command="{x:Bind ViewModel.CopyAllCommand}"/>
 
-            <Button Grid.Column="8"
+            <Button Grid.Column="7"
                     Content="{x:Bind ViewModel.Strings.Get('SerialMonitor_Save', ViewModel.Strings.Code), Mode=OneWay}"
                     Click="SaveButton_Click"/>
         </Grid>
