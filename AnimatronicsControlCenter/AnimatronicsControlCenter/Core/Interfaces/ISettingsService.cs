@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AnimatronicsControlCenter.Core.Interfaces
 {
     public interface ISettingsService

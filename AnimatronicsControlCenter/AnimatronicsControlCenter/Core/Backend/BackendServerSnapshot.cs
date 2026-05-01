@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AnimatronicsControlCenter.Core.Backend;
 
 public sealed record BackendServerSnapshot(
