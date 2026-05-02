@@ -10,6 +10,8 @@
 
     <Page.Resources>
         <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
+        <cv:MotorErrorBrushConverter x:Key="MotorErrorBrushConverter"/>
+        <cv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Page.Resources>
 
         <Grid Padding="24">
@@ -222,38 +224,56 @@
                         <GridView Grid.Row="1" ItemsSource="{x:Bind ViewModel.SelectedDevice.Motors, Mode=OneWay}" SelectionMode="None">
                             <GridView.ItemTemplate>
                                 <DataTemplate x:DataType="models:MotorState">
-                                    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="4" Padding="12" Width="200" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                    <Grid Width="200" CornerRadius="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                                <TextBlock Text="{x:Bind DisplayId}" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="1" Text="{x:Bind Status}" FontSize="12" 
-                                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"/>
-                                        </Grid>
+                                        <!-- 오류 상태 액센트 바 -->
+                                        <Border CornerRadius="4,0,0,4"
+                                                Background="{x:Bind IsError, Mode=OneWay, Converter={StaticResource MotorErrorBrushConverter}}"/>
 
-                                        <TextBlock Grid.Row="1" Text="{x:Bind Type}" FontSize="12" 
-                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="0,4,0,8"/>
+                                        <!-- 카드 본문 -->
+                                        <Grid Grid.Column="1"
+                                              Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                              CornerRadius="0,4,4,0"
+                                              Padding="12"
+                                              BorderThickness="1"
+                                              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
 
-                                        <StackPanel Grid.Row="2">
-                                            <Grid Margin="0,0,0,4">
-                                                <TextBlock Text="Position" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                                <TextBlock Text="{x:Bind PositionDisplay, Mode=OneWay}" FontSize="10" HorizontalAlignment="Right"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="12" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                                    <TextBlock Text="{x:Bind DisplayId}" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{x:Bind Status}" FontSize="12"
+                                                           Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                                           Visibility="{x:Bind IsError, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                             </Grid>
-                                            <Slider Value="{x:Bind AnglePosition, Mode=TwoWay}" Minimum="{x:Bind MinAngle, Mode=OneWay}" Maximum="{x:Bind MaxAngle, Mode=OneWay}" 
-                                                    PointerCaptureLost="Slider_PointerCaptureLost"
-                                                    Height="32"/>
-                                        </StackPanel>
+
+                                            <TextBlock Grid.Row="1" Text="{x:Bind Type}" FontSize="12"
+                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="0,4,0,8"/>
+
+                                            <StackPanel Grid.Row="2">
+                                                <Grid Margin="0,0,0,4">
+                                                    <TextBlock Text="Position" FontSize="10" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                                    <TextBlock Text="{x:Bind PositionDisplay, Mode=OneWay}" FontSize="10" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                                <Slider Value="{x:Bind AnglePosition, Mode=TwoWay}" Minimum="{x:Bind MinAngle, Mode=OneWay}" Maximum="{x:Bind MaxAngle, Mode=OneWay}"
+                                                        PointerCaptureLost="Slider_PointerCaptureLost"
+                                                        Height="32"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Grid>
                                 </DataTemplate>
                             </GridView.ItemTemplate>

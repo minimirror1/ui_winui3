@@ -19,7 +19,10 @@ namespace AnimatronicsControlCenter.Core.Models
         private string type = "Null"; // Default type
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsError))]
         private string status = "Normal"; // Default status
+
+        public bool IsError => Status != "Normal";
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AnglePosition))]
