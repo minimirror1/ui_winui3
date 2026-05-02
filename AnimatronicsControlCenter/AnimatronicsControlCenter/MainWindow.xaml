@@ -40,42 +40,94 @@
             </NavigationView.MenuItems>
 
             <NavigationView.PaneFooter>
-                <Grid x:Name="SerialTrafficFooterHost"
-                      Width="48"
-                      HorizontalAlignment="Left"
-                      Margin="0,0,0,12">
-                    <Button x:Name="SerialTrafficButton"
-                            Click="SerialTrafficButton_Click"
-                            Width="36"
-                            Height="52"
-                            Padding="0"
+                <StackPanel Width="48" HorizontalAlignment="Left" Margin="0,0,0,12" Spacing="4">
+
+                    <!-- 연결 상태 버튼: 클릭 시 포트 선택 + 연결 Flyout -->
+                    <Button x:Name="ConnectionButton"
+                            Width="36" Height="36" Padding="0"
                             HorizontalAlignment="Center"
                             Background="Transparent"
-                            BorderBrush="Transparent"
-                            ToolTipService.ToolTip="Serial activity">
-                        <Border x:Name="SerialTrafficButtonChrome"
-                                Width="28"
-                                Height="44"
-                                Padding="0"
-                                CornerRadius="14"
-                                Background="#10FFFFFF">
-                            <StackPanel VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"
-                                        Spacing="8">
-                                <Border x:Name="RxTrafficDot"
-                                        Width="8"
-                                        Height="8"
-                                        CornerRadius="4"
-                                        Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
-                                <Border x:Name="TxTrafficDot"
-                                        Width="8"
-                                        Height="8"
-                                        CornerRadius="4"
-                                        Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
-                            </StackPanel>
-                        </Border>
+                            BorderBrush="Transparent">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="{x:Bind ConnectionViewModel.ConnectionStatusText, Mode=OneWay}"/>
+                        </ToolTipService.ToolTip>
+                        <FontIcon Glyph="{x:Bind ConnectionViewModel.ConnectionIconGlyph, Mode=OneWay}"
+                                  Foreground="{x:Bind ConnectionViewModel.ConnectionStatusBrush, Mode=OneWay}"
+                                  FontFamily="Segoe Fluent Icons"
+                                  FontSize="16"/>
+                        <Button.Flyout>
+                            <Flyout Placement="Right">
+                                <StackPanel Width="260" Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="{x:Bind ConnectionViewModel.ConnectionIconGlyph, Mode=OneWay}"
+                                                  Foreground="{x:Bind ConnectionViewModel.ConnectionStatusBrush, Mode=OneWay}"
+                                                  FontFamily="Segoe Fluent Icons"
+                                                  FontSize="14"/>
+                                        <TextBlock Text="{x:Bind ConnectionViewModel.ConnectionStatusText, Mode=OneWay}"
+                                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox Grid.Column="0"
+                                                  ItemsSource="{x:Bind ConnectionViewModel.AvailablePortOptions, Mode=OneWay}"
+                                                  DisplayMemberPath="DisplayName"
+                                                  SelectedValuePath="PortName"
+                                                  SelectedValue="{x:Bind ConnectionViewModel.SelectedPort, Mode=TwoWay}"
+                                                  HorizontalAlignment="Stretch"/>
+                                        <Button Grid.Column="1"
+                                                Command="{x:Bind ConnectionViewModel.RefreshPortsCommand}"
+                                                Style="{StaticResource DateTimePickerFlyoutButtonStyle}">
+                                            <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                        </Button>
+                                    </Grid>
+                                    <Button Content="{x:Bind ConnectionViewModel.ConnectButtonText, Mode=OneWay}"
+                                            Command="{x:Bind ConnectionViewModel.ConnectCommand}"
+                                            Style="{StaticResource AccentButtonStyle}"
+                                            HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
                     </Button>
-                </Grid>
+
+                    <!-- 시리얼 트래픽 인디케이터 -->
+                    <Grid x:Name="SerialTrafficFooterHost" Width="48" HorizontalAlignment="Left">
+                        <Button x:Name="SerialTrafficButton"
+                                Click="SerialTrafficButton_Click"
+                                Width="36"
+                                Height="52"
+                                Padding="0"
+                                HorizontalAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                ToolTipService.ToolTip="Serial activity">
+                            <Border x:Name="SerialTrafficButtonChrome"
+                                    Width="28"
+                                    Height="44"
+                                    Padding="0"
+                                    CornerRadius="14"
+                                    Background="#10FFFFFF">
+                                <StackPanel VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            Spacing="8">
+                                    <Border x:Name="RxTrafficDot"
+                                            Width="8"
+                                            Height="8"
+                                            CornerRadius="4"
+                                            Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                                    <Border x:Name="TxTrafficDot"
+                                            Width="8"
+                                            Height="8"
+                                            CornerRadius="4"
+                                            Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                    </Grid>
+                </StackPanel>
             </NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame"/>

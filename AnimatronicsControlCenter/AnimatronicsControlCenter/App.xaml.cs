@@ -55,7 +55,7 @@ namespace AnimatronicsControlCenter
 
             // ViewModels
             services.AddSingleton<DashboardViewModel>();
-            services.AddTransient<SettingsViewModel>();
+            services.AddSingleton<SettingsViewModel>();
             services.AddTransient<DeviceDetailViewModel>();
             services.AddTransient<ScanDialogViewModel>();
             services.AddTransient<SerialMonitorViewModel>();

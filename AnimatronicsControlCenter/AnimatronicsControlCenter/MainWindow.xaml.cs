@@ -9,6 +9,7 @@ using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
 using AnimatronicsControlCenter.Core.Utilities;
 using AnimatronicsControlCenter.UI.Helpers;
+using AnimatronicsControlCenter.UI.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 
@@ -28,10 +29,13 @@ namespace AnimatronicsControlCenter
         private readonly DispatcherTimer _serialTrafficIndicatorTimer;
         private readonly object _serialTrafficIndicatorLock = new();
 
-        public MainWindow(ISerialTrafficTap serialTrafficTap, SerialMonitorWindowHost serialMonitorWindowHost)
+        public SettingsViewModel ConnectionViewModel { get; }
+
+        public MainWindow(ISerialTrafficTap serialTrafficTap, SerialMonitorWindowHost serialMonitorWindowHost, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;
             _serialMonitorWindowHost = serialMonitorWindowHost;
+            ConnectionViewModel = settingsViewModel;
 
             this.InitializeComponent();
             UpdateLanguage(); // Set initial strings

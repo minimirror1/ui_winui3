@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Protocol;
@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
@@ -51,9 +53,17 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ConnectButtonText))]
         [NotifyPropertyChangedFor(nameof(ConnectionStatusText))]
+        [NotifyPropertyChangedFor(nameof(ConnectionStatusBrush))]
+        [NotifyPropertyChangedFor(nameof(ConnectionIconGlyph))]
         private bool isConnectionActive;
 
-        public string ConnectButtonText => IsConnectionActive ? 
+        public SolidColorBrush ConnectionStatusBrush => IsConnectionActive
+            ? new SolidColorBrush(Color.FromArgb(255, 76, 201, 128))
+            : new SolidColorBrush(Color.FromArgb(255, 128, 128, 128));
+
+        public string ConnectionIconGlyph => IsConnectionActive ? "" : "";
+
+        public string ConnectButtonText => IsConnectionActive ?
             _localizationService.GetString("Disconnect_Button") : 
             _localizationService.GetString("Connect_Text");
 
@@ -367,3 +377,4 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
     }
 }
+
