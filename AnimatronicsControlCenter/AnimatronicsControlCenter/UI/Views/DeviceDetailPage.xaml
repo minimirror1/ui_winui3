@@ -5,7 +5,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:AnimatronicsControlCenter.Core.Models"
+    xmlns:cv="using:AnimatronicsControlCenter.UI.Converters"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
+    </Page.Resources>
 
         <Grid Padding="24">
             <Grid.RowDefinitions>
@@ -15,26 +20,59 @@
             </Grid.RowDefinitions>
 
         <!-- Device Header -->
-        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,24">
+        <Grid Margin="0,0,0,24" CornerRadius="8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="24"/>
-                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Id, FallbackValue='Device #0', Mode=OneWay}" 
-                           Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center"/>
-            </StackPanel>
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_StatusLabel', ViewModel.Strings.Code), Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
-                <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8,4">
-                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='Unknown', Mode=OneWay}" 
+            <!-- 연결 상태 액센트 바 -->
+            <Border CornerRadius="8,0,0,8"
+                    Background="{x:Bind ViewModel.SelectedDevice.IsConnected, FallbackValue=False, Mode=OneWay, Converter={StaticResource ConnectionColorConverter}}"/>
+
+            <!-- 카드 본문 -->
+            <Grid Grid.Column="1"
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  CornerRadius="0,8,8,0"
+                  Padding="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 왼쪽: 아이콘 + 장치 ID -->
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE966;" FontFamily="Segoe Fluent Icons" FontSize="24"
+                              Foreground="{x:Bind ViewModel.SelectedDevice.IsConnected, FallbackValue=False, Mode=OneWay, Converter={StaticResource ConnectionColorConverter}}"/>
+                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.Id, FallbackValue='Device #0', Mode=OneWay}"
+                               Style="{StaticResource TitleTextBlockStyle}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- 가운데: 모션 상태 배지 -->
+                <Border Grid.Column="1"
+                        Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        CornerRadius="4" Padding="12,4"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{x:Bind ViewModel.SelectedDevice.MotionState, FallbackValue='Idle', Mode=OneWay}"
                                Style="{StaticResource CaptionTextBlockStyle}"/>
                 </Border>
-            </StackPanel>
+
+                <!-- 오른쪽: 연결 도트 + 상태 메시지 -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                             Fill="{x:Bind ViewModel.SelectedDevice.IsConnected, FallbackValue=False, Mode=OneWay, Converter={StaticResource ConnectionColorConverter}}"/>
+                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_StatusLabel', ViewModel.Strings.Code), Mode=OneWay}"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               VerticalAlignment="Center"/>
+                    <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8,4">
+                        <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='Unknown', Mode=OneWay}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </Grid>
 
         <TextBlock Grid.Row="1"
