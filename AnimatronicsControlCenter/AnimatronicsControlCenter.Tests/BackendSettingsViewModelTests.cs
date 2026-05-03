@@ -71,6 +71,46 @@ public class BackendSettingsViewModelTests
         StringAssert.Contains(viewModel.BackendDeviceObjectMappingsMessage, "JSON");
     }
 
+    [TestMethod]
+    public void SelectedCountryCode_PopulatesServerStoreList()
+    {
+        var catalog = new FakeCatalogClient
+        {
+            StoreList = new BackendStoreListResponse(new[]
+            {
+                new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR")
+            })
+        };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+
+        viewModel.SelectedCountryCode = "KR";
+
+        Assert.AreEqual(1, viewModel.ServerStoreList.Count);
+        Assert.AreEqual("Seoul Store", viewModel.ServerStoreList[0].StoreName);
+    }
+
+    [TestMethod]
+    public void SelectedCountryCode_Changed_ClearsStoreAndPcSelections()
+    {
+        var catalog = new FakeCatalogClient
+        {
+            StoreList = new BackendStoreListResponse(new[]
+            {
+                new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR")
+            }),
+            StoreDetail = StoreDetail("pc-1", "Main PC", "1.0", "obj-1")
+        };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+        viewModel.SelectedCountryCode = "KR";
+        viewModel.SelectedServerStore = viewModel.ServerStoreList[0];
+
+        catalog.StoreList = null; // JP에는 스토어 없음
+        viewModel.SelectedCountryCode = "JP";
+
+        Assert.AreEqual(0, viewModel.ServerStoreList.Count);
+        Assert.IsNull(viewModel.SelectedServerStore);
+    }
+
     private static SettingsService TestSettings()
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_settings_vm_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");

@@ -16,6 +16,7 @@ public partial class BackendSettingsViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IBackendServerCatalogClient _serverCatalogClient;
     private BackendServerSnapshot? _lastServerSnapshot;
+    private BackendStoreDetailResponse? _lastFetchedStoreDetail;
 
     [ObservableProperty] private string backendBaseUrl = string.Empty;
     [ObservableProperty] private string backendBearerToken = string.Empty;
@@ -37,7 +38,14 @@ public partial class BackendSettingsViewModel : ObservableObject
     [ObservableProperty] private string pcIdComparisonMessage = string.Empty;
     [ObservableProperty] private string swVersionComparisonMessage = string.Empty;
     [ObservableProperty] private string deviceObjectMappingsComparisonMessage = string.Empty;
+    [ObservableProperty] private string? selectedCountryCode;
+    [ObservableProperty] private BackendStoreSummaryResponse? selectedServerStore;
+    [ObservableProperty] private BackendPcDetailResponse? selectedServerPc;
+    [ObservableProperty] private bool isFetchingStoreList;
 
+    public static readonly IReadOnlyList<string> AvailableCountryCodes = ["KR", "JP", "US", "CN", "GB"];
+    public ObservableCollection<BackendStoreSummaryResponse> ServerStoreList { get; } = new();
+    public ObservableCollection<BackendPcDetailResponse> ServerPcList { get; } = new();
     public ObservableCollection<BackendServerObjectSnapshot> ServerObjects { get; } = new();
 
     public BackendSettingsViewModel(ISettingsService settingsService, IBackendServerCatalogClient serverCatalogClient)
@@ -178,6 +186,39 @@ public partial class BackendSettingsViewModel : ObservableObject
             BackendPcName,
             BackendSoftwareVersion,
             mappings);
+    }
+
+    partial void OnSelectedCountryCodeChanged(string? value)
+    {
+        ServerStoreList.Clear();
+        SelectedServerStore = null;
+        ServerPcList.Clear();
+        SelectedServerPc = null;
+        ServerObjects.Clear();
+        _lastServerSnapshot = null;
+        _lastFetchedStoreDetail = null;
+        if (value is not null)
+            _ = FetchStoreListAsync(value);
+    }
+
+    private async Task FetchStoreListAsync(string countryCode)
+    {
+        IsFetchingStoreList = true;
+        ServerStatusMessage = string.Empty;
+        var result = await _serverCatalogClient.GetStoreListAsync(countryCode, CancellationToken.None);
+        IsFetchingStoreList = false;
+        if (!result.Success || result.Data is null)
+        {
+            ServerStatusMessage = result.Message;
+            return;
+        }
+        if (result.Data.Stores.Count == 0)
+        {
+            ServerStatusMessage = "해당 국가에 등록된 스토어가 없습니다.";
+            return;
+        }
+        foreach (BackendStoreSummaryResponse store in result.Data.Stores)
+            ServerStoreList.Add(store);
     }
 
     private bool TryParseMappings(out Dictionary<int, string> mappings)
