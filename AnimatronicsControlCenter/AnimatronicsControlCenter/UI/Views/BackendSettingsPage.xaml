@@ -14,11 +14,21 @@
             <TextBlock Text="Server Values" Style="{StaticResource SubtitleTextBlockStyle}" />
             <TextBox Header="Base URL" Text="{x:Bind ViewModel.BackendBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <PasswordBox Header="Bearer Token" Password="{x:Bind ViewModel.BackendBearerToken, Mode=TwoWay}" />
-            <TextBox Header="Store ID" Text="{x:Bind ViewModel.BackendStoreId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="서버 조회" Command="{x:Bind ViewModel.FetchServerCommand}" />
+            <ComboBox Header="Country Code"
+                      ItemsSource="{x:Bind ViewModel.AvailableCountryCodes}"
+                      SelectedItem="{x:Bind ViewModel.SelectedCountryCode, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch" />
+            <ComboBox Header="Store"
+                      ItemsSource="{x:Bind ViewModel.ServerStoreList, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.SelectedServerStore, Mode=TwoWay}"
+                      DisplayMemberPath="StoreName"
+                      HorizontalAlignment="Stretch" />
+            <ComboBox Header="PC"
+                      ItemsSource="{x:Bind ViewModel.ServerPcList, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.SelectedServerPc, Mode=TwoWay}"
+                      DisplayMemberPath="PcName"
+                      HorizontalAlignment="Stretch" />
             <TextBlock Text="{x:Bind ViewModel.ServerStatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-            <TextBlock Text="{x:Bind ViewModel.ServerStoreId, Mode=OneWay}" />
-            <TextBlock Text="{x:Bind ViewModel.ServerPcId, Mode=OneWay}" />
             <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}" />
         </StackPanel>
 

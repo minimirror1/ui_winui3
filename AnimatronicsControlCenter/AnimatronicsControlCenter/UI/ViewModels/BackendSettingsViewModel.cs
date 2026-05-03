@@ -41,7 +41,7 @@ public partial class BackendSettingsViewModel : ObservableObject
     [ObservableProperty] private BackendPcDetailResponse? selectedServerPc;
     [ObservableProperty] private bool isFetchingStoreList;
 
-    public static readonly IReadOnlyList<string> AvailableCountryCodes = ["KR", "JP", "US", "CN", "GB"];
+    public IReadOnlyList<string> AvailableCountryCodes { get; } = ["KR", "JP", "US", "CN", "GB"];
     public ObservableCollection<BackendStoreSummaryResponse> ServerStoreList { get; } = new();
     public ObservableCollection<BackendPcDetailResponse> ServerPcList { get; } = new();
     public ObservableCollection<BackendServerObjectSnapshot> ServerObjects { get; } = new();

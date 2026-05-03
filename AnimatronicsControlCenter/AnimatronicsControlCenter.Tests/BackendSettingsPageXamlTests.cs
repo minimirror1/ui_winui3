@@ -14,7 +14,12 @@ public class BackendSettingsPageXamlTests
         {
             "ServerValuesPanel",
             "LocalSettingsPanel",
-            "FetchServerCommand",
+            "AvailableCountryCodes",
+            "SelectedCountryCode",
+            "ServerStoreList",
+            "SelectedServerStore",
+            "ServerPcList",
+            "SelectedServerPc",
             "ApplyServerValuesCommand",
             "CompareWithServerCommand",
             "SaveCommand",
