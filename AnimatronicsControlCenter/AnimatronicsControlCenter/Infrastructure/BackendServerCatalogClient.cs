@@ -54,6 +54,42 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         }
     }
 
+    public async Task<BackendFetchResult<BackendStoreListResponse>> GetStoreListAsync(
+        string countryCode,
+        CancellationToken cancellationToken)
+    {
+        string path = $"/v1/service/stores?country_code={Uri.EscapeDataString(countryCode)}";
+        if (!BackendHttpRequest.TryCreateUri(_settingsService, path, out Uri uri, out string message))
+        {
+            return new BackendFetchResult<BackendStoreListResponse>(false, null, message, null);
+        }
+
+        try
+        {
+            using HttpRequestMessage request = BackendHttpRequest.Create(_settingsService, HttpMethod.Get, uri);
+            using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new BackendFetchResult<BackendStoreListResponse>(false, (int)response.StatusCode, body, null);
+            }
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                return new BackendFetchResult<BackendStoreListResponse>(false, (int)response.StatusCode, "Backend response body is empty.", null);
+            }
+
+            var data = JsonSerializer.Deserialize<BackendStoreListResponse>(body, BackendHttpRequest.JsonOptions);
+            return data is null
+                ? new BackendFetchResult<BackendStoreListResponse>(false, (int)response.StatusCode, "Backend response body is invalid.", null)
+                : new BackendFetchResult<BackendStoreListResponse>(true, (int)response.StatusCode, "OK", data);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return new BackendFetchResult<BackendStoreListResponse>(false, null, ex.Message, null);
+        }
+    }
+
     public async Task<BackendSendResult> UpdatePcMetadataAsync(
         string storeId,
         string pcId,
