@@ -74,3 +74,11 @@ public sealed record BackendObjectDetailResponse(
     [property: JsonPropertyName("object_name")] string? ObjectName,
     [property: JsonPropertyName("power_status")] string? PowerStatus,
     [property: JsonPropertyName("error_data")] IReadOnlyList<BackendErrorData>? ErrorData);
+
+public sealed record BackendStoreListResponse(
+    [property: JsonPropertyName("stores")] IReadOnlyList<BackendStoreSummaryResponse> Stores);
+
+public sealed record BackendStoreSummaryResponse(
+    [property: JsonPropertyName("id")] string StoreId,
+    [property: JsonPropertyName("store_name")] string? StoreName,
+    [property: JsonPropertyName("country_code")] string? CountryCode);
