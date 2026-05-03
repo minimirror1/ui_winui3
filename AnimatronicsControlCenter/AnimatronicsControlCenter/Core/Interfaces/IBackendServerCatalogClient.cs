@@ -10,6 +10,10 @@ public interface IBackendServerCatalogClient
         string storeId,
         CancellationToken cancellationToken);
 
+    Task<BackendFetchResult<BackendStoreListResponse>> GetStoreListAsync(
+        string countryCode,
+        CancellationToken cancellationToken);
+
     Task<BackendSendResult> UpdatePcMetadataAsync(
         string storeId,
         string pcId,

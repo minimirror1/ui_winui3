@@ -106,13 +106,22 @@ public class BackendSettingsViewModelTests
     private sealed class FakeCatalogClient : IBackendServerCatalogClient
     {
         public BackendStoreDetailResponse? StoreDetail { get; set; }
+        public BackendStoreListResponse? StoreList { get; set; }
         public string? UpdatedStoreId { get; private set; }
         public string? UpdatedPcId { get; private set; }
         public BackendPcUpdateRequest? UpdatedRequest { get; private set; }
 
         public Task<BackendFetchResult<BackendStoreDetailResponse>> GetStoreDetailAsync(string storeId, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new BackendFetchResult<BackendStoreDetailResponse>(true, 200, "OK", StoreDetail));
+            bool success = StoreDetail is not null;
+            string message = success ? "OK" : "Store not found.";
+            return Task.FromResult(new BackendFetchResult<BackendStoreDetailResponse>(success, success ? 200 : 404, message, StoreDetail));
+        }
+
+        public Task<BackendFetchResult<BackendStoreListResponse>> GetStoreListAsync(string countryCode, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new BackendFetchResult<BackendStoreListResponse>(
+                StoreList is not null, 200, "OK", StoreList));
         }
 
         public Task<BackendSendResult> UpdatePcMetadataAsync(string storeId, string pcId, BackendPcUpdateRequest request, CancellationToken cancellationToken)
