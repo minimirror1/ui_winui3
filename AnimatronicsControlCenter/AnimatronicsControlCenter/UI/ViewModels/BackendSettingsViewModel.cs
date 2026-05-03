@@ -32,8 +32,6 @@ public partial class BackendSettingsViewModel : ObservableObject
     [ObservableProperty] private int backendSyncIntervalSeconds;
     [ObservableProperty] private string serverStatusMessage = string.Empty;
     [ObservableProperty] private string localStatusMessage = string.Empty;
-    [ObservableProperty] private string serverStoreId = string.Empty;
-    [ObservableProperty] private string serverPcId = string.Empty;
     [ObservableProperty] private string storeCountryCodeComparisonMessage = string.Empty;
     [ObservableProperty] private string pcIdComparisonMessage = string.Empty;
     [ObservableProperty] private string swVersionComparisonMessage = string.Empty;
@@ -53,46 +51,6 @@ public partial class BackendSettingsViewModel : ObservableObject
         _settingsService = settingsService;
         _serverCatalogClient = serverCatalogClient;
         LoadFromSettings();
-    }
-
-    [RelayCommand]
-    private async Task FetchServerAsync()
-    {
-        ServerStatusMessage = string.Empty;
-        var result = await _serverCatalogClient.GetStoreDetailAsync(BackendStoreId, CancellationToken.None);
-        if (!result.Success || result.Data is null)
-        {
-            _lastServerSnapshot = null;
-            ServerStatusMessage = result.Message;
-            return;
-        }
-
-        var pc = result.Data.Pcs.FirstOrDefault(item => item.PcId == BackendPcId);
-        if (pc is null)
-        {
-            _lastServerSnapshot = null;
-            ServerStatusMessage = "조회한 Store 아래에 이 PC ID가 없습니다.";
-            return;
-        }
-
-        _lastServerSnapshot = new BackendServerSnapshot(
-            result.Data.StoreId,
-            result.Data.StoreName,
-            result.Data.CountryCode,
-            pc.PcId,
-            pc.PcName,
-            pc.SwVersion,
-            pc.Objects.Select(item => new BackendServerObjectSnapshot(item.Id, item.ObjectName)).ToArray());
-
-        ServerStoreId = _lastServerSnapshot.StoreId;
-        ServerPcId = _lastServerSnapshot.PcId ?? string.Empty;
-        ServerObjects.Clear();
-        foreach (BackendServerObjectSnapshot item in _lastServerSnapshot.Objects)
-        {
-            ServerObjects.Add(item);
-        }
-
-        ServerStatusMessage = "서버 조회가 완료되었습니다.";
     }
 
     [RelayCommand]
@@ -199,6 +157,25 @@ public partial class BackendSettingsViewModel : ObservableObject
         _lastFetchedStoreDetail = null;
         if (value is not null)
             _ = FetchStoreListAsync(value);
+    }
+
+    partial void OnSelectedServerPcChanged(BackendPcDetailResponse? value)
+    {
+        ServerObjects.Clear();
+        _lastServerSnapshot = null;
+        if (value is null || _lastFetchedStoreDetail is null) return;
+
+        _lastServerSnapshot = new BackendServerSnapshot(
+            _lastFetchedStoreDetail.StoreId,
+            _lastFetchedStoreDetail.StoreName,
+            _lastFetchedStoreDetail.CountryCode,
+            value.PcId,
+            value.PcName,
+            value.SwVersion,
+            value.Objects.Select(o => new BackendServerObjectSnapshot(o.Id, o.ObjectName)).ToArray());
+
+        foreach (BackendServerObjectSnapshot obj in _lastServerSnapshot.Objects)
+            ServerObjects.Add(obj);
     }
 
     partial void OnSelectedServerStoreChanged(BackendStoreSummaryResponse? value)

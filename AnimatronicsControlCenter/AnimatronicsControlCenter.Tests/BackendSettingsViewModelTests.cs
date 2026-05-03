@@ -14,22 +14,40 @@ namespace AnimatronicsControlCenter.Tests;
 public class BackendSettingsViewModelTests
 {
     [TestMethod]
-    public async Task FetchServerCommand_SelectsCurrentPcSnapshot()
+    public void SelectedServerPc_PopulatesServerObjectsAndSnapshot()
     {
-        var settings = TestSettings();
-        settings.BackendStoreId = "store-1";
-        settings.BackendPcId = "pc-1";
         var catalog = new FakeCatalogClient
         {
             StoreDetail = StoreDetail("pc-1", "Main PC", "1.1.1.0", "obj-1")
         };
-        var viewModel = new BackendSettingsViewModel(settings, catalog);
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+        viewModel.SelectedServerStore = new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR");
 
-        await viewModel.FetchServerCommand.ExecuteAsync(null);
+        viewModel.SelectedServerPc = viewModel.ServerPcList[0];
 
-        Assert.AreEqual("store-1", viewModel.ServerStoreId);
-        Assert.AreEqual("pc-1", viewModel.ServerPcId);
+        Assert.AreEqual(1, viewModel.ServerObjects.Count);
         Assert.AreEqual("obj-1", viewModel.ServerObjects[0].ObjectId);
+    }
+
+    [TestMethod]
+    public void ApplyServerValues_AfterPcSelection_SetsLocalSettingsFields()
+    {
+        var catalog = new FakeCatalogClient
+        {
+            StoreDetail = StoreDetail("pc-1", "Main PC", "1.1.1.0", "obj-1")
+        };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+        viewModel.SelectedServerStore = new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR");
+        viewModel.SelectedServerPc = viewModel.ServerPcList[0];
+
+        viewModel.ApplyServerValuesCommand.Execute(null);
+
+        Assert.AreEqual("store-1", viewModel.BackendStoreId);
+        Assert.AreEqual("Seoul Store", viewModel.BackendStoreName);
+        Assert.AreEqual("KR", viewModel.BackendStoreCountryCode);
+        Assert.AreEqual("pc-1", viewModel.BackendPcId);
+        Assert.AreEqual("Main PC", viewModel.BackendPcName);
+        Assert.AreEqual("1.1.1.0", viewModel.BackendSoftwareVersion);
     }
 
     [TestMethod]
