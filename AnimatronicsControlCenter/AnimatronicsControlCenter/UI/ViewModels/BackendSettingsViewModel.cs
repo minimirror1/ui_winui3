@@ -201,6 +201,31 @@ public partial class BackendSettingsViewModel : ObservableObject
             _ = FetchStoreListAsync(value);
     }
 
+    partial void OnSelectedServerStoreChanged(BackendStoreSummaryResponse? value)
+    {
+        ServerPcList.Clear();
+        SelectedServerPc = null;
+        ServerObjects.Clear();
+        _lastServerSnapshot = null;
+        _lastFetchedStoreDetail = null;
+        if (value is not null)
+            _ = FetchStoreDetailForSelectionAsync(value.StoreId);
+    }
+
+    private async Task FetchStoreDetailForSelectionAsync(string storeId)
+    {
+        ServerStatusMessage = string.Empty;
+        var result = await _serverCatalogClient.GetStoreDetailAsync(storeId, CancellationToken.None);
+        if (!result.Success || result.Data is null)
+        {
+            ServerStatusMessage = result.Message;
+            return;
+        }
+        _lastFetchedStoreDetail = result.Data;
+        foreach (BackendPcDetailResponse pc in result.Data.Pcs)
+            ServerPcList.Add(pc);
+    }
+
     private async Task FetchStoreListAsync(string countryCode)
     {
         IsFetchingStoreList = true;

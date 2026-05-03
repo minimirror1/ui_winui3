@@ -111,6 +111,52 @@ public class BackendSettingsViewModelTests
         Assert.IsNull(viewModel.SelectedServerStore);
     }
 
+    [TestMethod]
+    public void SelectedServerStore_PopulatesServerPcList()
+    {
+        var catalog = new FakeCatalogClient
+        {
+            StoreDetail = StoreDetail("pc-1", "Main PC", "1.1.1.0", "obj-1")
+        };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+
+        viewModel.SelectedServerStore = new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR");
+
+        Assert.AreEqual(1, viewModel.ServerPcList.Count);
+        Assert.AreEqual("Main PC", viewModel.ServerPcList[0].PcName);
+    }
+
+    [TestMethod]
+    public void SelectedServerStore_Changed_ClearsPcAndObjects()
+    {
+        var catalog = new FakeCatalogClient
+        {
+            StoreDetail = StoreDetail("pc-1", "Main PC", "1.1.1.0", "obj-1")
+        };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+        viewModel.SelectedServerStore = new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR");
+        viewModel.SelectedServerPc = viewModel.ServerPcList[0];
+
+        catalog.StoreDetail = null;
+        viewModel.SelectedServerStore = new BackendStoreSummaryResponse("store-2", "Tokyo Store", "JP");
+
+        Assert.AreEqual(0, viewModel.ServerPcList.Count);
+        Assert.IsNull(viewModel.SelectedServerPc);
+        Assert.AreEqual(0, viewModel.ServerObjects.Count);
+    }
+
+    [TestMethod]
+    public void SelectedServerStore_ErrorResponse_ShowsStatusMessage()
+    {
+        var catalog = new FakeCatalogClient { StoreDetail = null };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+
+        viewModel.SelectedServerStore = new BackendStoreSummaryResponse("bad-id", "Bad Store", "KR");
+
+        Assert.AreEqual(0, viewModel.ServerPcList.Count);
+        Assert.IsFalse(string.IsNullOrEmpty(viewModel.ServerStatusMessage));
+    }
+
     private static SettingsService TestSettings()
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_settings_vm_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
