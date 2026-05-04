@@ -82,3 +82,38 @@ public sealed record BackendStoreSummaryResponse(
     [property: JsonPropertyName("id")] string StoreId,
     [property: JsonPropertyName("store_name")] string? StoreName,
     [property: JsonPropertyName("country_code")] string? CountryCode);
+
+// PUT /v1/service/stores/{store_id}
+public sealed record BackendStoreUpdateRequest(
+    [property: JsonPropertyName("store_name")] string? StoreName,
+    [property: JsonPropertyName("country_code")] string? CountryCode,
+    [property: JsonPropertyName("address")] string? Address,
+    [property: JsonPropertyName("latitude")] double? Latitude,
+    [property: JsonPropertyName("longitude")] double? Longitude,
+    [property: JsonPropertyName("timezone")] string? Timezone,
+    [property: JsonPropertyName("operate_times")] IReadOnlyList<BackendStoreOperateTime>? OperateTimes);
+
+// PUT /v1/service/objects/{object_id}
+public sealed record BackendObjectUpdateRequest(
+    [property: JsonPropertyName("object_name")] string? ObjectName,
+    [property: JsonPropertyName("object_operation_time")] BackendTimeRange? ObjectOperationTime,
+    [property: JsonPropertyName("schedule_flag")] bool? ScheduleFlag,
+    [property: JsonPropertyName("firmware_version")] BackendFirmwareVersion? FirmwareVersion,
+    [property: JsonPropertyName("operation_status")] string? OperationStatus);
+
+// POST /v1/service/stores 응답
+public sealed record BackendStoreCreateResponse(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("store_name")] string StoreName,
+    [property: JsonPropertyName("created_at")] string CreatedAt);
+
+// POST /v1/service/stores/{store_id}/pcs 응답
+public sealed record BackendPcAddResponse(
+    [property: JsonPropertyName("store_id")] string StoreId,
+    [property: JsonPropertyName("pc_id")] string PcId,
+    [property: JsonPropertyName("created_at")] string CreatedAt);
+
+// POST /v1/service/stores/{store_id}/pcs/{pc_id}/objects 응답
+public sealed record BackendObjectCreateResponse(
+    [property: JsonPropertyName("object_id")] string ObjectId,
+    [property: JsonPropertyName("created_at")] string CreatedAt);
