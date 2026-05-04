@@ -28,6 +28,27 @@ public class MainWindowLayoutTests
         Assert.AreEqual("Center", (string?)button.Attribute("HorizontalAlignment"));
     }
 
+    [TestMethod]
+    public void BackendSettingsButton_IsLastPaneFooterButtonAboveSettingsItem()
+    {
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "MainWindow.xaml"));
+
+        XElement footerStack = page
+            .Descendants(xaml + "NavigationView.PaneFooter")
+            .Single()
+            .Elements(xaml + "StackPanel")
+            .Single();
+
+        XElement lastButton = footerStack
+            .Elements()
+            .Where(element => element.Name == xaml + "Button")
+            .Last();
+
+        Assert.AreEqual("BackendSettingsButton", (string?)lastButton.Attribute(x + "Name"));
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

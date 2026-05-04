@@ -44,18 +44,6 @@
                             HorizontalAlignment="Left"
                             Margin="0,0,0,12"
                             Spacing="4">
-                    <Button x:Name="BackendSettingsButton"
-                            Click="BackendSettingsButton_Click"
-                            Width="36"
-                            Height="36"
-                            Padding="0"
-                            HorizontalAlignment="Center"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            ToolTipService.ToolTip="Backend settings">
-                        <FontIcon Glyph="&#xE774;" FontSize="16" />
-                    </Button>
-
                     <!-- 연결 상태 버튼: 클릭 시 포트 선택 + 연결 Flyout -->
                     <Button x:Name="ConnectionButton"
                             Width="36" Height="36" Padding="0"
@@ -183,6 +171,18 @@
                             </Border>
                         </Button>
                     </Grid>
+
+                    <Button x:Name="BackendSettingsButton"
+                            Click="BackendSettingsButton_Click"
+                            Width="36"
+                            Height="36"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            ToolTipService.ToolTip="Backend settings">
+                        <FontIcon Glyph="&#xE774;" FontSize="16" />
+                    </Button>
                 </StackPanel>
             </NavigationView.PaneFooter>
 
