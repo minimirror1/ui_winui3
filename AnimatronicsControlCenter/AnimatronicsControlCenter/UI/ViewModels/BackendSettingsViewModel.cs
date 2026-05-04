@@ -247,15 +247,26 @@ public partial class BackendSettingsViewModel : ObservableObject
         ServerStoreList.Clear();
         SelectedServerStore = null;
 
-        if (!string.IsNullOrWhiteSpace(result.CountryCode))
-            await FetchStoreListAsync(result.CountryCode);
+        if (string.IsNullOrWhiteSpace(result.CountryCode))
+        {
+            ServerStatusMessage = "등록 결과에 CountryCode가 없어 스토어 목록을 갱신할 수 없습니다.";
+            return;
+        }
+
+        await FetchStoreListAsync(result.CountryCode);
+        selectedCountryCode = result.CountryCode;
+        OnPropertyChanged(nameof(SelectedCountryCode));
 
         var store = ServerStoreList.FirstOrDefault(s => s.StoreId == result.StoreId);
-        if (store is null) return;
+        if (store is null)
+        {
+            ServerStatusMessage = "등록된 스토어를 목록에서 찾을 수 없습니다.";
+            return;
+        }
 
         _suppressStoreCascade = true;
-        SelectedServerStore = store;
-        _suppressStoreCascade = false;
+        try { SelectedServerStore = store; }
+        finally { _suppressStoreCascade = false; }
 
         await FetchStoreDetailForSelectionAsync(result.StoreId);
         SelectedServerPc = ServerPcList.FirstOrDefault(p => p.PcId == result.PcId);

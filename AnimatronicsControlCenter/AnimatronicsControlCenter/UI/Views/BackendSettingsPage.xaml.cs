@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using AnimatronicsControlCenter.Core.Backend;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,14 +20,21 @@ public sealed partial class BackendSettingsPage : Page
 
     private async void OnOpenRegistrationDialogClicked(object sender, RoutedEventArgs e)
     {
-        var catalogClient = App.Current.Services.GetRequiredService<IBackendServerCatalogClient>();
-        var stores = ViewModel.ServerStoreList.ToList();
-        var vm = new BackendRegistrationViewModel(catalogClient, stores);
-        var dialog = new BackendRegistrationDialog(vm);
-        if (App.Current.m_window?.Content is FrameworkElement element)
-            dialog.XamlRoot = element.XamlRoot;
-        await dialog.ShowAsync().AsTask();
-        if (vm.Result is { } result)
-            await ViewModel.HandleRegistrationResultAsync(result);
+        try
+        {
+            var catalogClient = App.Current.Services.GetRequiredService<IBackendServerCatalogClient>();
+            var stores = ViewModel.ServerStoreList.ToList();
+            var vm = new BackendRegistrationViewModel(catalogClient, stores);
+            var dialog = new BackendRegistrationDialog(vm);
+            if (App.Current.m_window?.Content is FrameworkElement element)
+                dialog.XamlRoot = element.XamlRoot;
+            await dialog.ShowAsync().AsTask();
+            if (vm.Result is { } result)
+                await ViewModel.HandleRegistrationResultAsync(result);
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ServerStatusMessage = $"데이터 관리 오류: {ex.Message}";
+        }
     }
 }

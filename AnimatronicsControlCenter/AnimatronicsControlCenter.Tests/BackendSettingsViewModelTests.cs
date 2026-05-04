@@ -196,6 +196,8 @@ public class BackendSettingsViewModelTests
         Assert.AreEqual("store-1", viewModel.SelectedServerStore!.StoreId);
         Assert.IsNotNull(viewModel.SelectedServerPc);
         Assert.AreEqual("pc-1", viewModel.SelectedServerPc!.PcId);
+        Assert.AreEqual(1, catalog.GetStoreDetailCallCount);
+        Assert.AreEqual(1, viewModel.ServerPcList.Count);
     }
 
     private static SettingsService TestSettings()
@@ -238,11 +240,14 @@ public class BackendSettingsViewModelTests
         public string? UpdatedPcId { get; private set; }
         public BackendPcUpdateRequest? UpdatedRequest { get; private set; }
 
+        public int GetStoreDetailCallCount { get; private set; }
+
         public Task<BackendFetchResult<BackendStoreDetailResponse>> GetStoreDetailAsync(string storeId, CancellationToken cancellationToken)
         {
-            bool success = StoreDetail is not null;
-            string message = success ? "OK" : "Store not found.";
-            return Task.FromResult(new BackendFetchResult<BackendStoreDetailResponse>(success, success ? 200 : 404, message, StoreDetail));
+            GetStoreDetailCallCount++;
+            bool ok = StoreDetail is not null;
+            return Task.FromResult(new BackendFetchResult<BackendStoreDetailResponse>(
+                ok, ok ? 200 : 404, ok ? "OK" : "Not found.", StoreDetail));
         }
 
         public Task<BackendFetchResult<BackendStoreListResponse>> GetStoreListAsync(string countryCode, CancellationToken cancellationToken)
