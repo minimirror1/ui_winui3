@@ -54,14 +54,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [NotifyPropertyChangedFor(nameof(ConnectButtonText))]
         [NotifyPropertyChangedFor(nameof(ConnectionStatusText))]
         [NotifyPropertyChangedFor(nameof(ConnectionStatusBrush))]
-        [NotifyPropertyChangedFor(nameof(ConnectionIconGlyph))]
         private bool isConnectionActive;
 
         public SolidColorBrush ConnectionStatusBrush => IsConnectionActive
             ? new SolidColorBrush(Color.FromArgb(255, 76, 201, 128))
             : new SolidColorBrush(Color.FromArgb(255, 128, 128, 128));
-
-        public string ConnectionIconGlyph => IsConnectionActive ? "" : "";
 
         public string ConnectButtonText => IsConnectionActive ?
             _localizationService.GetString("Disconnect_Button") : 

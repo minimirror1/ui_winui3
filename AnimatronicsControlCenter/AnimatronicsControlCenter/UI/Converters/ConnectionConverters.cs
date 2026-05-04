@@ -22,23 +22,6 @@ namespace AnimatronicsControlCenter.UI.Converters
         public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
     }
 
-    public class BoolToIconGlyphConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            // E701: World (Connected like), E711: World (Disconnected like) or specific status icons
-            // E930: CompletedSolid
-            // EA39: ErrorBadge
-            if (value is bool isConnected && isConnected)
-            {
-                return "\uE930"; // Checkmark circle
-            }
-            return "\uF384"; // StatusErrorFull (or similar circle)
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
-    }
-
     public class MotorErrorBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
@@ -55,6 +38,14 @@ namespace AnimatronicsControlCenter.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, string language)
             => value is bool b && b ? Visibility.Visible : Visibility.Collapsed;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
+    }
+
+    public class InverseBoolToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => value is bool b && b ? Visibility.Collapsed : Visibility.Visible;
 
         public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
     }

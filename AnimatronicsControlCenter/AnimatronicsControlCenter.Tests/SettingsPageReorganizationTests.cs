@@ -116,6 +116,22 @@ public class SettingsPageReorganizationTests
         StringAssert.Contains(source, "SerialPortDisplay.CreateOption(portName, deviceInfo: null)");
     }
 
+    [TestMethod]
+    public void ConnectionControls_UseVectorPlugIconsInsteadOfUnsupportedFontGlyphs()
+    {
+        string mainWindow = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "MainWindow.xaml"));
+        string settingsPage = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string converterSource = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Converters", "ConnectionConverters.cs"));
+
+        Assert.IsFalse(mainWindow.Contains("ConnectionIconGlyph", StringComparison.Ordinal));
+        Assert.IsFalse(settingsPage.Contains("ConnectionIconConverter", StringComparison.Ordinal));
+        StringAssert.Contains(mainWindow, "ConnectedPlugIcon");
+        StringAssert.Contains(mainWindow, "DisconnectedPlugIcon");
+        StringAssert.Contains(settingsPage, "ConnectedPlugIcon");
+        StringAssert.Contains(settingsPage, "DisconnectedPlugIcon");
+        StringAssert.Contains(converterSource, "InverseBoolToVisibilityConverter");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

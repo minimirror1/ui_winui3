@@ -12,6 +12,7 @@ using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter.UI.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
+using System.ComponentModel;
 
 namespace AnimatronicsControlCenter
 {
@@ -55,6 +56,8 @@ namespace AnimatronicsControlCenter
             ContentFrame.Navigated += ContentFrame_Navigated;
 
             UpdateSerialTrafficIndicator();
+            UpdateConnectionIconVisibility();
+            ConnectionViewModel.PropertyChanged += ConnectionViewModel_PropertyChanged;
         }
 
         public void UpdateLanguage()
@@ -150,6 +153,25 @@ namespace AnimatronicsControlCenter
             _serialMonitorWindowHost.Show();
         }
 
+        private void ConnectionViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SettingsViewModel.IsConnectionActive))
+            {
+                UpdateConnectionIconVisibility();
+            }
+        }
+
+        private void UpdateConnectionIconVisibility()
+        {
+            Visibility connectedVisibility = ConnectionViewModel.IsConnectionActive ? Visibility.Visible : Visibility.Collapsed;
+            Visibility disconnectedVisibility = ConnectionViewModel.IsConnectionActive ? Visibility.Collapsed : Visibility.Visible;
+
+            ConnectedPlugIcon.Visibility = connectedVisibility;
+            FlyoutConnectedPlugIcon.Visibility = connectedVisibility;
+            DisconnectedPlugIcon.Visibility = disconnectedVisibility;
+            FlyoutDisconnectedPlugIcon.Visibility = disconnectedVisibility;
+        }
+
         private void BackendSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             ContentFrame.Navigate(typeof(BackendSettingsPage));
@@ -214,6 +236,7 @@ namespace AnimatronicsControlCenter
 
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
+            ConnectionViewModel.PropertyChanged -= ConnectionViewModel_PropertyChanged;
             _serialTrafficTap.EntryRecorded -= SerialTrafficTap_EntryRecorded;
             _serialTrafficIndicatorTimer.Tick -= SerialTrafficIndicatorTimer_Tick;
             _serialTrafficIndicatorTimer.Stop();
