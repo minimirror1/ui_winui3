@@ -30,6 +30,9 @@
                       HorizontalAlignment="Stretch" />
             <TextBlock Text="{x:Bind ViewModel.ServerStatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
             <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}" />
+            <Button Content="데이터 관리"
+                    Click="OnOpenRegistrationDialogClicked"
+                    HorizontalAlignment="Stretch" />
         </StackPanel>
 
         <Button Grid.Column="1"

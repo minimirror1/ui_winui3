@@ -28,7 +28,8 @@ public class BackendSettingsPageXamlTests
             "BackendPcId",
             "BackendPcName",
             "BackendSoftwareVersion",
-            "BackendDeviceObjectMappingsText"
+            "BackendDeviceObjectMappingsText",
+            "데이터 관리",
         })
         {
             StringAssert.Contains(xaml, expected);

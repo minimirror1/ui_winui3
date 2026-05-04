@@ -175,6 +175,29 @@ public class BackendSettingsViewModelTests
         Assert.IsFalse(string.IsNullOrEmpty(viewModel.ServerStatusMessage));
     }
 
+    [TestMethod]
+    public async Task HandleRegistrationResultAsync_RefreshesStoreListAndAutoSelects()
+    {
+        var catalog = new FakeCatalogClient
+        {
+            StoreList = new BackendStoreListResponse(new[]
+            {
+                new BackendStoreSummaryResponse("store-1", "Seoul Store", "KR")
+            }),
+            StoreDetail = StoreDetail("pc-1", "Main PC", "1.0", "obj-1")
+        };
+        var viewModel = new BackendSettingsViewModel(TestSettings(), catalog);
+
+        var result = new RegistrationResult("store-1", "Seoul Store", "KR", "pc-1", "Main PC", "obj-1", "Robot A");
+        await viewModel.HandleRegistrationResultAsync(result);
+
+        Assert.AreEqual(1, viewModel.ServerStoreList.Count);
+        Assert.IsNotNull(viewModel.SelectedServerStore);
+        Assert.AreEqual("store-1", viewModel.SelectedServerStore!.StoreId);
+        Assert.IsNotNull(viewModel.SelectedServerPc);
+        Assert.AreEqual("pc-1", viewModel.SelectedServerPc!.PcId);
+    }
+
     private static SettingsService TestSettings()
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_settings_vm_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");

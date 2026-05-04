@@ -17,6 +17,7 @@ public partial class BackendSettingsViewModel : ObservableObject
     private readonly IBackendServerCatalogClient _serverCatalogClient;
     private BackendServerSnapshot? _lastServerSnapshot;
     private BackendStoreDetailResponse? _lastFetchedStoreDetail;
+    private bool _suppressStoreCascade = false;
 
     [ObservableProperty] private string backendBaseUrl = string.Empty;
     [ObservableProperty] private string backendBearerToken = string.Empty;
@@ -185,7 +186,7 @@ public partial class BackendSettingsViewModel : ObservableObject
         ServerObjects.Clear();
         _lastServerSnapshot = null;
         _lastFetchedStoreDetail = null;
-        if (value is not null)
+        if (!_suppressStoreCascade && value is not null)
             _ = FetchStoreDetailForSelectionAsync(value.StoreId);
     }
 
@@ -239,5 +240,24 @@ public partial class BackendSettingsViewModel : ObservableObject
             LocalStatusMessage = BackendDeviceObjectMappingsMessage;
             return false;
         }
+    }
+
+    internal async Task HandleRegistrationResultAsync(RegistrationResult result)
+    {
+        ServerStoreList.Clear();
+        SelectedServerStore = null;
+
+        if (!string.IsNullOrWhiteSpace(result.CountryCode))
+            await FetchStoreListAsync(result.CountryCode);
+
+        var store = ServerStoreList.FirstOrDefault(s => s.StoreId == result.StoreId);
+        if (store is null) return;
+
+        _suppressStoreCascade = true;
+        SelectedServerStore = store;
+        _suppressStoreCascade = false;
+
+        await FetchStoreDetailForSelectionAsync(result.StoreId);
+        SelectedServerPc = ServerPcList.FirstOrDefault(p => p.PcId == result.PcId);
     }
 }
