@@ -133,10 +133,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
             if (!response.IsSuccessStatusCode)
                 return new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, body, null);
             if (string.IsNullOrWhiteSpace(body))
-                return new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, "Empty response.", null);
+                return new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, "Backend response body is empty.", null);
             var data = JsonSerializer.Deserialize<BackendStoreCreateResponse>(body, BackendHttpRequest.JsonOptions);
             return data is null
-                ? new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, "Invalid response.", null)
+                ? new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, "Backend response body is invalid.", null)
                 : new BackendFetchResult<BackendStoreCreateResponse>(true, (int)response.StatusCode, "OK", data);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
@@ -188,10 +188,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
             if (!response.IsSuccessStatusCode)
                 return new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, body, null);
             if (string.IsNullOrWhiteSpace(body))
-                return new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, "Empty response.", null);
+                return new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, "Backend response body is empty.", null);
             var data = JsonSerializer.Deserialize<BackendPcAddResponse>(body, BackendHttpRequest.JsonOptions);
             return data is null
-                ? new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, "Invalid response.", null)
+                ? new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, "Backend response body is invalid.", null)
                 : new BackendFetchResult<BackendPcAddResponse>(true, (int)response.StatusCode, "OK", data);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
@@ -219,10 +219,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
             if (!response.IsSuccessStatusCode)
                 return new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, body, null);
             if (string.IsNullOrWhiteSpace(body))
-                return new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, "Empty response.", null);
+                return new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, "Backend response body is empty.", null);
             var data = JsonSerializer.Deserialize<BackendObjectCreateResponse>(body, BackendHttpRequest.JsonOptions);
             return data is null
-                ? new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, "Invalid response.", null)
+                ? new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, "Backend response body is invalid.", null)
                 : new BackendFetchResult<BackendObjectCreateResponse>(true, (int)response.StatusCode, "OK", data);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
