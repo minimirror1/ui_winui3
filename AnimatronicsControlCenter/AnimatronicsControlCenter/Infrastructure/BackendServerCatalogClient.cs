@@ -116,4 +116,143 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
             return new BackendSendResult(false, null, ex.Message);
         }
     }
+
+    public async Task<BackendFetchResult<BackendStoreCreateResponse>> CreateStoreAsync(
+        BackendStoreCreateRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!BackendHttpRequest.TryCreateUri(_settingsService, "/v1/service/stores", out Uri uri, out string message))
+            return new BackendFetchResult<BackendStoreCreateResponse>(false, null, message, null);
+
+        try
+        {
+            using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Post, uri);
+            httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, body, null);
+            if (string.IsNullOrWhiteSpace(body))
+                return new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, "Empty response.", null);
+            var data = JsonSerializer.Deserialize<BackendStoreCreateResponse>(body, BackendHttpRequest.JsonOptions);
+            return data is null
+                ? new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, "Invalid response.", null)
+                : new BackendFetchResult<BackendStoreCreateResponse>(true, (int)response.StatusCode, "OK", data);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return new BackendFetchResult<BackendStoreCreateResponse>(false, null, ex.Message, null);
+        }
+    }
+
+    public async Task<BackendSendResult> UpdateStoreAsync(
+        string storeId,
+        BackendStoreUpdateRequest request,
+        CancellationToken cancellationToken)
+    {
+        string path = $"/v1/service/stores/{Uri.EscapeDataString(storeId)}";
+        if (!BackendHttpRequest.TryCreateUri(_settingsService, path, out Uri uri, out string message))
+            return new BackendSendResult(false, null, message);
+
+        try
+        {
+            using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Put, uri);
+            httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return response.IsSuccessStatusCode
+                ? new BackendSendResult(true, (int)response.StatusCode, "OK")
+                : new BackendSendResult(false, (int)response.StatusCode, body);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            return new BackendSendResult(false, null, ex.Message);
+        }
+    }
+
+    public async Task<BackendFetchResult<BackendPcAddResponse>> CreatePcAsync(
+        string storeId,
+        BackendPcCreateRequest request,
+        CancellationToken cancellationToken)
+    {
+        string path = $"/v1/service/stores/{Uri.EscapeDataString(storeId)}/pcs";
+        if (!BackendHttpRequest.TryCreateUri(_settingsService, path, out Uri uri, out string message))
+            return new BackendFetchResult<BackendPcAddResponse>(false, null, message, null);
+
+        try
+        {
+            using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Post, uri);
+            httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, body, null);
+            if (string.IsNullOrWhiteSpace(body))
+                return new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, "Empty response.", null);
+            var data = JsonSerializer.Deserialize<BackendPcAddResponse>(body, BackendHttpRequest.JsonOptions);
+            return data is null
+                ? new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, "Invalid response.", null)
+                : new BackendFetchResult<BackendPcAddResponse>(true, (int)response.StatusCode, "OK", data);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return new BackendFetchResult<BackendPcAddResponse>(false, null, ex.Message, null);
+        }
+    }
+
+    public async Task<BackendFetchResult<BackendObjectCreateResponse>> CreateObjectAsync(
+        string storeId,
+        string pcId,
+        BackendObjectCreateRequest request,
+        CancellationToken cancellationToken)
+    {
+        string path = $"/v1/service/stores/{Uri.EscapeDataString(storeId)}/pcs/{Uri.EscapeDataString(pcId)}/objects";
+        if (!BackendHttpRequest.TryCreateUri(_settingsService, path, out Uri uri, out string message))
+            return new BackendFetchResult<BackendObjectCreateResponse>(false, null, message, null);
+
+        try
+        {
+            using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Post, uri);
+            httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, body, null);
+            if (string.IsNullOrWhiteSpace(body))
+                return new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, "Empty response.", null);
+            var data = JsonSerializer.Deserialize<BackendObjectCreateResponse>(body, BackendHttpRequest.JsonOptions);
+            return data is null
+                ? new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, "Invalid response.", null)
+                : new BackendFetchResult<BackendObjectCreateResponse>(true, (int)response.StatusCode, "OK", data);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return new BackendFetchResult<BackendObjectCreateResponse>(false, null, ex.Message, null);
+        }
+    }
+
+    public async Task<BackendSendResult> UpdateObjectAsync(
+        string objectId,
+        BackendObjectUpdateRequest request,
+        CancellationToken cancellationToken)
+    {
+        string path = $"/v1/service/objects/{Uri.EscapeDataString(objectId)}";
+        if (!BackendHttpRequest.TryCreateUri(_settingsService, path, out Uri uri, out string message))
+            return new BackendSendResult(false, null, message);
+
+        try
+        {
+            using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Put, uri);
+            httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return response.IsSuccessStatusCode
+                ? new BackendSendResult(true, (int)response.StatusCode, "OK")
+                : new BackendSendResult(false, (int)response.StatusCode, body);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            return new BackendSendResult(false, null, ex.Message);
+        }
+    }
 }

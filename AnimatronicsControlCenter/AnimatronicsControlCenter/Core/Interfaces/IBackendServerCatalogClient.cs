@@ -19,6 +19,31 @@ public interface IBackendServerCatalogClient
         string pcId,
         BackendPcUpdateRequest request,
         CancellationToken cancellationToken);
+
+    Task<BackendFetchResult<BackendStoreCreateResponse>> CreateStoreAsync(
+        BackendStoreCreateRequest request,
+        CancellationToken cancellationToken);
+
+    Task<BackendSendResult> UpdateStoreAsync(
+        string storeId,
+        BackendStoreUpdateRequest request,
+        CancellationToken cancellationToken);
+
+    Task<BackendFetchResult<BackendPcAddResponse>> CreatePcAsync(
+        string storeId,
+        BackendPcCreateRequest request,
+        CancellationToken cancellationToken);
+
+    Task<BackendFetchResult<BackendObjectCreateResponse>> CreateObjectAsync(
+        string storeId,
+        string pcId,
+        BackendObjectCreateRequest request,
+        CancellationToken cancellationToken);
+
+    Task<BackendSendResult> UpdateObjectAsync(
+        string objectId,
+        BackendObjectUpdateRequest request,
+        CancellationToken cancellationToken);
 }
 
 public sealed record BackendFetchResult<T>(

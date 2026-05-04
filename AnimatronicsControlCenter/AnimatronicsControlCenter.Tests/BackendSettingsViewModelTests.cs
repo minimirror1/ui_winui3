@@ -235,5 +235,28 @@ public class BackendSettingsViewModelTests
             UpdatedRequest = request;
             return Task.FromResult(new BackendSendResult(true, 200, "OK"));
         }
+
+        public Task<BackendFetchResult<BackendStoreCreateResponse>> CreateStoreAsync(
+            BackendStoreCreateRequest request, CancellationToken cancellationToken)
+            => Task.FromResult(new BackendFetchResult<BackendStoreCreateResponse>(
+                true, 201, "OK", new BackendStoreCreateResponse("new-store-id", request.StoreName, "2026-01-01")));
+
+        public Task<BackendSendResult> UpdateStoreAsync(
+            string storeId, BackendStoreUpdateRequest request, CancellationToken cancellationToken)
+            => Task.FromResult(new BackendSendResult(true, 200, "OK"));
+
+        public Task<BackendFetchResult<BackendPcAddResponse>> CreatePcAsync(
+            string storeId, BackendPcCreateRequest request, CancellationToken cancellationToken)
+            => Task.FromResult(new BackendFetchResult<BackendPcAddResponse>(
+                true, 201, "OK", new BackendPcAddResponse(storeId, "new-pc-id", "2026-01-01")));
+
+        public Task<BackendFetchResult<BackendObjectCreateResponse>> CreateObjectAsync(
+            string storeId, string pcId, BackendObjectCreateRequest request, CancellationToken cancellationToken)
+            => Task.FromResult(new BackendFetchResult<BackendObjectCreateResponse>(
+                true, 201, "OK", new BackendObjectCreateResponse("new-obj-id", "2026-01-01")));
+
+        public Task<BackendSendResult> UpdateObjectAsync(
+            string objectId, BackendObjectUpdateRequest request, CancellationToken cancellationToken)
+            => Task.FromResult(new BackendSendResult(true, 200, "OK"));
     }
 }
