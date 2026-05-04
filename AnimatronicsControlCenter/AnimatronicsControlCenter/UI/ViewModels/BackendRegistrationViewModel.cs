@@ -154,7 +154,7 @@ public partial class BackendRegistrationViewModel : ObservableObject
     [ObservableProperty] private string editObjectStartTime = string.Empty;
     [ObservableProperty] private string editObjectEndTime = string.Empty;
     [ObservableProperty] private bool editObjectScheduleFlag = false;
-    [ObservableProperty] private string editObjectOperationStatus = "PLAY";
+    [ObservableProperty] private string editObjectOperationStatus = string.Empty;
     [ObservableProperty] private string editObjectFirmwareBoardId = string.Empty;
     [ObservableProperty] private string editObjectFirmwareBoardType = string.Empty;
     [ObservableProperty] private string editObjectFirmwareVersion = string.Empty;
@@ -287,8 +287,8 @@ public partial class BackendRegistrationViewModel : ObservableObject
 
             if (IsEditExpanded && HasAnyStoreEdit())
             {
-                double? lat = double.TryParse(EditStoreLatitude, out double latVal) ? latVal : null;
-                double? lng = double.TryParse(EditStoreLongitude, out double lngVal) ? lngVal : null;
+                double? lat = double.TryParse(EditStoreLatitude, NumberStyles.Float, CultureInfo.InvariantCulture, out double latVal) ? latVal : null;
+                double? lng = double.TryParse(EditStoreLongitude, NumberStyles.Float, CultureInfo.InvariantCulture, out double lngVal) ? lngVal : null;
                 var updateResult = await _catalogClient.UpdateStoreAsync(
                     _resolvedStoreId,
                     new BackendStoreUpdateRequest(
@@ -403,7 +403,7 @@ public partial class BackendRegistrationViewModel : ObservableObject
                 var updateResult = await _catalogClient.UpdateObjectAsync(
                     objectId,
                     new BackendObjectUpdateRequest(
-                        NullIfEmpty(EditObjectName), timeRange, EditObjectScheduleFlag,
+                        NullIfEmpty(EditObjectName), timeRange, null,
                         firmware, NullIfEmpty(EditObjectOperationStatus)),
                     CancellationToken.None);
                 if (!updateResult.Success)
@@ -459,8 +459,7 @@ public partial class BackendRegistrationViewModel : ObservableObject
         !string.IsNullOrWhiteSpace(EditObjectFirmwareBoardId) ||
         !string.IsNullOrWhiteSpace(EditObjectFirmwareBoardType) ||
         !string.IsNullOrWhiteSpace(EditObjectFirmwareVersion) ||
-        !string.IsNullOrWhiteSpace(EditObjectOperationStatus) ||
-        EditObjectScheduleFlag;
+        !string.IsNullOrWhiteSpace(EditObjectOperationStatus);
 
     private static string? NullIfEmpty(string s) =>
         string.IsNullOrWhiteSpace(s) ? null : s;
