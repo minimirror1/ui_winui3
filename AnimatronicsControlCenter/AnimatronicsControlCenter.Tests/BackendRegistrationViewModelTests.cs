@@ -128,6 +128,7 @@ public class BackendRegistrationViewModelTests
 
         Assert.AreEqual(1, vm.CurrentStep);
         Assert.IsFalse(string.IsNullOrEmpty(vm.StatusMessage));
+        Assert.IsFalse(vm.IsBusy);
     }
 
     // ── Step 2: 이전으로 ──────────────────────────────────────

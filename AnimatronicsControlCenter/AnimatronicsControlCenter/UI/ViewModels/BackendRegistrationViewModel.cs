@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels;
 
 public sealed partial class OperateTimeEntry : ObservableObject
 {
-    [ObservableProperty] private string dayOfWeek;
+    [ObservableProperty] private string dayOfWeek = string.Empty;
     [ObservableProperty] private string openTime = "09:00";
     [ObservableProperty] private string closeTime = "18:00";
 
@@ -210,8 +211,8 @@ public partial class BackendRegistrationViewModel : ObservableObject
         1 => !string.IsNullOrWhiteSpace(NewStoreName) &&
              !string.IsNullOrWhiteSpace(NewStoreCountryCode) &&
              !string.IsNullOrWhiteSpace(NewStoreAddress) &&
-             double.TryParse(NewStoreLatitude, out _) &&
-             double.TryParse(NewStoreLongitude, out _) &&
+             double.TryParse(NewStoreLatitude, NumberStyles.Float, CultureInfo.InvariantCulture, out _) &&
+             double.TryParse(NewStoreLongitude, NumberStyles.Float, CultureInfo.InvariantCulture, out _) &&
              !string.IsNullOrWhiteSpace(NewStoreTimezone),
         2 when IsSelectMode => SelectedPc is not null,
         2 => !string.IsNullOrWhiteSpace(NewPcName) && !string.IsNullOrWhiteSpace(NewPcSwVersion),
@@ -316,7 +317,7 @@ public partial class BackendRegistrationViewModel : ObservableObject
             var createResult = await _catalogClient.CreateStoreAsync(
                 new BackendStoreCreateRequest(
                     NewStoreName, NewStoreCountryCode, NewStoreAddress,
-                    double.Parse(NewStoreLatitude), double.Parse(NewStoreLongitude),
+                    double.Parse(NewStoreLatitude, CultureInfo.InvariantCulture), double.Parse(NewStoreLongitude, CultureInfo.InvariantCulture),
                     NewStoreTimezone, operateTimes),
                 CancellationToken.None);
             if (!createResult.Success || createResult.Data is null)
