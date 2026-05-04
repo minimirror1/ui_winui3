@@ -254,7 +254,9 @@ public partial class BackendSettingsViewModel : ObservableObject
         }
 
         await FetchStoreListAsync(result.CountryCode);
-        selectedCountryCode = result.CountryCode;
+#pragma warning disable MVVMTK0034
+        selectedCountryCode = result.CountryCode; // bypass OnSelectedCountryCodeChanged to avoid redundant fetch
+#pragma warning restore MVVMTK0034
         OnPropertyChanged(nameof(SelectedCountryCode));
 
         var store = ServerStoreList.FirstOrDefault(s => s.StoreId == result.StoreId);
