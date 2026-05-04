@@ -55,7 +55,11 @@ public partial class BackendRegistrationViewModel : ObservableObject
     [ObservableProperty] private bool isBusy = false;
     [ObservableProperty] private string statusMessage = string.Empty;
 
-    public bool IsNewMode => !IsSelectMode;
+    public bool IsNewMode
+    {
+        get => !IsSelectMode;
+        set => IsSelectMode = !value;
+    }
     public string StepTitle => CurrentStep switch
     {
         1 => "단계 1/3 — Store",
