@@ -13,8 +13,25 @@
 
         <StackPanel x:Name="ServerValuesPanel" Spacing="12">
             <TextBlock Text="Server Values" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <TextBox Header="Base URL" Text="{x:Bind ViewModel.BackendBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <PasswordBox Header="Bearer Token" Password="{x:Bind ViewModel.BackendBearerToken, Mode=TwoWay}" />
+            <Button Content="서버 데이터(Store/PC/Object) 등록/수정"
+                    Click="OnOpenRegistrationDialogClicked"
+                    IsEnabled="{x:Bind ViewModel.IsRegistrationAvailable, Mode=OneWay}"
+                    HorizontalAlignment="Stretch" />
+            <TextBlock Text="Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다."
+                       Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowRegistrationCountryCodeHint), Mode=OneWay}"
+                       TextWrapping="Wrap" />
+            <Button Content="{x:Bind ViewModel.ServerConnectionEditButtonText, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.ToggleServerConnectionEditingCommand}"
+                    HorizontalAlignment="Stretch" />
+            <TextBlock Text="서버 접속 정보는 잠겨 있습니다."
+                       Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowServerConnectionLockedMessage), Mode=OneWay}"
+                       TextWrapping="Wrap" />
+            <TextBox Header="Base URL"
+                     Text="{x:Bind ViewModel.BackendBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Visibility="{x:Bind BoolToVisibility(ViewModel.IsServerConnectionEditing), Mode=OneWay}" />
+            <PasswordBox Header="Bearer Token"
+                         Password="{x:Bind ViewModel.BackendBearerToken, Mode=TwoWay}"
+                         Visibility="{x:Bind BoolToVisibility(ViewModel.IsServerConnectionEditing), Mode=OneWay}" />
             <ComboBox Header="Country Code"
                       ItemsSource="{x:Bind ViewModel.AvailableCountryCodes}"
                       SelectedItem="{x:Bind ViewModel.SelectedCountryCode, Mode=TwoWay}"
@@ -30,18 +47,30 @@
                       DisplayMemberPath="PcName"
                       HorizontalAlignment="Stretch" />
             <TextBlock Text="{x:Bind ViewModel.ServerStatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-            <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}" />
-            <Button Content="서버 데이터(Store/PC/Object) 등록/수정"
-                    Click="OnOpenRegistrationDialogClicked"
-                    IsEnabled="{x:Bind ViewModel.IsRegistrationAvailable, Mode=OneWay}"
-                    HorizontalAlignment="Stretch" />
-            <TextBlock Text="Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다."
-                       Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowRegistrationCountryCodeHint), Mode=OneWay}"
-                       TextWrapping="Wrap" />
-            <Button x:Name="OpenLocalSettingsFileButton"
-                    Content="로컬 설정 파일 열기"
-                    Click="OnOpenLocalSettingsFileClicked"
-                    HorizontalAlignment="Stretch" />
+            <TextBlock Text="서버 오브제" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            <Grid x:Name="ServerObjectListHeader" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="오브제 이름" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock Grid.Column="1" Text="서버 오브제 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            </Grid>
+            <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}"
+                      MaxHeight="220">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="backend:BackendServerObjectSnapshot">
+                        <Grid ColumnSpacing="12" Padding="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{x:Bind ObjectName}" TextWrapping="Wrap" />
+                            <TextBlock Grid.Column="1" Text="{x:Bind ObjectId}" TextWrapping="Wrap" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </StackPanel>
 
         <Button Grid.Column="1"
@@ -52,6 +81,10 @@
         <ScrollViewer Grid.Column="2">
             <StackPanel x:Name="LocalSettingsPanel" Spacing="12">
                 <TextBlock Text="Local Settings" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <Button x:Name="OpenLocalSettingsFileButton"
+                        Content="로컬 설정 파일 열기"
+                        Click="OnOpenLocalSettingsFileClicked"
+                        HorizontalAlignment="Stretch" />
                 <ToggleSwitch Header="Sync Enabled" IsOn="{x:Bind ViewModel.IsBackendSyncEnabled, Mode=TwoWay}" />
                 <NumberBox Header="Sync Interval Seconds" Value="{x:Bind ViewModel.BackendSyncIntervalSeconds, Mode=TwoWay}" Minimum="1" />
                 <TextBox Header="Store ID" Text="{x:Bind ViewModel.BackendStoreId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />

@@ -38,6 +38,10 @@ public partial class BackendSettingsViewModel : ObservableObject
     [ObservableProperty] private string swVersionComparisonMessage = string.Empty;
     [ObservableProperty] private string deviceObjectMappingsComparisonMessage = string.Empty;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ServerConnectionEditButtonText))]
+    [NotifyPropertyChangedFor(nameof(ShouldShowServerConnectionLockedMessage))]
+    private bool isServerConnectionEditing;
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsRegistrationAvailable))]
     [NotifyPropertyChangedFor(nameof(ShouldShowRegistrationCountryCodeHint))]
     private string? selectedCountryCode;
@@ -52,12 +56,20 @@ public partial class BackendSettingsViewModel : ObservableObject
     public ObservableCollection<BackendObjectMappingDisplay> MappedServerObjects { get; } = new();
     public bool IsRegistrationAvailable => !string.IsNullOrWhiteSpace(SelectedCountryCode);
     public bool ShouldShowRegistrationCountryCodeHint => !IsRegistrationAvailable;
+    public string ServerConnectionEditButtonText => IsServerConnectionEditing ? "서버 접속 정보 잠금" : "서버 접속 정보 수정";
+    public bool ShouldShowServerConnectionLockedMessage => !IsServerConnectionEditing;
 
     public BackendSettingsViewModel(ISettingsService settingsService, IBackendServerCatalogClient serverCatalogClient)
     {
         _settingsService = settingsService;
         _serverCatalogClient = serverCatalogClient;
         LoadFromSettings();
+    }
+
+    [RelayCommand]
+    private void ToggleServerConnectionEditing()
+    {
+        IsServerConnectionEditing = !IsServerConnectionEditing;
     }
 
     [RelayCommand]
