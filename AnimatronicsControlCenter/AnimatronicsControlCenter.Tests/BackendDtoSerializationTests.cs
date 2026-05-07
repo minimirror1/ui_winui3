@@ -42,6 +42,10 @@ public class BackendDtoSerializationTests
           "store_id": "store-1",
           "store_name": "Seoul Store",
           "country_code": "KR",
+          "address": "123 Seoul St",
+          "latitude": 37.5,
+          "longitude": 127.0,
+          "timezone": "Asia/Seoul",
           "pcs": [
             {
               "pc_id": "pc-1",
@@ -60,6 +64,10 @@ public class BackendDtoSerializationTests
         Assert.IsNotNull(response);
         Assert.AreEqual("store-1", response.StoreId);
         Assert.AreEqual("KR", response.CountryCode);
+        Assert.AreEqual("123 Seoul St", response.Address);
+        Assert.AreEqual(37.5, response.Latitude);
+        Assert.AreEqual(127.0, response.Longitude);
+        Assert.AreEqual("Asia/Seoul", response.Timezone);
         Assert.AreEqual("pc-1", response.Pcs[0].PcId);
         Assert.AreEqual("1.1.1.0", response.Pcs[0].SwVersion);
         Assert.AreEqual("obj-1", response.Pcs[0].Objects[0].Id);

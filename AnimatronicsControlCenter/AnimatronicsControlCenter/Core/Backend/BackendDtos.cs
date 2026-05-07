@@ -61,7 +61,11 @@ public sealed record BackendStoreDetailResponse(
     [property: JsonPropertyName("store_id")] string StoreId,
     [property: JsonPropertyName("store_name")] string? StoreName,
     [property: JsonPropertyName("country_code")] string? CountryCode,
-    [property: JsonPropertyName("pcs")] IReadOnlyList<BackendPcDetailResponse> Pcs);
+    [property: JsonPropertyName("pcs")] IReadOnlyList<BackendPcDetailResponse> Pcs,
+    [property: JsonPropertyName("address")] string? Address = null,
+    [property: JsonPropertyName("latitude")] double? Latitude = null,
+    [property: JsonPropertyName("longitude")] double? Longitude = null,
+    [property: JsonPropertyName("timezone")] string? Timezone = null);
 
 public sealed record BackendPcDetailResponse(
     [property: JsonPropertyName("pc_id")] string PcId,
