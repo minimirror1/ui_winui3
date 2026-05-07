@@ -48,7 +48,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
         public bool IsBackendSyncEnabled { get; set; } = true;
-        public string BackendBaseUrl { get; set; } = "https://robot-monitor-api-dev.innergm.com";
+        public string BackendBaseUrl { get; set; } = "https://robot-monitor-api.innergm.com";
         public string BackendBearerToken { get; set; } = string.Empty;
         public string BackendStoreId { get; set; } = string.Empty;
         public string BackendStoreName { get; set; } = string.Empty;

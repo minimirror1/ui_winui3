@@ -37,6 +37,10 @@
             <TextBlock Text="Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다."
                        Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowRegistrationCountryCodeHint), Mode=OneWay}"
                        TextWrapping="Wrap" />
+            <Button x:Name="OpenLocalSettingsFileButton"
+                    Content="로컬 설정 파일 열기"
+                    Click="OnOpenLocalSettingsFileClicked"
+                    HorizontalAlignment="Stretch" />
         </StackPanel>
 
         <Button Grid.Column="1"

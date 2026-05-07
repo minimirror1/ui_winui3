@@ -32,6 +32,9 @@ public class BackendSettingsPageXamlTests
             "BackendPcName",
             "BackendSoftwareVersion",
             "BackendDeviceObjectMappingsText",
+            "OpenLocalSettingsFileButton",
+            "OnOpenLocalSettingsFileClicked",
+            "로컬 설정 파일 열기",
             "서버 데이터(Store/PC/Object) 등록/수정",
         })
         {

@@ -18,6 +18,7 @@ public class BackendSettingsSourceTests
         settings.Load();
 
         Assert.IsTrue(settings.IsBackendSyncEnabled);
+        Assert.AreEqual("https://robot-monitor-api.innergm.com", settings.BackendBaseUrl);
         Assert.AreEqual("pc_name_001", settings.BackendPcName);
         Assert.AreEqual("1.1.1.0", settings.BackendSoftwareVersion);
         Assert.AreEqual(0, settings.BackendDeviceObjectMappings.Count);
