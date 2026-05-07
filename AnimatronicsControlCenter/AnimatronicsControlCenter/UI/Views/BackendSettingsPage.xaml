@@ -1,7 +1,8 @@
 <Page
     x:Class="AnimatronicsControlCenter.UI.Views.BackendSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:backend="using:AnimatronicsControlCenter.Core.Backend">
 
     <Grid Padding="24" ColumnSpacing="20">
         <Grid.ColumnDefinitions>
@@ -62,9 +63,42 @@
                 <TextBox Header="PC Name" Text="{x:Bind ViewModel.BackendPcName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBox Header="Software Version" Text="{x:Bind ViewModel.BackendSoftwareVersion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock Text="{x:Bind ViewModel.SwVersionComparisonMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
+                <TextBlock Text="Object Mappings" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="120" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="오브제 이름" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Grid.Column="1" Text="서버 오브제 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Grid.Column="2" Text="WinUI 로컬 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                </Grid>
+                <ListView ItemsSource="{x:Bind ViewModel.MappedServerObjects, Mode=OneWay}"
+                          MaxHeight="220">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="backend:BackendObjectMappingDisplay">
+                            <Grid ColumnSpacing="12" Padding="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="120" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Bind ObjectName}" TextWrapping="Wrap" />
+                                <TextBlock Grid.Column="1" Text="{x:Bind ObjectId}" TextWrapping="Wrap" />
+                                <TextBlock Grid.Column="2" Text="{x:Bind LocalObjectIdText}" TextWrapping="Wrap" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button x:Name="EditObjectMappingsButton"
+                        Content="오브제 매핑 수정"
+                        Click="OnEditObjectMappingsClicked"
+                        HorizontalAlignment="Stretch" />
                 <TextBox Header="Device/Object Mapping JSON"
-                         Text="{x:Bind ViewModel.BackendDeviceObjectMappingsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{x:Bind ViewModel.BackendDeviceObjectMappingsText, Mode=OneWay}"
                          AcceptsReturn="True"
+                         IsReadOnly="True"
                          MinHeight="120" />
                 <TextBlock Text="{x:Bind ViewModel.BackendDeviceObjectMappingsMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
                 <TextBlock Text="{x:Bind ViewModel.DeviceObjectMappingsComparisonMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />

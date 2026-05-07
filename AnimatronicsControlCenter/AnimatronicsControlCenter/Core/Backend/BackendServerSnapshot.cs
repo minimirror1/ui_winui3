@@ -13,6 +13,10 @@ public sealed record BackendServerSnapshot(
 
 public sealed record BackendServerObjectSnapshot(string ObjectId, string? ObjectName);
 
+public sealed record BackendServerObjectMappingSource(string ObjectId, string? ObjectName);
+
+public sealed record BackendObjectMappingDisplay(string ObjectId, string? ObjectName, string LocalObjectIdText);
+
 public sealed record BackendLocalSettingsSnapshot(
     string StoreId,
     string StoreName,

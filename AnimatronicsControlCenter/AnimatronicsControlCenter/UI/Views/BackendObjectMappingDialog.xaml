@@ -1,0 +1,78 @@
+<ContentDialog
+    x:Class="AnimatronicsControlCenter.UI.Views.BackendObjectMappingDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:AnimatronicsControlCenter.UI.ViewModels"
+    Title="오브제 매핑 수정"
+    PrimaryButtonText="저장"
+    CloseButtonText="취소"
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    MinWidth="560">
+
+    <ScrollViewer MaxHeight="620" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12" Padding="0,4,16,4">
+            <TextBlock Text="서버 오브제별로 XBee 스캔에서 확인한 WinUI 로컬 오브제 ID를 입력합니다. 빈 값은 해당 매핑을 삭제합니다."
+                       TextWrapping="Wrap" />
+            <TextBlock Text="서버 오브제를 아직 조회하지 않은 경우 기존 저장 매핑만 표시됩니다."
+                       Visibility="{x:Bind BoolToVisibility(ViewModel.HasNoServerObjects), Mode=OneWay}"
+                       TextWrapping="Wrap" />
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="서버 오브제" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock Grid.Column="1" Text="WinUI 로컬 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            </Grid>
+            <ItemsRepeater ItemsSource="{x:Bind ViewModel.ServerObjectMappings}">
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BackendObjectMappingEditorRow">
+                        <Grid ColumnSpacing="12" Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="140" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{x:Bind DisplayName}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind ObjectId}" TextWrapping="Wrap" Opacity="0.7" />
+                            </StackPanel>
+                            <TextBox Grid.Column="1"
+                                     Header="Local ID"
+                                     Text="{x:Bind LocalObjectIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+
+            <StackPanel Visibility="{x:Bind BoolToVisibility(ViewModel.HasMissingServerObjects), Mode=OneWay}" Spacing="8">
+                <TextBlock Text="현재 서버 목록에 없음" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock Text="아래 매핑은 현재 조회된 서버 오브제 목록에 없습니다. 삭제하려면 Local ID를 비우고 저장하세요."
+                           TextWrapping="Wrap" />
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.MissingServerObjectMappings}">
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:BackendObjectMappingEditorRow">
+                            <Grid ColumnSpacing="12" Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{x:Bind DisplayName}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{x:Bind ObjectId}" TextWrapping="Wrap" Opacity="0.7" />
+                                </StackPanel>
+                                <TextBox Grid.Column="1"
+                                         Header="Local ID"
+                                         Text="{x:Bind LocalObjectIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+
+            <TextBlock Text="{x:Bind ViewModel.ValidationMessage, Mode=OneWay}"
+                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>

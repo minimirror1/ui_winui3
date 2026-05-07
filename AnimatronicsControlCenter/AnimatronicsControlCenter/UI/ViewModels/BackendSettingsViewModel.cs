@@ -49,6 +49,7 @@ public partial class BackendSettingsViewModel : ObservableObject
     public ObservableCollection<BackendStoreSummaryResponse> ServerStoreList { get; } = new();
     public ObservableCollection<BackendPcDetailResponse> ServerPcList { get; } = new();
     public ObservableCollection<BackendServerObjectSnapshot> ServerObjects { get; } = new();
+    public ObservableCollection<BackendObjectMappingDisplay> MappedServerObjects { get; } = new();
     public bool IsRegistrationAvailable => !string.IsNullOrWhiteSpace(SelectedCountryCode);
     public bool ShouldShowRegistrationCountryCodeHint => !IsRegistrationAvailable;
 
@@ -106,8 +107,10 @@ public partial class BackendSettingsViewModel : ObservableObject
         _settingsService.BackendPcName = BackendPcName;
         _settingsService.BackendSoftwareVersion = BackendSoftwareVersion;
         _settingsService.BackendDeviceObjectMappings = mappings;
+        _settingsService.BackendServerObjects = GetObjectMappingSourcesForSave();
         _settingsService.BackendSyncIntervalSeconds = BackendSyncIntervalSeconds;
         _settingsService.Save();
+        RefreshMappedServerObjects();
 
         if (!string.IsNullOrWhiteSpace(BackendStoreId) && !string.IsNullOrWhiteSpace(BackendPcId))
         {
@@ -137,6 +140,7 @@ public partial class BackendSettingsViewModel : ObservableObject
         BackendDeviceObjectMappingsText = JsonSerializer.Serialize(_settingsService.BackendDeviceObjectMappings);
         IsBackendSyncEnabled = _settingsService.IsBackendSyncEnabled;
         BackendSyncIntervalSeconds = _settingsService.BackendSyncIntervalSeconds;
+        RefreshMappedServerObjects();
     }
 
     private BackendLocalSettingsSnapshot CreateLocalSnapshot()
@@ -182,6 +186,25 @@ public partial class BackendSettingsViewModel : ObservableObject
 
         foreach (BackendServerObjectSnapshot obj in _lastServerSnapshot.Objects)
             ServerObjects.Add(obj);
+        RefreshMappedServerObjects();
+    }
+
+    public BackendObjectMappingEditorViewModel CreateObjectMappingEditorViewModel()
+    {
+        return new BackendObjectMappingEditorViewModel(
+            GetObjectMappingSourcesForEditor(),
+            _settingsService.BackendDeviceObjectMappings);
+    }
+
+    public bool SaveObjectMappings(Dictionary<int, string> mappings)
+    {
+        _settingsService.BackendDeviceObjectMappings = mappings;
+        _settingsService.BackendServerObjects = GetObjectMappingSourcesForSave();
+        _settingsService.Save();
+        BackendDeviceObjectMappingsText = JsonSerializer.Serialize(_settingsService.BackendDeviceObjectMappings);
+        RefreshMappedServerObjects();
+        LocalStatusMessage = "오브제 매핑을 저장했습니다.";
+        return true;
     }
 
     partial void OnSelectedServerStoreChanged(BackendStoreSummaryResponse? value)
@@ -244,6 +267,51 @@ public partial class BackendSettingsViewModel : ObservableObject
             BackendDeviceObjectMappingsMessage = $"Mapping JSON 파싱 실패: {ex.Message}";
             LocalStatusMessage = BackendDeviceObjectMappingsMessage;
             return false;
+        }
+    }
+
+    private List<BackendServerObjectMappingSource> GetObjectMappingSourcesForEditor()
+    {
+        if (ServerObjects.Count > 0)
+        {
+            return ServerObjects
+                .Select(obj => new BackendServerObjectMappingSource(obj.ObjectId, obj.ObjectName))
+                .ToList();
+        }
+
+        return _settingsService.BackendServerObjects.ToList();
+    }
+
+    private List<BackendServerObjectMappingSource> GetObjectMappingSourcesForSave()
+    {
+        List<BackendServerObjectMappingSource> current = GetObjectMappingSourcesForEditor();
+        return current.Count > 0 ? current : _settingsService.BackendServerObjects.ToList();
+    }
+
+    private void RefreshMappedServerObjects()
+    {
+        MappedServerObjects.Clear();
+        List<BackendServerObjectMappingSource> sources = GetObjectMappingSourcesForEditor();
+        var sourceIds = sources.Select(source => source.ObjectId).ToHashSet();
+
+        foreach (BackendServerObjectMappingSource source in sources)
+        {
+            int localObjectId = _settingsService.BackendDeviceObjectMappings
+                .FirstOrDefault(mapping => mapping.Value == source.ObjectId)
+                .Key;
+            string localObjectIdText = localObjectId == 0 && !_settingsService.BackendDeviceObjectMappings.ContainsKey(0)
+                ? string.Empty
+                : localObjectId.ToString();
+
+            MappedServerObjects.Add(new BackendObjectMappingDisplay(source.ObjectId, source.ObjectName, localObjectIdText));
+        }
+
+        foreach (KeyValuePair<int, string> mapping in _settingsService.BackendDeviceObjectMappings.OrderBy(mapping => mapping.Key))
+        {
+            if (!sourceIds.Contains(mapping.Value))
+            {
+                MappedServerObjects.Add(new BackendObjectMappingDisplay(mapping.Value, "현재 서버 목록에 없음", mapping.Key.ToString()));
+            }
         }
     }
 

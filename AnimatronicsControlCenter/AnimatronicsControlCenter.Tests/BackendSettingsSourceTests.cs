@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AnimatronicsControlCenter.Core.Backend;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Infrastructure;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -51,6 +52,31 @@ public class BackendSettingsSourceTests
         Assert.AreEqual("Main PC", second.BackendPcName);
         Assert.AreEqual("1.2.3.4", second.BackendSoftwareVersion);
         Assert.AreEqual("obj-1", second.BackendDeviceObjectMappings[2]);
+    }
+
+    [TestMethod]
+    public void BackendSettings_SaveAndLoad_RoundTripsServerObjectCatalog()
+    {
+        string path = CreateTempSettingsPath();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(path))
+        {
+            BackendServerObjects = new List<BackendServerObjectMappingSource>
+            {
+                new("obj-1", "Robot A"),
+                new("obj-2", "Robot B"),
+            },
+        };
+
+        first.Save();
+
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(path));
+        second.Load();
+
+        Assert.AreEqual(2, second.BackendServerObjects.Count);
+        Assert.AreEqual("obj-1", second.BackendServerObjects[0].ObjectId);
+        Assert.AreEqual("Robot A", second.BackendServerObjects[0].ObjectName);
+        Assert.AreEqual("obj-2", second.BackendServerObjects[1].ObjectId);
+        Assert.AreEqual("Robot B", second.BackendServerObjects[1].ObjectName);
     }
 
     [TestMethod]

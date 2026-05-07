@@ -67,6 +67,28 @@ public sealed partial class BackendSettingsPage : Page
         }
     }
 
+    private async void OnEditObjectMappingsClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            BackendObjectMappingEditorViewModel mappingViewModel = ViewModel.CreateObjectMappingEditorViewModel();
+            var dialog = new BackendObjectMappingDialog(mappingViewModel);
+            if (App.Current.m_window?.Content is FrameworkElement element)
+                dialog.XamlRoot = element.XamlRoot;
+
+            ContentDialogResult result = await dialog.ShowAsync().AsTask();
+            if (result == ContentDialogResult.Primary &&
+                mappingViewModel.TryBuildMappings(out var mappings))
+            {
+                ViewModel.SaveObjectMappings(mappings);
+            }
+        }
+        catch (Exception ex)
+        {
+            ViewModel.LocalStatusMessage = $"오브제 매핑 수정 오류: {ex.Message}";
+        }
+    }
+
     private Visibility BoolToVisibility(bool value) =>
         value ? Visibility.Visible : Visibility.Collapsed;
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using AnimatronicsControlCenter.Core.Backend;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Utilities;
 #if WINDOWS
@@ -57,6 +58,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         public string BackendPcName { get; set; } = "pc_name_001";
         public string BackendSoftwareVersion { get; set; } = "1.1.1.0";
         public Dictionary<int, string> BackendDeviceObjectMappings { get; set; } = new();
+        public List<BackendServerObjectMappingSource> BackendServerObjects { get; set; } = new();
         public int BackendSyncIntervalSeconds { get; set; } = 5;
 
         public void Save()
@@ -133,6 +135,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                     BackendPcName,
                     BackendSoftwareVersion,
                     BackendDeviceObjectMappings,
+                    BackendServerObjects,
                     BackendSyncIntervalSeconds);
 
                 string json = JsonSerializer.Serialize(settings, BackendJsonOptions);
@@ -169,6 +172,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 BackendPcName = settings.BackendPcName ?? BackendPcName;
                 BackendSoftwareVersion = settings.BackendSoftwareVersion ?? BackendSoftwareVersion;
                 BackendDeviceObjectMappings = settings.BackendDeviceObjectMappings ?? new Dictionary<int, string>();
+                BackendServerObjects = settings.BackendServerObjects ?? new List<BackendServerObjectMappingSource>();
                 BackendSyncIntervalSeconds = settings.BackendSyncIntervalSeconds;
             }
             catch
@@ -187,6 +191,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             string BackendPcName,
             string BackendSoftwareVersion,
             Dictionary<int, string> BackendDeviceObjectMappings,
+            List<BackendServerObjectMappingSource>? BackendServerObjects,
             int BackendSyncIntervalSeconds);
     }
 }
