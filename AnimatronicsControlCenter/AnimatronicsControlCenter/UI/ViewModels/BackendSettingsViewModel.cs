@@ -37,7 +37,10 @@ public partial class BackendSettingsViewModel : ObservableObject
     [ObservableProperty] private string pcIdComparisonMessage = string.Empty;
     [ObservableProperty] private string swVersionComparisonMessage = string.Empty;
     [ObservableProperty] private string deviceObjectMappingsComparisonMessage = string.Empty;
-    [ObservableProperty] private string? selectedCountryCode;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRegistrationAvailable))]
+    [NotifyPropertyChangedFor(nameof(ShouldShowRegistrationCountryCodeHint))]
+    private string? selectedCountryCode;
     [ObservableProperty] private BackendStoreSummaryResponse? selectedServerStore;
     [ObservableProperty] private BackendPcDetailResponse? selectedServerPc;
     [ObservableProperty] private bool isFetchingStoreList;
@@ -46,6 +49,8 @@ public partial class BackendSettingsViewModel : ObservableObject
     public ObservableCollection<BackendStoreSummaryResponse> ServerStoreList { get; } = new();
     public ObservableCollection<BackendPcDetailResponse> ServerPcList { get; } = new();
     public ObservableCollection<BackendServerObjectSnapshot> ServerObjects { get; } = new();
+    public bool IsRegistrationAvailable => !string.IsNullOrWhiteSpace(SelectedCountryCode);
+    public bool ShouldShowRegistrationCountryCodeHint => !IsRegistrationAvailable;
 
     public BackendSettingsViewModel(ISettingsService settingsService, IBackendServerCatalogClient serverCatalogClient)
     {

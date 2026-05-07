@@ -30,9 +30,13 @@
                       HorizontalAlignment="Stretch" />
             <TextBlock Text="{x:Bind ViewModel.ServerStatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
             <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}" />
-            <Button Content="데이터 관리"
+            <Button Content="서버 데이터(Store/PC/Object) 등록/수정"
                     Click="OnOpenRegistrationDialogClicked"
+                    IsEnabled="{x:Bind ViewModel.IsRegistrationAvailable, Mode=OneWay}"
                     HorizontalAlignment="Stretch" />
+            <TextBlock Text="Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다."
+                       Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowRegistrationCountryCodeHint), Mode=OneWay}"
+                       TextWrapping="Wrap" />
         </StackPanel>
 
         <Button Grid.Column="1"

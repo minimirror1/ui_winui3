@@ -108,6 +108,23 @@ public class BackendSettingsViewModelTests
     }
 
     [TestMethod]
+    public void DataManagement_IsAvailableOnlyAfterCountryCodeSelection()
+    {
+        var viewModel = new BackendSettingsViewModel(TestSettings(), new FakeCatalogClient());
+
+        Assert.IsFalse(viewModel.IsRegistrationAvailable);
+        Assert.IsTrue(viewModel.ShouldShowRegistrationCountryCodeHint);
+
+        viewModel.SelectedCountryCode = "KR";
+        Assert.IsTrue(viewModel.IsRegistrationAvailable);
+        Assert.IsFalse(viewModel.ShouldShowRegistrationCountryCodeHint);
+
+        viewModel.SelectedCountryCode = null;
+        Assert.IsFalse(viewModel.IsRegistrationAvailable);
+        Assert.IsTrue(viewModel.ShouldShowRegistrationCountryCodeHint);
+    }
+
+    [TestMethod]
     public void SelectedCountryCode_Changed_ClearsStoreAndPcSelections()
     {
         var catalog = new FakeCatalogClient

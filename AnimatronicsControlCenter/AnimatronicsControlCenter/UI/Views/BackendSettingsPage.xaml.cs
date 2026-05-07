@@ -37,4 +37,7 @@ public sealed partial class BackendSettingsPage : Page
             ViewModel.ServerStatusMessage = $"데이터 관리 오류: {ex.Message}";
         }
     }
+
+    private Visibility BoolToVisibility(bool value) =>
+        value ? Visibility.Visible : Visibility.Collapsed;
 }

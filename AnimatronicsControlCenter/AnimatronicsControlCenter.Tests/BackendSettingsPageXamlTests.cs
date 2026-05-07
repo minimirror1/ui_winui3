@@ -20,6 +20,9 @@ public class BackendSettingsPageXamlTests
             "SelectedServerStore",
             "ServerPcList",
             "SelectedServerPc",
+            "IsRegistrationAvailable",
+            "ShouldShowRegistrationCountryCodeHint",
+            "Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다.",
             "ApplyServerValuesCommand",
             "CompareWithServerCommand",
             "SaveCommand",
@@ -29,7 +32,7 @@ public class BackendSettingsPageXamlTests
             "BackendPcName",
             "BackendSoftwareVersion",
             "BackendDeviceObjectMappingsText",
-            "데이터 관리",
+            "서버 데이터(Store/PC/Object) 등록/수정",
         })
         {
             StringAssert.Contains(xaml, expected);
