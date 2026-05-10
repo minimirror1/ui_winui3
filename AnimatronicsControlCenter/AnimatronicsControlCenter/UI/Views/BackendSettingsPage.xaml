@@ -79,7 +79,7 @@
                 VerticalAlignment="Center" />
 
         <ScrollViewer Grid.Column="2">
-            <StackPanel x:Name="LocalSettingsPanel" Spacing="12">
+            <StackPanel x:Name="LocalSettingsPanel" Spacing="12" Padding="0,0,16,0">
                 <TextBlock Text="Local Settings" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <Button x:Name="OpenLocalSettingsFileButton"
                         Content="로컬 설정 파일 열기"

@@ -14,6 +14,7 @@ public class BackendSettingsPageXamlTests
         {
             "ServerValuesPanel",
             "LocalSettingsPanel",
+            "Padding=\"0,0,16,0\"",
             "AvailableCountryCodes",
             "SelectedCountryCode",
             "ServerStoreList",
