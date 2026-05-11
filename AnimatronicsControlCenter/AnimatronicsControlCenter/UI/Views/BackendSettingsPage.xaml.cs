@@ -91,4 +91,10 @@ public sealed partial class BackendSettingsPage : Page
 
     private Visibility BoolToVisibility(bool value) =>
         value ? Visibility.Visible : Visibility.Collapsed;
+
+    private bool HasText(string? value) =>
+        !string.IsNullOrWhiteSpace(value);
+
+    private Visibility HasTextVisibility(string? value) =>
+        HasText(value) ? Visibility.Visible : Visibility.Collapsed;
 }

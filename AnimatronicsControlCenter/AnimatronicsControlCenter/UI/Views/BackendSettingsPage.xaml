@@ -4,143 +4,321 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:backend="using:AnimatronicsControlCenter.Core.Backend">
 
-    <Grid Padding="24" ColumnSpacing="20">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+    <Page.Resources>
+        <Style x:Key="SettingsSectionHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+        <Style x:Key="SettingsSectionCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+    </Page.Resources>
 
-        <StackPanel x:Name="ServerValuesPanel" Spacing="12">
-            <TextBlock Text="Server Values" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <Button Content="서버 데이터(Store/PC/Object) 등록/수정"
-                    Click="OnOpenRegistrationDialogClicked"
-                    IsEnabled="{x:Bind ViewModel.IsRegistrationAvailable, Mode=OneWay}"
-                    HorizontalAlignment="Stretch" />
-            <TextBlock Text="Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다."
-                       Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowRegistrationCountryCodeHint), Mode=OneWay}"
-                       TextWrapping="Wrap" />
-            <Button Content="{x:Bind ViewModel.ServerConnectionEditButtonText, Mode=OneWay}"
-                    Command="{x:Bind ViewModel.ToggleServerConnectionEditingCommand}"
-                    HorizontalAlignment="Stretch" />
-            <TextBlock Text="서버 접속 정보는 잠겨 있습니다."
-                       Visibility="{x:Bind BoolToVisibility(ViewModel.ShouldShowServerConnectionLockedMessage), Mode=OneWay}"
-                       TextWrapping="Wrap" />
-            <TextBox Header="Base URL"
-                     Text="{x:Bind ViewModel.BackendBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     Visibility="{x:Bind BoolToVisibility(ViewModel.IsServerConnectionEditing), Mode=OneWay}" />
-            <PasswordBox Header="Bearer Token"
-                         Password="{x:Bind ViewModel.BackendBearerToken, Mode=TwoWay}"
-                         Visibility="{x:Bind BoolToVisibility(ViewModel.IsServerConnectionEditing), Mode=OneWay}" />
-            <ComboBox Header="Country Code"
-                      ItemsSource="{x:Bind ViewModel.AvailableCountryCodes}"
-                      SelectedItem="{x:Bind ViewModel.SelectedCountryCode, Mode=TwoWay}"
-                      HorizontalAlignment="Stretch" />
-            <ComboBox Header="Store"
-                      ItemsSource="{x:Bind ViewModel.ServerStoreList, Mode=OneWay}"
-                      SelectedItem="{x:Bind ViewModel.SelectedServerStore, Mode=TwoWay}"
-                      DisplayMemberPath="StoreName"
-                      HorizontalAlignment="Stretch" />
-            <ComboBox Header="PC"
-                      ItemsSource="{x:Bind ViewModel.ServerPcList, Mode=OneWay}"
-                      SelectedItem="{x:Bind ViewModel.SelectedServerPc, Mode=TwoWay}"
-                      DisplayMemberPath="PcName"
-                      HorizontalAlignment="Stretch" />
-            <TextBlock Text="{x:Bind ViewModel.ServerStatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-            <TextBlock Text="서버 오브제" Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <Grid x:Name="ServerObjectListHeader" ColumnSpacing="12">
+    <Grid RowSpacing="12" Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <CommandBar x:Name="BackendSettingsCommandBar"
+                    DefaultLabelPosition="Right"
+                    Background="Transparent">
+            <CommandBar.Content>
+                <Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="서버 값 관리" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="서버 카탈로그와 이 PC의 로컬 백엔드 설정을 비교하고 동기화합니다."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Grid>
+            </CommandBar.Content>
+            <AppBarElementContainer x:Name="CommandResultMessageContainer"
+                                    Visibility="{x:Bind HasTextVisibility(ViewModel.LocalStatusMessage), Mode=OneWay}">
+                <Border Background="{ThemeResource SystemControlBackgroundAccentBrush}"
+                        BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,6"
+                        Margin="0,0,12,0"
+                        MaxWidth="420"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        ToolTipService.ToolTip="{x:Bind ViewModel.LocalStatusMessage, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon x:Name="CommandResultMessageIcon"
+                                  Glyph="&#xE946;"
+                                  FontSize="12"
+                                  Foreground="{ThemeResource SystemControlForegroundAltHighBrush}" />
+                        <TextBlock x:Name="CommandResultMessage"
+                                   Text="{x:Bind ViewModel.LocalStatusMessage, Mode=OneWay}"
+                                   Foreground="{ThemeResource SystemControlForegroundAltHighBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="360"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </AppBarElementContainer>
+            <AppBarButton x:Name="ApplyServerValuesButton"
+                          Label="서버 값 적용"
+                          Command="{x:Bind ViewModel.ApplyServerValuesCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Download" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="CompareWithServerButton"
+                          Label="서버 값 비교"
+                          Command="{x:Bind ViewModel.CompareWithServerCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="View" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="SaveSettingsButton"
+                          Label="저장"
+                          Command="{x:Bind ViewModel.SaveCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Save" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+        </CommandBar>
+
+        <ScrollViewer Grid.Row="1">
+            <Grid ColumnSpacing="20">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="420" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="오브제 이름" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <TextBlock Grid.Column="1" Text="서버 오브제 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
-            </Grid>
-            <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}"
-                      MaxHeight="220">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="backend:BackendServerObjectSnapshot">
-                        <Grid ColumnSpacing="12" Padding="0,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{x:Bind ObjectName}" TextWrapping="Wrap" />
-                            <TextBlock Grid.Column="1" Text="{x:Bind ObjectId}" TextWrapping="Wrap" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </StackPanel>
 
-        <Button Grid.Column="1"
-                Content="서버 값 적용"
-                Command="{x:Bind ViewModel.ApplyServerValuesCommand}"
-                VerticalAlignment="Center" />
+                <StackPanel x:Name="ServerValuesPanel" Spacing="12">
+                    <Border Style="{StaticResource SettingsSectionCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="서버 선택" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                            <Button Content="서버 데이터(Store/PC/Object) 등록/수정"
+                                    Click="OnOpenRegistrationDialogClicked"
+                                    IsEnabled="{x:Bind ViewModel.IsRegistrationAvailable, Mode=OneWay}"
+                                    HorizontalAlignment="Stretch" />
+                            <InfoBar Title="Country Code 필요"
+                                     Message="Country Code를 먼저 선택하면 데이터 관리가 활성화됩니다."
+                                     Severity="Informational"
+                                     IsClosable="False"
+                                     IsOpen="{x:Bind ViewModel.ShouldShowRegistrationCountryCodeHint, Mode=OneWay}" />
+                            <ComboBox Header="Country Code"
+                                      ItemsSource="{x:Bind ViewModel.AvailableCountryCodes}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedCountryCode, Mode=TwoWay}"
+                                      HorizontalAlignment="Stretch" />
+                            <ComboBox Header="Store"
+                                      ItemsSource="{x:Bind ViewModel.ServerStoreList, Mode=OneWay}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedServerStore, Mode=TwoWay}"
+                                      DisplayMemberPath="StoreName"
+                                      HorizontalAlignment="Stretch" />
+                            <ComboBox Header="PC"
+                                      ItemsSource="{x:Bind ViewModel.ServerPcList, Mode=OneWay}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedServerPc, Mode=TwoWay}"
+                                      DisplayMemberPath="PcName"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </Border>
 
-        <ScrollViewer Grid.Column="2">
-            <StackPanel x:Name="LocalSettingsPanel" Spacing="12" Padding="0,0,16,0">
-                <TextBlock Text="Local Settings" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <Button x:Name="OpenLocalSettingsFileButton"
-                        Content="로컬 설정 파일 열기"
-                        Click="OnOpenLocalSettingsFileClicked"
-                        HorizontalAlignment="Stretch" />
-                <ToggleSwitch Header="Sync Enabled" IsOn="{x:Bind ViewModel.IsBackendSyncEnabled, Mode=TwoWay}" />
-                <NumberBox Header="Sync Interval Seconds" Value="{x:Bind ViewModel.BackendSyncIntervalSeconds, Mode=TwoWay}" Minimum="1" />
-                <TextBox Header="Store ID" Text="{x:Bind ViewModel.BackendStoreId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Header="Store Name" Text="{x:Bind ViewModel.BackendStoreName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Header="Store Country Code" Text="{x:Bind ViewModel.BackendStoreCountryCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Text="{x:Bind ViewModel.StoreCountryCodeComparisonMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
-                <TextBox Header="PC ID" Text="{x:Bind ViewModel.BackendPcId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Text="{x:Bind ViewModel.PcIdComparisonMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
-                <TextBox Header="PC Name" Text="{x:Bind ViewModel.BackendPcName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Header="Software Version" Text="{x:Bind ViewModel.BackendSoftwareVersion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Text="{x:Bind ViewModel.SwVersionComparisonMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
-                <TextBlock Text="Object Mappings" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="120" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="오브제 이름" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <TextBlock Grid.Column="1" Text="서버 오브제 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <TextBlock Grid.Column="2" Text="WinUI 로컬 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                </Grid>
-                <ListView ItemsSource="{x:Bind ViewModel.MappedServerObjects, Mode=OneWay}"
-                          MaxHeight="220">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="backend:BackendObjectMappingDisplay">
-                            <Grid ColumnSpacing="12" Padding="0,4">
+                    <Expander x:Name="ConnectionSettingsExpander"
+                              Header="{x:Bind ViewModel.ServerConnectionEditButtonText, Mode=OneWay}"
+                              IsExpanded="{x:Bind ViewModel.IsServerConnectionEditing, Mode=TwoWay}">
+                        <StackPanel Spacing="12" Padding="0,8,0,0">
+                            <InfoBar Title="서버 접속 정보"
+                                     Message="서버 접속 정보는 잠겨 있습니다."
+                                     Severity="Informational"
+                                     IsClosable="False"
+                                     IsOpen="{x:Bind ViewModel.ShouldShowServerConnectionLockedMessage, Mode=OneWay}" />
+                            <Button Content="{x:Bind ViewModel.ServerConnectionEditButtonText, Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.ToggleServerConnectionEditingCommand}"
+                                    HorizontalAlignment="Stretch" />
+                            <TextBox Header="Base URL"
+                                     Text="{x:Bind ViewModel.BackendBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <PasswordBox Header="Bearer Token"
+                                         Password="{x:Bind ViewModel.BackendBearerToken, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Expander>
+
+                    <InfoBar x:Name="ServerConnectionInfoBar"
+                             Message="{x:Bind ViewModel.ServerStatusMessage, Mode=OneWay}"
+                             Severity="Informational"
+                             IsClosable="False"
+                             IsOpen="{x:Bind HasText(ViewModel.ServerStatusMessage), Mode=OneWay}" />
+
+                    <Border Style="{StaticResource SettingsSectionCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="서버 오브제" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                            <Grid x:Name="ServerObjectListHeader" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="1.4*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="오브제 이름" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Grid.Column="1" Text="서버 오브제 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            </Grid>
+                            <ListView ItemsSource="{x:Bind ViewModel.ServerObjects, Mode=OneWay}"
+                                      MaxHeight="260"
+                                      SelectionMode="None">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="backend:BackendServerObjectSnapshot">
+                                        <Grid ColumnSpacing="12" Padding="0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="1.4*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind ObjectName}" TextWrapping="Wrap" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind ObjectId}" TextWrapping="Wrap" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel x:Name="LocalSettingsPanel" Grid.Column="1" Spacing="12">
+                    <Border Style="{StaticResource SettingsSectionCardStyle}">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="로컬 PC 설정" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                                <Button x:Name="OpenLocalSettingsFileButton"
+                                        Grid.Column="1"
+                                        Content="설정 파일 열기"
+                                        Click="OnOpenLocalSettingsFileClicked" />
+                            </Grid>
+                            <Grid ColumnSpacing="12" RowSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <ToggleSwitch Header="Sync Enabled"
+                                              IsOn="{x:Bind ViewModel.IsBackendSyncEnabled, Mode=TwoWay}" />
+                                <NumberBox Grid.Column="1"
+                                           Header="Sync Interval Seconds"
+                                           Value="{x:Bind ViewModel.BackendSyncIntervalSeconds, Mode=TwoWay}"
+                                           Minimum="1" />
+                                <TextBox Grid.Row="1"
+                                         Header="PC Name"
+                                         Text="{x:Bind ViewModel.BackendPcName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Header="Software Version"
+                                         Text="{x:Bind ViewModel.BackendSoftwareVersion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                            <TextBlock Text="{x:Bind ViewModel.SwVersionComparisonMessage, Mode=OneWay}"
+                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsSectionCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="스토어 및 PC 식별자" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                            <Grid ColumnSpacing="12" RowSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBox Header="Store ID"
+                                         Text="{x:Bind ViewModel.BackendStoreId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="1"
+                                         Header="Store Name"
+                                         Text="{x:Bind ViewModel.BackendStoreName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Row="1"
+                                         Header="Store Country Code"
+                                         Text="{x:Bind ViewModel.BackendStoreCountryCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Header="PC ID"
+                                         Text="{x:Bind ViewModel.BackendPcId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="2"
+                                           Text="{x:Bind ViewModel.StoreCountryCodeComparisonMessage, Mode=OneWay}"
+                                           Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="1"
+                                           Text="{x:Bind ViewModel.PcIdComparisonMessage, Mode=OneWay}"
+                                           Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                           TextWrapping="Wrap" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsSectionCardStyle}">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="오브제 매핑" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                                <Button x:Name="EditObjectMappingsButton"
+                                        Grid.Column="1"
+                                        Content="매핑 수정"
+                                        Click="OnEditObjectMappingsClicked" />
+                            </Grid>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="1.4*" />
                                     <ColumnDefinition Width="120" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{x:Bind ObjectName}" TextWrapping="Wrap" />
-                                <TextBlock Grid.Column="1" Text="{x:Bind ObjectId}" TextWrapping="Wrap" />
-                                <TextBlock Grid.Column="2" Text="{x:Bind LocalObjectIdText}" TextWrapping="Wrap" />
+                                <TextBlock Text="오브제 이름" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Grid.Column="1" Text="서버 오브제 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Grid.Column="2" Text="WinUI 로컬 ID" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-                <Button x:Name="EditObjectMappingsButton"
-                        Content="오브제 매핑 수정"
-                        Click="OnEditObjectMappingsClicked"
-                        HorizontalAlignment="Stretch" />
-                <TextBox Header="Device/Object Mapping JSON"
-                         Text="{x:Bind ViewModel.BackendDeviceObjectMappingsText, Mode=OneWay}"
-                         AcceptsReturn="True"
-                         IsReadOnly="True"
-                         MinHeight="120" />
-                <TextBlock Text="{x:Bind ViewModel.BackendDeviceObjectMappingsMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
-                <TextBlock Text="{x:Bind ViewModel.DeviceObjectMappingsComparisonMessage, Mode=OneWay}" Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" TextWrapping="Wrap" />
-                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                    <Button Content="서버 값 비교" Command="{x:Bind ViewModel.CompareWithServerCommand}" />
-                    <Button Content="저장" Command="{x:Bind ViewModel.SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
+                            <ListView ItemsSource="{x:Bind ViewModel.MappedServerObjects, Mode=OneWay}"
+                                      MaxHeight="260"
+                                      SelectionMode="None">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="backend:BackendObjectMappingDisplay">
+                                        <Grid ColumnSpacing="12" Padding="0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="1.4*" />
+                                                <ColumnDefinition Width="120" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind ObjectName}" TextWrapping="Wrap" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind ObjectId}" TextWrapping="Wrap" />
+                                            <TextBlock Grid.Column="2" Text="{x:Bind LocalObjectIdText}" TextWrapping="Wrap" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+
+                    <Expander x:Name="MappingJsonExpander" Header="Device/Object Mapping JSON">
+                        <StackPanel Spacing="8" Padding="0,8,0,0">
+                            <TextBox Text="{x:Bind ViewModel.BackendDeviceObjectMappingsText, Mode=OneWay}"
+                                     AcceptsReturn="True"
+                                     IsReadOnly="True"
+                                     MinHeight="120" />
+                            <TextBlock Text="{x:Bind ViewModel.BackendDeviceObjectMappingsMessage, Mode=OneWay}"
+                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.DeviceObjectMappingsComparisonMessage, Mode=OneWay}"
+                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Expander>
                 </StackPanel>
-                <TextBlock Text="{x:Bind ViewModel.LocalStatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-            </StackPanel>
+            </Grid>
         </ScrollViewer>
     </Grid>
 </Page>
