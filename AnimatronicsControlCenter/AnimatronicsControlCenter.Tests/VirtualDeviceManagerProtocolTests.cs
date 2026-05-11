@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Text;
+using System;
 using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Infrastructure;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -9,6 +10,35 @@ namespace AnimatronicsControlCenter.Tests;
 [TestClass]
 public class VirtualDeviceManagerProtocolTests
 {
+    [TestMethod]
+    public void Virtual_DeviceOnePing_TogglesServerTestStateEveryTenSeconds()
+    {
+        DateTimeOffset now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        var manager = new VirtualDeviceManager(() => now);
+        byte[] request = BuildPingRequest(0, 1);
+
+        PongStatus initial = ParsePong(manager.ProcessBinaryCommand(request));
+        now = now.AddSeconds(10);
+        PongStatus toggled = ParsePong(manager.ProcessBinaryCommand(request));
+
+        Assert.AreEqual(BinaryPingState.Playing, initial.State);
+        Assert.AreEqual("ON", initial.PowerStatus);
+        Assert.AreEqual(BinaryPingState.Stopped, toggled.State);
+        Assert.AreEqual("OFF", toggled.PowerStatus);
+    }
+
+    [TestMethod]
+    public void Virtual_DeviceTwoPing_KeepsDefaultStoppedOffState()
+    {
+        DateTimeOffset now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        var manager = new VirtualDeviceManager(() => now);
+
+        PongStatus status = ParsePong(manager.ProcessBinaryCommand(BuildPingRequest(0, 2)));
+
+        Assert.AreEqual(BinaryPingState.Stopped, status.State);
+        Assert.AreEqual("OFF", status.PowerStatus);
+    }
+
     [TestMethod]
     public void Virtual_SaveResponse_ReturnsPathConfirmationPayload()
     {
@@ -88,6 +118,27 @@ public class VirtualDeviceManagerProtocolTests
         BinaryPrimitives.WriteUInt16LittleEndian(request.AsSpan(3), (ushort)payload.Length);
         payload.CopyTo(request.AsSpan(BinaryProtocolConst.RequestHeaderSize));
         return request;
+    }
+
+    private static byte[] BuildPingRequest(byte srcId, byte tarId)
+    {
+        byte[] request = new byte[BinaryProtocolConst.RequestHeaderSize];
+        request[0] = srcId;
+        request[1] = tarId;
+        request[2] = (byte)BinaryCommand.Ping;
+        BinaryPrimitives.WriteUInt16LittleEndian(request.AsSpan(3), 0);
+        return request;
+    }
+
+    private static PongStatus ParsePong(byte[]? response)
+    {
+        Assert.IsNotNull(response);
+        Assert.IsTrue(BinaryDeserializer.TryParseResponseHeader(response, out var header));
+        Assert.AreEqual(BinaryCommand.Pong, header.Cmd);
+        Assert.AreEqual(ResponseStatus.Ok, header.Status);
+        ReadOnlySpan<byte> payload = response.AsSpan(BinaryProtocolConst.ResponseHeaderSize, header.PayloadLen);
+        Assert.IsTrue(BinaryDeserializer.TryParsePongResponse(payload, out var status));
+        return status;
     }
 
     private static byte[] BuildSaveResponse(string path)

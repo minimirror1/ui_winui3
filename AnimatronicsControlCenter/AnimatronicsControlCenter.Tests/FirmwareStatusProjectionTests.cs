@@ -88,11 +88,12 @@ public class FirmwareStatusProjectionTests
         Assert.AreEqual(ResponseStatus.Ok, header.Status);
 
         ReadOnlySpan<byte> payload = response.AsSpan(BinaryProtocolConst.ResponseHeaderSize, header.PayloadLen);
-        Assert.AreEqual(10, payload.Length);
+        Assert.AreEqual(BinaryProtocolConst.PongPayloadSize + 1, payload.Length);
         Assert.AreEqual((byte)BinaryPingState.Stopped, payload[0]);
         Assert.AreEqual((byte)0, payload[1]);
         Assert.AreEqual((uint)0, BinaryPrimitives.ReadUInt32LittleEndian(payload[2..]));
         Assert.AreEqual((uint)0, BinaryPrimitives.ReadUInt32LittleEndian(payload[6..]));
+        Assert.AreEqual((byte)0, payload[BinaryProtocolConst.PongPayloadSize]);
     }
 
     private static byte[] BuildPingRequest(byte srcId, byte tarId)
