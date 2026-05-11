@@ -114,6 +114,11 @@ namespace AnimatronicsControlCenter
             {
                 NavView.SelectedItem = (NavigationViewItem)NavView.SettingsItem;
             }
+            else if (ContentFrame.SourcePageType == typeof(ServerMonitorPage)
+                || ContentFrame.SourcePageType == typeof(BackendSettingsPage))
+            {
+                NavView.SelectedItem = null;
+            }
             else if (ContentFrame.SourcePageType == typeof(DashboardPage))
             {
                 NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>()

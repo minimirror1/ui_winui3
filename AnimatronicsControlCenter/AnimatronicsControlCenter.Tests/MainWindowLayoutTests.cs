@@ -77,6 +77,16 @@ public class MainWindowLayoutTests
         }
     }
 
+    [TestMethod]
+    public void FooterPages_ClearNavigationViewSelectedItem()
+    {
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "MainWindow.xaml.cs"));
+
+        StringAssert.Contains(code, "ContentFrame.SourcePageType == typeof(ServerMonitorPage)");
+        StringAssert.Contains(code, "ContentFrame.SourcePageType == typeof(BackendSettingsPage)");
+        StringAssert.Contains(code, "NavView.SelectedItem = null");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
