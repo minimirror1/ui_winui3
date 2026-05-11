@@ -18,6 +18,9 @@ public class BackendServiceRegistrationTests
             "AddSingleton<IBackendMonitoringService, BackendMonitoringService>",
             "AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>",
             "AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>",
+            "AddSingleton<IBackendTrafficTap, BackendTrafficTap>",
+            "AddTransient<ServerMonitorPage>",
+            "AddTransient<ServerMonitorViewModel>",
             "AddTransient<BackendSettingsViewModel>"
         })
         {

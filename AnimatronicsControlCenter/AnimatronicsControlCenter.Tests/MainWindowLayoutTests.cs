@@ -49,6 +49,34 @@ public class MainWindowLayoutTests
         Assert.AreEqual("BackendSettingsButton", (string?)lastButton.Attribute(x + "Name"));
     }
 
+    [TestMethod]
+    public void ServerTrafficIndicator_HasThreeDotsAndClickHandler()
+    {
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "MainWindow.xaml"));
+
+        XElement button = page
+            .Descendants(xaml + "Button")
+            .Single(element => (string?)element.Attribute(x + "Name") == "ServerTrafficButton");
+
+        Assert.AreEqual("ServerTrafficButton_Click", (string?)button.Attribute("Click"));
+
+        string[] expectedDots =
+        {
+            "ServerStatusDot",
+            "ServerUplinkDot",
+            "ServerDownlinkDot"
+        };
+
+        foreach (string dotName in expectedDots)
+        {
+            Assert.IsTrue(
+                button.Descendants(xaml + "Border").Any(element => (string?)element.Attribute(x + "Name") == dotName),
+                $"{dotName} should be present inside the server traffic button.");
+        }
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

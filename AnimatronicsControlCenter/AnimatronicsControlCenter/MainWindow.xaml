@@ -172,6 +172,47 @@
                         </Button>
                     </Grid>
 
+                    <Grid x:Name="ServerTrafficFooterHost"
+                          Width="48"
+                          HorizontalAlignment="Left">
+                        <Button x:Name="ServerTrafficButton"
+                                Click="ServerTrafficButton_Click"
+                                Width="36"
+                                Height="60"
+                                Padding="0"
+                                HorizontalAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                ToolTipService.ToolTip="Server activity">
+                            <Border x:Name="ServerTrafficButtonChrome"
+                                    Width="28"
+                                    Height="52"
+                                    Padding="0"
+                                    CornerRadius="14"
+                                    Background="#10FFFFFF">
+                                <StackPanel VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            Spacing="7">
+                                    <Border x:Name="ServerStatusDot"
+                                            Width="8"
+                                            Height="8"
+                                            CornerRadius="4"
+                                            Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                                    <Border x:Name="ServerUplinkDot"
+                                            Width="8"
+                                            Height="8"
+                                            CornerRadius="4"
+                                            Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                                    <Border x:Name="ServerDownlinkDot"
+                                            Width="8"
+                                            Height="8"
+                                            CornerRadius="4"
+                                            Background="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                    </Grid>
+
                     <Button x:Name="BackendSettingsButton"
                             Click="BackendSettingsButton_Click"
                             Width="36"
