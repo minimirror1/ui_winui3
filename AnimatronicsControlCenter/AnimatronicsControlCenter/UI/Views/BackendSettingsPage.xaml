@@ -62,13 +62,6 @@
                     </StackPanel>
                 </Border>
             </AppBarElementContainer>
-            <AppBarButton x:Name="ApplyServerValuesButton"
-                          Label="서버 값 적용"
-                          Command="{x:Bind ViewModel.ApplyServerValuesCommand}">
-                <AppBarButton.Icon>
-                    <SymbolIcon Symbol="Download" />
-                </AppBarButton.Icon>
-            </AppBarButton>
             <AppBarButton x:Name="CompareWithServerButton"
                           Label="서버 값 비교"
                           Command="{x:Bind ViewModel.CompareWithServerCommand}">
@@ -119,6 +112,15 @@
                                       SelectedItem="{x:Bind ViewModel.SelectedServerPc, Mode=TwoWay}"
                                       DisplayMemberPath="PcName"
                                       HorizontalAlignment="Stretch" />
+                            <Button x:Name="ApplyServerValuesButton"
+                                    Command="{x:Bind ViewModel.ApplyServerValuesCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="서버 값 적용" />
+                                    <SymbolIcon Symbol="Forward" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Border>
 
