@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,6 +20,7 @@ namespace AnimatronicsControlCenter.UI.Views
             DataContext = ViewModel;
 
             ViewModel.Entries.CollectionChanged += Entries_CollectionChanged;
+            ViewModel.Packets.CollectionChanged += Packets_CollectionChanged;
             ViewModel.ComRawEntries.CollectionChanged += ComRawEntries_CollectionChanged;
             Unloaded += SerialMonitorPage_Unloaded;
         }
@@ -29,8 +31,16 @@ namespace AnimatronicsControlCenter.UI.Views
             if (ViewModel.IsPaused) return;
             if (ViewModel.SelectedTabIndex != 0) return;
 
-            // ItemsRepeater doesn't support ScrollIntoView; scroll the viewer to bottom.
-            SerialScroll.ChangeView(null, SerialScroll.ScrollableHeight, null);
+            ScrollToBottomAfterLayout(SerialScroll);
+        }
+
+        private void Packets_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (!ViewModel.IsAutoScrollEnabled) return;
+            if (ViewModel.IsPaused) return;
+            if (ViewModel.SelectedTabIndex != 1) return;
+
+            ScrollListToLastItemAfterLayout(PacketList, ViewModel.Packets);
         }
 
         private void ComRawEntries_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -39,7 +49,34 @@ namespace AnimatronicsControlCenter.UI.Views
             if (ViewModel.IsPaused) return;
             if (ViewModel.SelectedTabIndex != 2) return;
 
-            ComRawScroll.ChangeView(null, ComRawScroll.ScrollableHeight, null);
+            ScrollToBottomAfterLayout(ComRawScroll);
+        }
+
+        private static void ScrollToBottomAfterLayout(ScrollViewer scrollViewer)
+        {
+            void ScrollToBottom()
+            {
+                scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null);
+            }
+
+            if (!scrollViewer.DispatcherQueue.TryEnqueue(ScrollToBottom))
+            {
+                ScrollToBottom();
+            }
+        }
+
+        private static void ScrollListToLastItemAfterLayout<T>(ListView listView, IReadOnlyList<T> items)
+        {
+            void ScrollToLastItem()
+            {
+                if (items.Count == 0) return;
+                listView.ScrollIntoView(items[^1]);
+            }
+
+            if (!listView.DispatcherQueue.TryEnqueue(ScrollToLastItem))
+            {
+                ScrollToLastItem();
+            }
         }
 
         private void FilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -75,8 +112,6 @@ namespace AnimatronicsControlCenter.UI.Views
         }
     }
 }
-
-
 
 
 
