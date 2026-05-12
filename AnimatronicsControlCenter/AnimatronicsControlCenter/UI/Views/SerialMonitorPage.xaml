@@ -129,7 +129,8 @@
                                       IsOn="{x:Bind ViewModel.IsParseErrorOnly, Mode=TwoWay}"/>
                     </StackPanel>
 
-                    <ListView Grid.Row="1"
+                    <ListView x:Name="PacketList"
+                              Grid.Row="1"
                               Grid.Column="0"
                               ItemsSource="{x:Bind ViewModel.Packets, Mode=OneWay}"
                               SelectedItem="{x:Bind ViewModel.SelectedPacket, Mode=TwoWay}">
@@ -204,7 +205,6 @@
         </Pivot>
     </Grid>
 </Page>
-
 
 
 
