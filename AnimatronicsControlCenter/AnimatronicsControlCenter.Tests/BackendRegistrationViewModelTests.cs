@@ -98,6 +98,56 @@ public class BackendRegistrationViewModelTests
         Assert.IsFalse(catalog.CreateStoreCalled);
     }
 
+    [TestMethod]
+    public async Task ToggleEdit_Step1_ExistingStore_FillsStoreEditFieldsFromServerDetail()
+    {
+        var catalog = new FakeRegCatalogClient
+        {
+            StoreDetail = MakeStoreDetail(
+                "s1", "pc-1", "Main PC", "1.0", "obj-1",
+                address: "123 Seoul St",
+                latitude: 37.5,
+                longitude: 127.0,
+                timezone: "Asia/Seoul")
+        };
+        var vm = MakeVm(catalog: catalog,
+            stores: [new BackendStoreSummaryResponse("s1", "Seoul", "KR")]);
+        vm.SelectedStore = vm.AvailableStores[0];
+
+        await vm.ToggleEditCommand.ExecuteAsync(null);
+
+        Assert.IsTrue(vm.IsEditExpanded);
+        Assert.AreEqual("Seoul Store", vm.EditStoreName);
+        Assert.AreEqual("KR", vm.EditStoreCountryCode);
+        Assert.AreEqual("123 Seoul St", vm.EditStoreAddress);
+        Assert.AreEqual("37.5", vm.EditStoreLatitude);
+        Assert.AreEqual("127", vm.EditStoreLongitude);
+        Assert.AreEqual("Asia/Seoul", vm.EditStoreTimezone);
+    }
+
+    [TestMethod]
+    public async Task GoNext_Step1_ExistingStore_DoesNotUpdateStoreWhenPrefilledValuesAreUnchanged()
+    {
+        var catalog = new FakeRegCatalogClient
+        {
+            StoreDetail = MakeStoreDetail(
+                "s1", "pc-1", "Main PC", "1.0", "obj-1",
+                address: "123 Seoul St",
+                latitude: 37.5,
+                longitude: 127.0,
+                timezone: "Asia/Seoul")
+        };
+        var vm = MakeVm(catalog: catalog,
+            stores: [new BackendStoreSummaryResponse("s1", "Seoul", "KR")]);
+        vm.SelectedStore = vm.AvailableStores[0];
+        await vm.ToggleEditCommand.ExecuteAsync(null);
+
+        await vm.GoNextCommand.ExecuteAsync(null);
+
+        Assert.IsFalse(catalog.UpdateStoreCalled);
+        Assert.AreEqual(2, vm.CurrentStep);
+    }
+
     // ── Step 1 → 2: 신규 등록 ────────────────────────────────
 
     [TestMethod]
@@ -265,17 +315,20 @@ public class BackendRegistrationViewModelTests
     }
 
     private static BackendStoreDetailResponse MakeStoreDetail(
-        string storeId, string pcId, string pcName, string swVersion, string objectId)
+        string storeId, string pcId, string pcName, string swVersion, string objectId,
+        string? address = null, double? latitude = null, double? longitude = null, string? timezone = null)
         => new(storeId, "Seoul Store", "KR",
             [new BackendPcDetailResponse(
                 pcId, pcName, swVersion,
-                [new BackendObjectDetailResponse(objectId, "Robot A", "ON", [])])]);
+                [new BackendObjectDetailResponse(objectId, "Robot A", "ON", [])])],
+            address, latitude, longitude, timezone);
 
     private sealed class FakeRegCatalogClient : IBackendServerCatalogClient
     {
         public BackendStoreDetailResponse? StoreDetail { get; set; }
         public bool ShouldCreateStoreFail { get; set; }
         public bool CreateStoreCalled { get; private set; }
+        public bool UpdateStoreCalled { get; private set; }
         public string? CreatedStoreName { get; private set; }
         public bool CreatePcCalled { get; private set; }
         public string? CreatePcStoreId { get; private set; }
@@ -312,7 +365,10 @@ public class BackendRegistrationViewModelTests
 
         public Task<BackendSendResult> UpdateStoreAsync(
             string storeId, BackendStoreUpdateRequest request, CancellationToken cancellationToken)
-            => Task.FromResult(new BackendSendResult(true, 200, "OK"));
+        {
+            UpdateStoreCalled = true;
+            return Task.FromResult(new BackendSendResult(true, 200, "OK"));
+        }
 
         public Task<BackendFetchResult<BackendPcAddResponse>> CreatePcAsync(
             string storeId, BackendPcCreateRequest request, CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AnimatronicsControlCenter.Core.Backend;
 
 namespace AnimatronicsControlCenter.Core.Interfaces
 {
@@ -24,6 +25,7 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         string BackendPcName { get; set; }
         string BackendSoftwareVersion { get; set; }
         Dictionary<int, string> BackendDeviceObjectMappings { get; set; }
+        List<BackendServerObjectMappingSource> BackendServerObjects { get; set; }
         int BackendSyncIntervalSeconds { get; set; }
         void Save();
         void Load();

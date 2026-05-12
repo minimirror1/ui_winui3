@@ -195,6 +195,7 @@ public partial class BackendRegistrationViewModel : ObservableObject
     private string? _resolvedCountryCode;
     private string? _resolvedPcId;
     private string? _resolvedPcName;
+    private StoreEditValues? _originalStoreEditValues;
 
     public BackendRegistrationViewModel(
         IBackendServerCatalogClient catalogClient,
@@ -275,7 +276,38 @@ public partial class BackendRegistrationViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleEdit() => IsEditExpanded = !IsEditExpanded;
+    private async Task ToggleEditAsync()
+    {
+        IsEditExpanded = !IsEditExpanded;
+        if (IsEditExpanded && CurrentStep == 1 && IsSelectMode && SelectedStore is not null)
+            await PopulateStoreEditFieldsAsync(SelectedStore);
+    }
+
+    private async Task PopulateStoreEditFieldsAsync(BackendStoreSummaryResponse store)
+    {
+        EditStoreName = store.StoreName ?? string.Empty;
+        EditStoreCountryCode = store.CountryCode ?? string.Empty;
+        EditStoreAddress = string.Empty;
+        EditStoreLatitude = string.Empty;
+        EditStoreLongitude = string.Empty;
+        EditStoreTimezone = string.Empty;
+
+        var detail = await _catalogClient.GetStoreDetailAsync(store.StoreId, CancellationToken.None);
+        if (!detail.Success || detail.Data is null)
+        {
+            StatusMessage = detail.Message;
+            CaptureOriginalStoreEditValues();
+            return;
+        }
+
+        EditStoreName = detail.Data.StoreName ?? EditStoreName;
+        EditStoreCountryCode = detail.Data.CountryCode ?? EditStoreCountryCode;
+        EditStoreAddress = detail.Data.Address ?? string.Empty;
+        EditStoreLatitude = FormatNullableDouble(detail.Data.Latitude);
+        EditStoreLongitude = FormatNullableDouble(detail.Data.Longitude);
+        EditStoreTimezone = detail.Data.Timezone ?? string.Empty;
+        CaptureOriginalStoreEditValues();
+    }
 
     private async Task<bool> ProcessStep1Async()
     {
@@ -442,12 +474,7 @@ public partial class BackendRegistrationViewModel : ObservableObject
     }
 
     private bool HasAnyStoreEdit() =>
-        !string.IsNullOrWhiteSpace(EditStoreName) ||
-        !string.IsNullOrWhiteSpace(EditStoreCountryCode) ||
-        !string.IsNullOrWhiteSpace(EditStoreAddress) ||
-        !string.IsNullOrWhiteSpace(EditStoreLatitude) ||
-        !string.IsNullOrWhiteSpace(EditStoreLongitude) ||
-        !string.IsNullOrWhiteSpace(EditStoreTimezone);
+        CaptureCurrentStoreEditValues() != (_originalStoreEditValues ?? StoreEditValues.Empty);
 
     private bool HasAnyPcEdit() =>
         !string.IsNullOrWhiteSpace(EditPcName) || !string.IsNullOrWhiteSpace(EditPcSwVersion);
@@ -463,4 +490,24 @@ public partial class BackendRegistrationViewModel : ObservableObject
 
     private static string? NullIfEmpty(string s) =>
         string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private void CaptureOriginalStoreEditValues() =>
+        _originalStoreEditValues = CaptureCurrentStoreEditValues();
+
+    private StoreEditValues CaptureCurrentStoreEditValues() =>
+        new(EditStoreName, EditStoreCountryCode, EditStoreAddress, EditStoreLatitude, EditStoreLongitude, EditStoreTimezone);
+
+    private static string FormatNullableDouble(double? value) =>
+        value?.ToString("G", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private sealed record StoreEditValues(
+        string StoreName,
+        string CountryCode,
+        string Address,
+        string Latitude,
+        string Longitude,
+        string Timezone)
+    {
+        public static StoreEditValues Empty { get; } = new(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+    }
 }

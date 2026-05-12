@@ -69,6 +69,27 @@ public class BackendMonitoringServiceTests
         Assert.IsNull(handler.Request);
     }
 
+    [TestMethod]
+    public async Task SendObjectLogAsync_RecordsBackendTraffic()
+    {
+        using var handler = new RecordingHandler("""{"ok":true}""");
+        using var httpClient = new HttpClient(handler);
+        var settings = TestSettings("https://example.invalid");
+        settings.BackendDeviceObjectMappings = new Dictionary<int, string> { [2] = "obj-1" };
+        var resolver = new BackendObjectIdResolver(settings);
+        var trafficTap = new BackendTrafficTap();
+        var service = new BackendMonitoringService(httpClient, settings, resolver, trafficTap);
+
+        await service.SendObjectLogAsync(new Device(2), CancellationToken.None);
+
+        var entries = trafficTap.GetEntries();
+        Assert.AreEqual(2, entries.Count);
+        Assert.AreEqual(BackendTrafficPhase.Request, entries[0].Phase);
+        Assert.AreEqual(BackendTrafficPhase.Response, entries[1].Phase);
+        Assert.AreEqual("/v1/service/objects/obj-1/logs", entries[1].Path);
+        Assert.AreEqual(200, entries[1].StatusCode);
+    }
+
     private static SettingsService TestSettings(string baseUrl)
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_monitoring_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");

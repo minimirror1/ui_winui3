@@ -19,6 +19,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\FirmwareStatusProjection.cs" Link="Core\Models\FirmwareStatusProjection.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\MotorState.cs" Link="Core\Models\MotorState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\SerialTrafficEntry.cs" Link="Core\Models\SerialTrafficEntry.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Models\BackendTrafficEntry.cs" Link="Core\Models\BackendTrafficEntry.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Models\FileSystemItem.cs" Link="Core\Models\FileSystemItem.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Backend\BackendDtos.cs" Link="Core\Backend\BackendDtos.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Backend\BackendDeviceMapper.cs" Link="Core\Backend\BackendDeviceMapper.cs" />
@@ -38,12 +39,14 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\SaveFileResponseProjection.cs" Link="Core\Protocol\SaveFileResponseProjection.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\DeviceStatusRefreshPolicy.cs" Link="Core\Utilities\DeviceStatusRefreshPolicy.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialTrafficIndicatorState.cs" Link="Core\Utilities\SerialTrafficIndicatorState.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\BackendTrafficState.cs" Link="Core\Utilities\BackendTrafficState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialPortDisplay.cs" Link="Core\Utilities\SerialPortDisplay.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendMonitoringService.cs" Link="Core\Interfaces\IBackendMonitoringService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendServerCatalogClient.cs" Link="Core\Interfaces\IBackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendDashboardSyncService.cs" Link="Core\Interfaces\IBackendDashboardSyncService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendTrafficTap.cs" Link="Core\Interfaces\IBackendTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialService.cs" Link="Core\Interfaces\ISerialService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
@@ -53,10 +56,13 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendMonitoringService.cs" Link="Infrastructure\BackendMonitoringService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendServerCatalogClient.cs" Link="Infrastructure\BackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendDashboardSyncService.cs" Link="Infrastructure\BackendDashboardSyncService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendTrafficTap.cs" Link="Infrastructure\BackendTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendObjectMappingEditorViewModel.cs" Link="UI\ViewModels\BackendObjectMappingEditorViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendSettingsViewModel.cs" Link="UI\ViewModels\BackendSettingsViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendRegistrationViewModel.cs" Link="UI\ViewModels\BackendRegistrationViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />
   </ItemGroup>
 </Project>

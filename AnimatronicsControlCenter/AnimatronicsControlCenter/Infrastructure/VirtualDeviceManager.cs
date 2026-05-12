@@ -15,9 +15,16 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly Dictionary<int, List<MotorState>> _deviceMotors = new();
         private readonly Dictionary<int, int> _deviceMotorTick = new();
         private readonly Dictionary<int, PongStatus> _devicePingStatuses = new();
+        private readonly Func<DateTimeOffset> _nowProvider;
 
         public VirtualDeviceManager()
+            : this(() => DateTimeOffset.Now)
         {
+        }
+
+        public VirtualDeviceManager(Func<DateTimeOffset> nowProvider)
+        {
+            _nowProvider = nowProvider;
             _deviceFileSystems = new Dictionary<int, Dictionary<string, string>>();
         }
 
@@ -87,6 +94,11 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         private PongStatus GetPingStatus(int deviceId)
         {
+            if (deviceId == 1)
+            {
+                return CreateDeviceOneServerTestStatus();
+            }
+
             if (!_devicePingStatuses.TryGetValue(deviceId, out var status))
             {
                 status = new PongStatus(BinaryPingState.Stopped, 0, 0, 0);
@@ -94,6 +106,15 @@ namespace AnimatronicsControlCenter.Infrastructure
             }
 
             return status;
+        }
+
+        private PongStatus CreateDeviceOneServerTestStatus()
+        {
+            long period = _nowProvider().ToUnixTimeSeconds() / 10;
+            bool active = period % 2 == 0;
+            return active
+                ? new PongStatus(BinaryPingState.Playing, 0, 0, 10_000, "ON")
+                : new PongStatus(BinaryPingState.Stopped, 0, 0, 10_000, "OFF");
         }
 
         // ── Binary 진입점 ─────────────────────────────────────────────
@@ -139,11 +160,12 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             // PONG: 헤더만, payload 없음
             var status = GetPingStatus(hdr.TarId);
-            var payload = new byte[BinaryProtocolConst.PongPayloadSize];
+            var payload = new byte[BinaryProtocolConst.PongPayloadSize + 1];
             payload[0] = (byte)status.State;
             payload[1] = status.InitState;
             BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(2), status.CurrentMs);
             BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(6), status.TotalMs);
+            payload[BinaryProtocolConst.PongPayloadSize] = status.PowerStatus == "ON" ? (byte)0x01 : (byte)0x00;
             return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.Pong, payload);
         }
 

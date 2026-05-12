@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Backend;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Models;
 using AnimatronicsControlCenter.Infrastructure;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -81,6 +82,42 @@ public class BackendServerCatalogClientTests
         StringAssert.Contains(result.Message, "nope");
     }
 
+    [TestMethod]
+    public async Task GetStoreDetailAsync_RecordsBackendTraffic()
+    {
+        using var handler = new RecordingHandler("""{"store_id":"store-1","store_name":null,"country_code":null,"pcs":[]}""");
+        using var httpClient = new HttpClient(handler);
+        var trafficTap = new BackendTrafficTap();
+        var client = new BackendServerCatalogClient(httpClient, TestSettings("https://example.invalid"), trafficTap);
+
+        await client.GetStoreDetailAsync("store-1", CancellationToken.None);
+
+        var entries = trafficTap.GetEntries();
+        Assert.AreEqual(2, entries.Count);
+        Assert.AreEqual(BackendTrafficPhase.Request, entries[0].Phase);
+        Assert.AreEqual(BackendTrafficPhase.Response, entries[1].Phase);
+        Assert.AreEqual("/v1/service/stores/store-1/detail", entries[1].Path);
+        Assert.AreEqual(200, entries[1].StatusCode);
+    }
+
+    [TestMethod]
+    public async Task GetStoreDetailAsync_RecordsBackendTrafficError()
+    {
+        using var handler = new ThrowingHandler(new HttpRequestException("network down"));
+        using var httpClient = new HttpClient(handler);
+        var trafficTap = new BackendTrafficTap();
+        var client = new BackendServerCatalogClient(httpClient, TestSettings("https://example.invalid"), trafficTap);
+
+        var result = await client.GetStoreDetailAsync("store-1", CancellationToken.None);
+
+        var entries = trafficTap.GetEntries();
+        Assert.IsFalse(result.Success);
+        Assert.AreEqual(2, entries.Count);
+        Assert.AreEqual(BackendTrafficPhase.Request, entries[0].Phase);
+        Assert.AreEqual(BackendTrafficPhase.Error, entries[1].Phase);
+        StringAssert.Contains(entries[1].Message, "network down");
+    }
+
     private static SettingsService TestSettings(string baseUrl)
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_http_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
@@ -99,4 +136,17 @@ public class BackendServerCatalogClientTests
 
         public string BackendSettingsFilePath { get; }
     }
+}
+
+public sealed class ThrowingHandler : HttpMessageHandler
+{
+    private readonly Exception _exception;
+
+    public ThrowingHandler(Exception exception)
+    {
+        _exception = exception;
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        => Task.FromException<HttpResponseMessage>(_exception);
 }

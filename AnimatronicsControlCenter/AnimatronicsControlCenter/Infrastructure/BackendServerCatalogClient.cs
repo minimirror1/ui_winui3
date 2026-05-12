@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,11 +13,13 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
 {
     private readonly HttpClient _httpClient;
     private readonly ISettingsService _settingsService;
+    private readonly IBackendTrafficTap? _trafficTap;
 
-    public BackendServerCatalogClient(HttpClient httpClient, ISettingsService settingsService)
+    public BackendServerCatalogClient(HttpClient httpClient, ISettingsService settingsService, IBackendTrafficTap? trafficTap = null)
     {
         _httpClient = httpClient;
         _settingsService = settingsService;
+        _trafficTap = trafficTap;
     }
 
     public async Task<BackendFetchResult<BackendStoreDetailResponse>> GetStoreDetailAsync(
@@ -31,8 +34,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         try
         {
             using HttpRequestMessage request = BackendHttpRequest.Create(_settingsService, HttpMethod.Get, uri);
+            Stopwatch stopwatch = StartTraffic(request.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(request.Method, uri, response, stopwatch, body);
             if (!response.IsSuccessStatusCode)
             {
                 return new BackendFetchResult<BackendStoreDetailResponse>(false, (int)response.StatusCode, body, null);
@@ -50,6 +55,7 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
+            RecordError(HttpMethod.Get, uri, ex.Message);
             return new BackendFetchResult<BackendStoreDetailResponse>(false, null, ex.Message, null);
         }
     }
@@ -67,8 +73,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         try
         {
             using HttpRequestMessage request = BackendHttpRequest.Create(_settingsService, HttpMethod.Get, uri);
+            Stopwatch stopwatch = StartTraffic(request.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(request.Method, uri, response, stopwatch, body);
             if (!response.IsSuccessStatusCode)
             {
                 return new BackendFetchResult<BackendStoreListResponse>(false, (int)response.StatusCode, body, null);
@@ -86,6 +94,7 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
+            RecordError(HttpMethod.Get, uri, ex.Message);
             return new BackendFetchResult<BackendStoreListResponse>(false, null, ex.Message, null);
         }
     }
@@ -105,14 +114,17 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         {
             using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Put, uri);
             httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            Stopwatch stopwatch = StartTraffic(httpRequest.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(httpRequest.Method, uri, response, stopwatch, body);
             return response.IsSuccessStatusCode
                 ? new BackendSendResult(true, (int)response.StatusCode, "OK")
                 : new BackendSendResult(false, (int)response.StatusCode, body);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
+            RecordError(HttpMethod.Put, uri, ex.Message);
             return new BackendSendResult(false, null, ex.Message);
         }
     }
@@ -128,8 +140,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         {
             using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Post, uri);
             httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            Stopwatch stopwatch = StartTraffic(httpRequest.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(httpRequest.Method, uri, response, stopwatch, body);
             if (!response.IsSuccessStatusCode)
                 return new BackendFetchResult<BackendStoreCreateResponse>(false, (int)response.StatusCode, body, null);
             if (string.IsNullOrWhiteSpace(body))
@@ -141,6 +155,7 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
+            RecordError(HttpMethod.Post, uri, ex.Message);
             return new BackendFetchResult<BackendStoreCreateResponse>(false, null, ex.Message, null);
         }
     }
@@ -158,14 +173,17 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         {
             using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Put, uri);
             httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            Stopwatch stopwatch = StartTraffic(httpRequest.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(httpRequest.Method, uri, response, stopwatch, body);
             return response.IsSuccessStatusCode
                 ? new BackendSendResult(true, (int)response.StatusCode, "OK")
                 : new BackendSendResult(false, (int)response.StatusCode, body);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
+            RecordError(HttpMethod.Put, uri, ex.Message);
             return new BackendSendResult(false, null, ex.Message);
         }
     }
@@ -183,8 +201,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         {
             using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Post, uri);
             httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            Stopwatch stopwatch = StartTraffic(httpRequest.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(httpRequest.Method, uri, response, stopwatch, body);
             if (!response.IsSuccessStatusCode)
                 return new BackendFetchResult<BackendPcAddResponse>(false, (int)response.StatusCode, body, null);
             if (string.IsNullOrWhiteSpace(body))
@@ -196,6 +216,7 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
+            RecordError(HttpMethod.Post, uri, ex.Message);
             return new BackendFetchResult<BackendPcAddResponse>(false, null, ex.Message, null);
         }
     }
@@ -214,8 +235,10 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         {
             using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Post, uri);
             httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            Stopwatch stopwatch = StartTraffic(httpRequest.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(httpRequest.Method, uri, response, stopwatch, body);
             if (!response.IsSuccessStatusCode)
                 return new BackendFetchResult<BackendObjectCreateResponse>(false, (int)response.StatusCode, body, null);
             if (string.IsNullOrWhiteSpace(body))
@@ -227,6 +250,7 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
+            RecordError(HttpMethod.Post, uri, ex.Message);
             return new BackendFetchResult<BackendObjectCreateResponse>(false, null, ex.Message, null);
         }
     }
@@ -244,15 +268,36 @@ public sealed class BackendServerCatalogClient : IBackendServerCatalogClient
         {
             using HttpRequestMessage httpRequest = BackendHttpRequest.Create(_settingsService, HttpMethod.Put, uri);
             httpRequest.Content = BackendHttpRequest.JsonContent(request);
+            Stopwatch stopwatch = StartTraffic(httpRequest.Method, uri);
             using HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            RecordResponse(httpRequest.Method, uri, response, stopwatch, body);
             return response.IsSuccessStatusCode
                 ? new BackendSendResult(true, (int)response.StatusCode, "OK")
                 : new BackendSendResult(false, (int)response.StatusCode, body);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
+            RecordError(HttpMethod.Put, uri, ex.Message);
             return new BackendSendResult(false, null, ex.Message);
         }
+    }
+
+    private Stopwatch StartTraffic(HttpMethod method, Uri uri)
+    {
+        _trafficTap?.RecordRequest(method, uri, DateTimeOffset.Now);
+        return Stopwatch.StartNew();
+    }
+
+    private void RecordResponse(HttpMethod method, Uri uri, HttpResponseMessage response, Stopwatch stopwatch, string body)
+    {
+        stopwatch.Stop();
+        string message = response.IsSuccessStatusCode ? "OK" : body;
+        _trafficTap?.RecordResponse(method, uri, (int)response.StatusCode, stopwatch.Elapsed, message, DateTimeOffset.Now);
+    }
+
+    private void RecordError(HttpMethod method, Uri uri, string message)
+    {
+        _trafficTap?.RecordError(method, uri, TimeSpan.Zero, message, DateTimeOffset.Now);
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.UI.ViewModels;
@@ -37,4 +39,62 @@ public sealed partial class BackendSettingsPage : Page
             ViewModel.ServerStatusMessage = $"데이터 관리 오류: {ex.Message}";
         }
     }
+
+    private void OnOpenLocalSettingsFileClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var pathProvider = App.Current.Services.GetRequiredService<IBackendSettingsPathProvider>();
+            string filePath = pathProvider.BackendSettingsFilePath;
+            string? directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+                Directory.CreateDirectory(directory);
+
+            if (!File.Exists(filePath))
+            {
+                var settingsService = App.Current.Services.GetRequiredService<ISettingsService>();
+                settingsService.Save();
+            }
+
+            Process.Start(new ProcessStartInfo("notepad.exe", $"\"{filePath}\"")
+            {
+                UseShellExecute = false
+            });
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ServerStatusMessage = $"로컬 설정 파일 열기 오류: {ex.Message}";
+        }
+    }
+
+    private async void OnEditObjectMappingsClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            BackendObjectMappingEditorViewModel mappingViewModel = ViewModel.CreateObjectMappingEditorViewModel();
+            var dialog = new BackendObjectMappingDialog(mappingViewModel);
+            if (App.Current.m_window?.Content is FrameworkElement element)
+                dialog.XamlRoot = element.XamlRoot;
+
+            ContentDialogResult result = await dialog.ShowAsync().AsTask();
+            if (result == ContentDialogResult.Primary &&
+                mappingViewModel.TryBuildMappings(out var mappings))
+            {
+                ViewModel.SaveObjectMappings(mappings);
+            }
+        }
+        catch (Exception ex)
+        {
+            ViewModel.LocalStatusMessage = $"오브제 매핑 수정 오류: {ex.Message}";
+        }
+    }
+
+    private Visibility BoolToVisibility(bool value) =>
+        value ? Visibility.Visible : Visibility.Collapsed;
+
+    private bool HasText(string? value) =>
+        !string.IsNullOrWhiteSpace(value);
+
+    private Visibility HasTextVisibility(string? value) =>
+        HasText(value) ? Visibility.Visible : Visibility.Collapsed;
 }

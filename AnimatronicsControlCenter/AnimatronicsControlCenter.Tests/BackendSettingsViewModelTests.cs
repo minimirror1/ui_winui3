@@ -108,6 +108,42 @@ public class BackendSettingsViewModelTests
     }
 
     [TestMethod]
+    public void DataManagement_IsAvailableOnlyAfterCountryCodeSelection()
+    {
+        var viewModel = new BackendSettingsViewModel(TestSettings(), new FakeCatalogClient());
+
+        Assert.IsFalse(viewModel.IsRegistrationAvailable);
+        Assert.IsTrue(viewModel.ShouldShowRegistrationCountryCodeHint);
+
+        viewModel.SelectedCountryCode = "KR";
+        Assert.IsTrue(viewModel.IsRegistrationAvailable);
+        Assert.IsFalse(viewModel.ShouldShowRegistrationCountryCodeHint);
+
+        viewModel.SelectedCountryCode = null;
+        Assert.IsFalse(viewModel.IsRegistrationAvailable);
+        Assert.IsTrue(viewModel.ShouldShowRegistrationCountryCodeHint);
+    }
+
+    [TestMethod]
+    public void ServerConnectionFields_AreLockedByDefaultAndToggleEditable()
+    {
+        var viewModel = new BackendSettingsViewModel(TestSettings(), new FakeCatalogClient());
+
+        Assert.IsFalse(viewModel.IsServerConnectionEditing);
+        Assert.AreEqual("서버 접속 정보 수정", viewModel.ServerConnectionEditButtonText);
+
+        viewModel.ToggleServerConnectionEditingCommand.Execute(null);
+
+        Assert.IsTrue(viewModel.IsServerConnectionEditing);
+        Assert.AreEqual("서버 접속 정보 잠금", viewModel.ServerConnectionEditButtonText);
+
+        viewModel.ToggleServerConnectionEditingCommand.Execute(null);
+
+        Assert.IsFalse(viewModel.IsServerConnectionEditing);
+        Assert.AreEqual("서버 접속 정보 수정", viewModel.ServerConnectionEditButtonText);
+    }
+
+    [TestMethod]
     public void SelectedCountryCode_Changed_ClearsStoreAndPcSelections()
     {
         var catalog = new FakeCatalogClient

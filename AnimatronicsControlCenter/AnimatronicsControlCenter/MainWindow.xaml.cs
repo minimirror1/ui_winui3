@@ -21,20 +21,25 @@ namespace AnimatronicsControlCenter
         private static readonly SolidColorBrush InactiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0x73, 0x73, 0x73));
         private static readonly SolidColorBrush RxActiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0x33, 0xD1, 0xC4));
         private static readonly SolidColorBrush TxActiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0xFF, 0xA3, 0x3A));
+        private static readonly SolidColorBrush ServerOnlineBrush = new(ColorHelper.FromArgb(0xFF, 0x4C, 0xD9, 0x64));
+        private static readonly SolidColorBrush ServerOfflineBrush = new(ColorHelper.FromArgb(0xFF, 0x73, 0x73, 0x73));
         private static readonly SolidColorBrush IdleTrafficChromeBrush = new(ColorHelper.FromArgb(0x18, 0xFF, 0xFF, 0xFF));
         private static readonly SolidColorBrush ActiveTrafficChromeBrush = new(ColorHelper.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
 
         private readonly ISerialTrafficTap _serialTrafficTap;
+        private readonly IBackendTrafficTap _backendTrafficTap;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly SerialTrafficIndicatorState _serialTrafficIndicatorState = new();
         private readonly DispatcherTimer _serialTrafficIndicatorTimer;
+        private readonly DispatcherTimer _serverTrafficIndicatorTimer;
         private readonly object _serialTrafficIndicatorLock = new();
 
         public SettingsViewModel ConnectionViewModel { get; }
 
-        public MainWindow(ISerialTrafficTap serialTrafficTap, SerialMonitorWindowHost serialMonitorWindowHost, SettingsViewModel settingsViewModel)
+        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, SerialMonitorWindowHost serialMonitorWindowHost, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;
+            _backendTrafficTap = backendTrafficTap;
             _serialMonitorWindowHost = serialMonitorWindowHost;
             ConnectionViewModel = settingsViewModel;
 
@@ -50,12 +55,19 @@ namespace AnimatronicsControlCenter
                 Interval = TimeSpan.FromMilliseconds(16)
             };
             _serialTrafficIndicatorTimer.Tick += SerialTrafficIndicatorTimer_Tick;
+            _serverTrafficIndicatorTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(16)
+            };
+            _serverTrafficIndicatorTimer.Tick += ServerTrafficIndicatorTimer_Tick;
 
             _serialTrafficTap.EntryRecorded += SerialTrafficTap_EntryRecorded;
+            _backendTrafficTap.TrafficChanged += BackendTrafficTap_TrafficChanged;
             Closed += MainWindow_Closed;
             ContentFrame.Navigated += ContentFrame_Navigated;
 
             UpdateSerialTrafficIndicator();
+            UpdateServerTrafficIndicator();
             UpdateConnectionIconVisibility();
             ConnectionViewModel.PropertyChanged += ConnectionViewModel_PropertyChanged;
         }
@@ -101,6 +113,11 @@ namespace AnimatronicsControlCenter
             if (ContentFrame.SourcePageType == typeof(SettingsPage))
             {
                 NavView.SelectedItem = (NavigationViewItem)NavView.SettingsItem;
+            }
+            else if (ContentFrame.SourcePageType == typeof(ServerMonitorPage)
+                || ContentFrame.SourcePageType == typeof(BackendSettingsPage))
+            {
+                NavView.SelectedItem = null;
             }
             else if (ContentFrame.SourcePageType == typeof(DashboardPage))
             {
@@ -177,6 +194,11 @@ namespace AnimatronicsControlCenter
             ContentFrame.Navigate(typeof(BackendSettingsPage));
         }
 
+        private void ServerTrafficButton_Click(object sender, RoutedEventArgs e)
+        {
+            ContentFrame.Navigate(typeof(ServerMonitorPage));
+        }
+
         private void SerialTrafficTap_EntryRecorded(object? sender, SerialTrafficEntry entry)
         {
             lock (_serialTrafficIndicatorLock)
@@ -193,6 +215,17 @@ namespace AnimatronicsControlCenter
             DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, ActivateSerialTrafficIndicator);
         }
 
+        private void BackendTrafficTap_TrafficChanged(object? sender, EventArgs e)
+        {
+            if (DispatcherQueue.HasThreadAccess)
+            {
+                ActivateServerTrafficIndicator();
+                return;
+            }
+
+            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, ActivateServerTrafficIndicator);
+        }
+
         private void ActivateSerialTrafficIndicator()
         {
             UpdateSerialTrafficIndicator();
@@ -205,6 +238,20 @@ namespace AnimatronicsControlCenter
             var snapshot = UpdateSerialTrafficIndicator();
             if (!snapshot.IsRxActive && !snapshot.IsTxActive)
                 _serialTrafficIndicatorTimer.Stop();
+        }
+
+        private void ActivateServerTrafficIndicator()
+        {
+            UpdateServerTrafficIndicator();
+            if (!_serverTrafficIndicatorTimer.IsEnabled)
+                _serverTrafficIndicatorTimer.Start();
+        }
+
+        private void ServerTrafficIndicatorTimer_Tick(object? sender, object e)
+        {
+            var snapshot = UpdateServerTrafficIndicator();
+            if (!snapshot.IsUplinkActive && !snapshot.IsDownlinkActive)
+                _serverTrafficIndicatorTimer.Stop();
         }
 
         private SerialTrafficIndicatorSnapshot UpdateSerialTrafficIndicator()
@@ -227,6 +274,24 @@ namespace AnimatronicsControlCenter
             return snapshot;
         }
 
+        private BackendTrafficSnapshot UpdateServerTrafficIndicator()
+        {
+            var snapshot = _backendTrafficTap.GetSnapshot(DateTimeOffset.Now);
+
+            ServerStatusDot.Background = snapshot.IsServerOnline ? ServerOnlineBrush : ServerOfflineBrush;
+            ServerUplinkDot.Background = snapshot.IsUplinkActive ? TxActiveTrafficBrush : InactiveTrafficBrush;
+            ServerDownlinkDot.Background = snapshot.IsDownlinkActive ? RxActiveTrafficBrush : InactiveTrafficBrush;
+            ServerStatusDot.Opacity = snapshot.IsServerOnline ? 1.0 : 0.45;
+            ServerUplinkDot.Opacity = snapshot.IsUplinkActive ? 1.0 : 0.45;
+            ServerDownlinkDot.Opacity = snapshot.IsDownlinkActive ? 1.0 : 0.45;
+            ServerTrafficButtonChrome.Background = snapshot.IsServerOnline || snapshot.IsUplinkActive || snapshot.IsDownlinkActive
+                ? ActiveTrafficChromeBrush
+                : IdleTrafficChromeBrush;
+
+            ToolTipService.SetToolTip(ServerTrafficButton, BuildServerTrafficToolTip(snapshot));
+            return snapshot;
+        }
+
         private static string BuildSerialTrafficToolTip(SerialTrafficIndicatorSnapshot snapshot)
         {
             string rx = snapshot.IsRxActive ? "RX active" : "RX idle";
@@ -234,12 +299,23 @@ namespace AnimatronicsControlCenter
             return $"Serial activity\n{rx}\n{tx}\nClick to open monitor";
         }
 
+        private static string BuildServerTrafficToolTip(BackendTrafficSnapshot snapshot)
+        {
+            string status = snapshot.IsServerOnline ? "Server online" : "Server offline";
+            string uplink = snapshot.IsUplinkActive ? "Uplink active" : "Uplink idle";
+            string downlink = snapshot.IsDownlinkActive ? "Downlink active" : "Downlink idle";
+            return $"Server activity\n{status}\n{uplink}\n{downlink}\nClick to open monitor";
+        }
+
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
             ConnectionViewModel.PropertyChanged -= ConnectionViewModel_PropertyChanged;
             _serialTrafficTap.EntryRecorded -= SerialTrafficTap_EntryRecorded;
+            _backendTrafficTap.TrafficChanged -= BackendTrafficTap_TrafficChanged;
             _serialTrafficIndicatorTimer.Tick -= SerialTrafficIndicatorTimer_Tick;
             _serialTrafficIndicatorTimer.Stop();
+            _serverTrafficIndicatorTimer.Tick -= ServerTrafficIndicatorTimer_Tick;
+            _serverTrafficIndicatorTimer.Stop();
             Closed -= MainWindow_Closed;
         }
     }
