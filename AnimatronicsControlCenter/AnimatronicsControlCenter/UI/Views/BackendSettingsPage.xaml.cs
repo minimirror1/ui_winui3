@@ -67,6 +67,27 @@ public sealed partial class BackendSettingsPage : Page
         }
     }
 
+    private void OnOpenLocalSettingsFolderClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var pathProvider = App.Current.Services.GetRequiredService<IBackendSettingsPathProvider>();
+            string filePath = pathProvider.BackendSettingsFilePath;
+            string? directory = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrWhiteSpace(directory)) return;
+
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{directory}\"")
+            {
+                UseShellExecute = false
+            });
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ServerStatusMessage = $"Local settings folder open error: {ex.Message}";
+        }
+    }
+
     private async void OnEditObjectMappingsClicked(object sender, RoutedEventArgs e)
     {
         try

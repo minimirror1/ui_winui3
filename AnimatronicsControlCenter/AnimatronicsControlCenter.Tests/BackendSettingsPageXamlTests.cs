@@ -38,6 +38,8 @@ public class BackendSettingsPageXamlTests
             "MappedServerObjects",
             "EditObjectMappingsButton",
             "OnEditObjectMappingsClicked",
+            "OpenLocalSettingsFolderButton",
+            "OnOpenLocalSettingsFolderClicked",
             "OpenLocalSettingsFileButton",
             "OnOpenLocalSettingsFileClicked",
         })
@@ -118,6 +120,23 @@ public class BackendSettingsPageXamlTests
             xaml.IndexOf("Text=\"서버 값 적용\"", StringComparison.Ordinal) <
             xaml.IndexOf("Symbol=\"Forward\"", StringComparison.Ordinal),
             "Apply server values should show the label before the right arrow icon.");
+    }
+
+    [TestMethod]
+    public void BackendSettingsPage_PlacesOpenSettingsFolderButtonBeforeFileButton()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "BackendSettingsPage.xaml"));
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "BackendSettingsPage.xaml.cs"));
+
+        int folderButtonIndex = xaml.IndexOf("OpenLocalSettingsFolderButton", StringComparison.Ordinal);
+        int fileButtonIndex = xaml.IndexOf("OpenLocalSettingsFileButton", StringComparison.Ordinal);
+
+        Assert.IsTrue(folderButtonIndex >= 0, "Settings folder button should exist.");
+        Assert.IsTrue(fileButtonIndex >= 0, "Settings file button should exist.");
+        Assert.IsTrue(folderButtonIndex < fileButtonIndex, "Settings folder button should be left of the settings file button.");
+        StringAssert.Contains(code, "OnOpenLocalSettingsFolderClicked");
+        StringAssert.Contains(code, "Process.Start(new ProcessStartInfo(\"explorer.exe\",");
+        StringAssert.Contains(code, "Directory.CreateDirectory(directory)");
     }
 
     private static string ProjectPath(params string[] segments)
