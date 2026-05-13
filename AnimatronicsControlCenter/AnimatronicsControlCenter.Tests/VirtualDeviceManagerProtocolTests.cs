@@ -40,6 +40,30 @@ public class VirtualDeviceManagerProtocolTests
     }
 
     [TestMethod]
+    public void Virtual_PowerCtrlOn_UpdatesPongPowerStatus()
+    {
+        var manager = new VirtualDeviceManager();
+
+        byte[]? response = manager.ProcessBinaryCommand(BinarySerializer.EncodePowerCtrl(0, 2, BinaryPowerAction.On));
+        PongStatus status = ParsePong(manager.ProcessBinaryCommand(BuildPingRequest(0, 2)));
+
+        AssertPowerCtrlAccepted(response, BinaryPowerAction.On);
+        Assert.AreEqual("ON", status.PowerStatus);
+    }
+
+    [TestMethod]
+    public void Virtual_PowerCtrlReboot_LeavesDeviceOnAfterRebootCommand()
+    {
+        var manager = new VirtualDeviceManager();
+
+        byte[]? response = manager.ProcessBinaryCommand(BinarySerializer.EncodePowerCtrl(0, 2, BinaryPowerAction.Reboot));
+        PongStatus status = ParsePong(manager.ProcessBinaryCommand(BuildPingRequest(0, 2)));
+
+        AssertPowerCtrlAccepted(response, BinaryPowerAction.Reboot);
+        Assert.AreEqual("ON", status.PowerStatus);
+    }
+
+    [TestMethod]
     public void Virtual_SaveResponse_ReturnsPathConfirmationPayload()
     {
         var manager = new VirtualDeviceManager();
@@ -139,6 +163,18 @@ public class VirtualDeviceManagerProtocolTests
         ReadOnlySpan<byte> payload = response.AsSpan(BinaryProtocolConst.ResponseHeaderSize, header.PayloadLen);
         Assert.IsTrue(BinaryDeserializer.TryParsePongResponse(payload, out var status));
         return status;
+    }
+
+    private static void AssertPowerCtrlAccepted(byte[]? response, BinaryPowerAction expectedAction)
+    {
+        Assert.IsNotNull(response);
+        Assert.IsTrue(BinaryDeserializer.TryParseResponseHeader(response, out var header));
+        Assert.AreEqual(BinaryCommand.PowerCtrl, header.Cmd);
+        Assert.AreEqual(ResponseStatus.Ok, header.Status);
+        ReadOnlySpan<byte> payload = response.AsSpan(BinaryProtocolConst.ResponseHeaderSize, header.PayloadLen);
+        Assert.AreEqual(2, payload.Length);
+        Assert.AreEqual((byte)expectedAction, payload[0]);
+        Assert.AreEqual((byte)0x01, payload[1]);
     }
 
     private static byte[] BuildSaveResponse(string path)

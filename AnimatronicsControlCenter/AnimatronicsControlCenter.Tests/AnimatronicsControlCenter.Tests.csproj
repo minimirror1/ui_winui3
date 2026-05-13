@@ -44,16 +44,19 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendMonitoringService.cs" Link="Core\Interfaces\IBackendMonitoringService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendPowerSseService.cs" Link="Core\Interfaces\IBackendPowerSseService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendServerCatalogClient.cs" Link="Core\Interfaces\IBackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendDashboardSyncService.cs" Link="Core\Interfaces\IBackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendTrafficTap.cs" Link="Core\Interfaces\IBackendTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialService.cs" Link="Core\Interfaces\ISerialService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ILocalizationService.cs" Link="Core\Interfaces\ILocalizationService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendObjectIdResolver.cs" Link="Infrastructure\BackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendHttpRequest.cs" Link="Infrastructure\BackendHttpRequest.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendMonitoringService.cs" Link="Infrastructure\BackendMonitoringService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendPowerSseService.cs" Link="Infrastructure\BackendPowerSseService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendServerCatalogClient.cs" Link="Infrastructure\BackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendDashboardSyncService.cs" Link="Infrastructure\BackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendTrafficTap.cs" Link="Infrastructure\BackendTrafficTap.cs" />
@@ -64,5 +67,7 @@
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendSettingsViewModel.cs" Link="UI\ViewModels\BackendSettingsViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendRegistrationViewModel.cs" Link="UI\ViewModels\BackendRegistrationViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ScanDialogViewModel.cs" Link="UI\ViewModels\ScanDialogViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\Helpers\LocalizedStrings.cs" Link="UI\Helpers\LocalizedStrings.cs" />
   </ItemGroup>
 </Project>

@@ -74,6 +74,9 @@ public static class BinarySerializer
         return BuildRequest(srcId, tarId, BinaryCommand.MotionCtrl, payload);
     }
 
+    public static byte[] EncodePowerCtrl(byte srcId, byte tarId, BinaryPowerAction action)
+        => BuildRequest(srcId, tarId, BinaryCommand.PowerCtrl, [(byte)action]);
+
     /// §4.4 GET_MOTORS — payload 없음
     public static byte[] EncodeGetMotors(byte srcId, byte tarId)
         => BuildRequest(srcId, tarId, BinaryCommand.GetMotors, ReadOnlySpan<byte>.Empty);

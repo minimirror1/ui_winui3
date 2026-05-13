@@ -9,6 +9,7 @@ public enum BinaryCommand : byte
     Pong          = 0x02,
     Move          = 0x03,
     MotionCtrl    = 0x04,
+    PowerCtrl     = 0x05,
     GetMotors     = 0x10,
     GetMotorState = 0x11,
     GetFiles      = 0x20,
@@ -53,6 +54,13 @@ public enum BinaryMotionAction : byte
     Stop  = 0x01,
     Pause = 0x02,
     Seek  = 0x03,
+}
+
+public enum BinaryPowerAction : byte
+{
+    Off    = 0x00,
+    On     = 0x01,
+    Reboot = 0x02,
 }
 
 // §3.6 ErrorCode (uint8)

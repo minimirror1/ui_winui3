@@ -61,6 +61,12 @@
   <data name="Settings_Title.Text" xml:space="preserve">
     <value>설정</value>
   </data>
+  <data name="OpenSettingsFolder_Button" xml:space="preserve">
+    <value>설정파일 폴더 열기</value>
+  </data>
+  <data name="OpenSettingsFile_Button" xml:space="preserve">
+    <value>설정파일 열기</value>
+  </data>
   <data name="Connection_Header.Header" xml:space="preserve">
     <value>연결</value>
   </data>
@@ -205,6 +211,12 @@
   <data name="XBeePort_Header.Header" xml:space="preserve">
     <value>XBee 포트</value>
   </data>
+  <data name="LastPortAutoConnect_Header.Header" xml:space="preserve">
+    <value>이전 포트 자동연결</value>
+  </data>
+  <data name="LastPortAutoConnect_Desc.Text" xml:space="preserve">
+    <value>프로그램 실행 시 마지막으로 연결한 포트에 자동으로 연결합니다</value>
+  </data>
   <data name="ResponseTimeout_Header.Header" xml:space="preserve">
     <value>응답 타임아웃</value>
   </data>
@@ -212,10 +224,19 @@
     <value>패킷 수신 후 다음 패킷을 기다리는 시간 (초)</value>
   </data>
   <data name="PingSettings_Header.Header" xml:space="preserve">
-    <value>PING 설정</value>
+    <value>동기화 설정</value>
   </data>
   <data name="PingSettings_Desc.Text" xml:space="preserve">
     <value>주기 상태 확인과 PING 시간 페이로드를 설정합니다</value>
+  </data>
+  <data name="ScanRange_Header.Header" xml:space="preserve">
+    <value>스캔 범위</value>
+  </data>
+  <data name="ScanStartId_Header.Header" xml:space="preserve">
+    <value>시작 ID</value>
+  </data>
+  <data name="ScanEndId_Header.Header" xml:space="preserve">
+    <value>끝 ID</value>
   </data>
   <data name="PeriodicPing_Header.Header" xml:space="preserve">
     <value>주기 PING</value>

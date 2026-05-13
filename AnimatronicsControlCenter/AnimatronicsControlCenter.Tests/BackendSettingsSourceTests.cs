@@ -80,6 +80,71 @@ public class BackendSettingsSourceTests
     }
 
     [TestMethod]
+    public void AppSettings_SaveAndLoad_UsesSeparateFileBesideBackendSettings()
+    {
+        string backendPath = CreateTempSettingsPath();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(backendPath))
+        {
+            LastComPort = "COM9",
+            LastBaudRate = 57600,
+            Theme = "Dark",
+            IsVirtualModeEnabled = true,
+            IsLastPortAutoConnectEnabled = true,
+            Language = "en-US",
+            ResponseTimeoutSeconds = 3.5,
+            IsPeriodicPingEnabled = false,
+            PingIntervalSeconds = 12.5,
+            PingCountryCode = "US",
+            PingUtcOffsetMinutes = -300,
+            ScanStartId = 3,
+            ScanEndId = 12
+        };
+
+        first.Save();
+
+        string appSettingsPath = Path.Combine(Path.GetDirectoryName(backendPath)!, "app-settings.json");
+        Assert.AreEqual(appSettingsPath, first.AppSettingsFilePath);
+        Assert.IsTrue(File.Exists(appSettingsPath));
+        Assert.AreNotEqual(backendPath, appSettingsPath);
+
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        second.Load();
+
+        Assert.AreEqual("COM9", second.LastComPort);
+        Assert.AreEqual(57600, second.LastBaudRate);
+        Assert.AreEqual("Dark", second.Theme);
+        Assert.IsTrue(second.IsVirtualModeEnabled);
+        Assert.IsTrue(second.IsLastPortAutoConnectEnabled);
+        Assert.AreEqual("en-US", second.Language);
+        Assert.AreEqual(3.5, second.ResponseTimeoutSeconds);
+        Assert.IsFalse(second.IsPeriodicPingEnabled);
+        Assert.AreEqual(12.5, second.PingIntervalSeconds);
+        Assert.AreEqual("US", second.PingCountryCode);
+        Assert.AreEqual(-300, second.PingUtcOffsetMinutes);
+        Assert.AreEqual(3, second.ScanStartId);
+        Assert.AreEqual(12, second.ScanEndId);
+    }
+
+    [TestMethod]
+    public void AppSettings_SaveAndLoad_NormalizesScanRange()
+    {
+        string backendPath = CreateTempSettingsPath();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(backendPath))
+        {
+            ScanStartId = 20,
+            ScanEndId = 5
+        };
+
+        first.Save();
+
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        second.Load();
+
+        Assert.AreEqual(5, second.ScanStartId);
+        Assert.AreEqual(20, second.ScanEndId);
+    }
+
+    [TestMethod]
     public void BackendSettings_InvalidJson_FallsBackToDefaults()
     {
         string path = CreateTempSettingsPath();

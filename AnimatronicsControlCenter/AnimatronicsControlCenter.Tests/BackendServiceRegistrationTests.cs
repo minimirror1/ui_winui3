@@ -16,6 +16,7 @@ public class BackendServiceRegistrationTests
             "AddSingleton<IBackendObjectIdResolver, BackendObjectIdResolver>",
             "AddSingleton<IBackendSettingsPathProvider, BackendSettingsPathProvider>",
             "AddSingleton<IBackendMonitoringService, BackendMonitoringService>",
+            "AddSingleton<IBackendPowerSseService, BackendPowerSseService>",
             "AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>",
             "AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>",
             "AddSingleton<IBackendTrafficTap, BackendTrafficTap>",

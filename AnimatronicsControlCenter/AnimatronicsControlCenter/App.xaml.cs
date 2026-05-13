@@ -29,6 +29,7 @@ namespace AnimatronicsControlCenter
             
             var localizationService = Services.GetRequiredService<ILocalizationService>();
             localizationService.SetLanguage(settingsService.Language);
+            Services.GetRequiredService<IBackendPowerSseService>().Start();
             
             m_window = Services.GetRequiredService<MainWindow>();
             m_window.Activate();
@@ -60,6 +61,7 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<IBackendSettingsPathProvider, BackendSettingsPathProvider>();
             services.AddSingleton<IBackendObjectIdResolver, BackendObjectIdResolver>();
             services.AddSingleton<IBackendMonitoringService, BackendMonitoringService>();
+            services.AddSingleton<IBackendPowerSseService, BackendPowerSseService>();
             services.AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>();
             services.AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>();
             services.AddSingleton<IBackendTrafficTap, BackendTrafficTap>();

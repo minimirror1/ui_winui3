@@ -26,6 +26,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ILocalizationService _localizationService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly XBeeService _xbeeService;
+        private readonly DashboardViewModel _dashboardViewModel;
 
         public LocalizedStrings Strings { get; }
 
@@ -46,6 +47,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         [ObservableProperty]
         private bool isVirtualModeEnabled;
+
+        [ObservableProperty]
+        private bool isLastPortAutoConnectEnabled;
 
         [ObservableProperty]
         private bool isConnected;
@@ -123,6 +127,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [NotifyPropertyChangedFor(nameof(PingPayloadPreviewText))]
         private int pingUtcOffsetMinutes;
 
+        [ObservableProperty]
+        private int scanStartId = 1;
+
+        [ObservableProperty]
+        private int scanEndId = 10;
+
         public string PingPreviewText
             => PingTimePayloadFactory.FormatPreview(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow);
 
@@ -131,19 +141,23 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private bool _isInitialized;
         private bool _isUpdatingPingSelection;
+        private bool _isUpdatingScanRange;
+        private string _lastLoadedComPortForAutoConnect = string.Empty;
 
         public SettingsViewModel(
             ISettingsService settingsService,
             ISerialService serialService,
             ILocalizationService localizationService,
             SerialMonitorWindowHost serialMonitorWindowHost,
-            XBeeService xbeeService)
+            XBeeService xbeeService,
+            DashboardViewModel dashboardViewModel)
         {
             _settingsService = settingsService;
             _serialService = serialService;
             _localizationService = localizationService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
             _xbeeService = xbeeService;
+            _dashboardViewModel = dashboardViewModel;
             Strings = new LocalizedStrings(_localizationService);
             
             // Set dispatcher for UI callbacks
@@ -151,13 +165,17 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             
             _settingsService.Load();
             SelectedPort = _settingsService.LastComPort;
+            _lastLoadedComPortForAutoConnect = _settingsService.LastComPort;
             BaudRate = _settingsService.LastBaudRate == 0 ? 115200 : _settingsService.LastBaudRate;
             IsVirtualModeEnabled = _settingsService.IsVirtualModeEnabled;
+            IsLastPortAutoConnectEnabled = _settingsService.IsLastPortAutoConnectEnabled;
             ResponseTimeoutSeconds = _settingsService.ResponseTimeoutSeconds;
             IsPeriodicPingEnabled = _settingsService.IsPeriodicPingEnabled;
             PingIntervalSeconds = _settingsService.PingIntervalSeconds;
             PingCountryCode = _settingsService.PingCountryCode;
             PingUtcOffsetMinutes = _settingsService.PingUtcOffsetMinutes;
+            ScanStartId = _settingsService.ScanStartId;
+            ScanEndId = _settingsService.ScanEndId;
             SelectedPingTimeZoneOption = PingTimeZoneCatalog.FindOrDefault(PingCountryCode, PingUtcOffsetMinutes);
 
             RefreshPorts();
@@ -170,6 +188,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             IsConnectionActive = _serialService.IsConnected;
             IsXBeeConnected = _xbeeService.IsConnected;
             _isInitialized = true;
+            StartLastPortAutoConnectIfEnabled();
         }
 
         partial void OnSelectedLanguageChanged(LanguageOption value)
@@ -200,7 +219,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
              _settingsService.Save();
              if (value)
              {
-                 _ = ConnectAsync();
+                 _ = ConnectCoreAsync(autoScanAfterConnect: false);
              }
              else
              {
@@ -212,10 +231,24 @@ namespace AnimatronicsControlCenter.UI.ViewModels
              }
         }
 
+        partial void OnIsLastPortAutoConnectEnabledChanged(bool value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.IsLastPortAutoConnectEnabled = value;
+            _settingsService.Save();
+        }
+
         partial void OnResponseTimeoutSecondsChanged(double value)
         {
             if (!_isInitialized) return;
-            _settingsService.ResponseTimeoutSeconds = value;
+            var timeoutSeconds = Math.Clamp(Math.Round(value, 1), 0.1, 60);
+            if (Math.Abs(value - timeoutSeconds) > 0.001)
+            {
+                ResponseTimeoutSeconds = timeoutSeconds;
+                return;
+            }
+
+            _settingsService.ResponseTimeoutSeconds = timeoutSeconds;
             _settingsService.Save();
         }
 
@@ -229,7 +262,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         partial void OnPingIntervalSecondsChanged(double value)
         {
             if (!_isInitialized) return;
-            var intervalSeconds = Math.Clamp((int)Math.Round(value), 1, 60);
+            var intervalSeconds = Math.Clamp(Math.Round(value, 1), 0.1, 60);
             if (Math.Abs(value - intervalSeconds) > 0.001)
             {
                 PingIntervalSeconds = intervalSeconds;
@@ -289,6 +322,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             OnPropertyChanged(nameof(PingPayloadPreviewText));
         }
 
+        partial void OnScanStartIdChanged(int value)
+        {
+            if (!_isInitialized || _isUpdatingScanRange) return;
+            SaveNormalizedScanRange(value, ScanEndId);
+        }
+
+        partial void OnScanEndIdChanged(int value)
+        {
+            if (!_isInitialized || _isUpdatingScanRange) return;
+            SaveNormalizedScanRange(ScanStartId, value);
+        }
+
         [RelayCommand]
         private void RefreshPorts()
         {
@@ -300,14 +345,33 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 .ToArray();
 
             if (AvailablePortOptions.Any() &&
-                (string.IsNullOrEmpty(SelectedPort) || !AvailablePortOptions.Any(option => option.PortName == SelectedPort)))
+                string.IsNullOrEmpty(SelectedPort))
             {
                 SelectedPort = AvailablePortOptions[0].PortName;
             }
         }
 
+        private void StartLastPortAutoConnectIfEnabled()
+        {
+            if (!IsLastPortAutoConnectEnabled || IsVirtualModeEnabled || string.IsNullOrWhiteSpace(_lastLoadedComPortForAutoConnect))
+            {
+                return;
+            }
+
+            if (!AvailablePortOptions.Any(option => option.PortName.Equals(_lastLoadedComPortForAutoConnect, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            SelectedPort = _lastLoadedComPortForAutoConnect;
+            _ = ConnectCoreAsync(autoScanAfterConnect: true);
+        }
+
         [RelayCommand]
-        private async Task ConnectAsync()
+        private Task ConnectAsync()
+            => ConnectCoreAsync(autoScanAfterConnect: false);
+
+        private async Task ConnectCoreAsync(bool autoScanAfterConnect)
         {
             if (IsConnectionActive)
             {
@@ -326,6 +390,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 _settingsService.LastComPort = SelectedPort;
                 _settingsService.LastBaudRate = BaudRate;
                 _settingsService.Save();
+
+                if (autoScanAfterConnect)
+                {
+                    await _dashboardViewModel.ScanConfiguredRangeAsync(_settingsService.ScanStartId, _settingsService.ScanEndId);
+                }
             }
             catch
             {
@@ -371,6 +440,29 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 PingTimePayloadFactory.Create(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow));
             var payload = packet.AsSpan(BinaryProtocolConst.RequestHeaderSize);
             return string.Join(" ", payload.ToArray().Select(b => b.ToString("X2")));
+        }
+
+        private void SaveNormalizedScanRange(int startId, int endId)
+        {
+            int clampedStart = Math.Clamp(startId, 1, 254);
+            int clampedEnd = Math.Clamp(endId, 1, 254);
+            int normalizedStart = Math.Min(clampedStart, clampedEnd);
+            int normalizedEnd = Math.Max(clampedStart, clampedEnd);
+
+            _isUpdatingScanRange = true;
+            try
+            {
+                ScanStartId = normalizedStart;
+                ScanEndId = normalizedEnd;
+            }
+            finally
+            {
+                _isUpdatingScanRange = false;
+            }
+
+            _settingsService.ScanStartId = normalizedStart;
+            _settingsService.ScanEndId = normalizedEnd;
+            _settingsService.Save();
         }
     }
 }

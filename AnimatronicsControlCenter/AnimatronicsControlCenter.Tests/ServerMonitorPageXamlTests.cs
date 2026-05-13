@@ -19,8 +19,13 @@ public class ServerMonitorPageXamlTests
         StringAssert.Contains(text, "Last success");
         StringAssert.Contains(text, "Last failure");
         StringAssert.Contains(text, "Recent backend traffic");
+        StringAssert.Contains(text, "Copy all");
+        StringAssert.Contains(text, "Copy selected");
 
-        Assert.IsTrue(page.Descendants(xaml + "ListView").Any(element => (string?)element.Attribute(x + "Name") == "TrafficList"));
+        XElement trafficList = page.Descendants(xaml + "ListView").Single(element => (string?)element.Attribute(x + "Name") == "TrafficList");
+        Assert.AreEqual("Multiple", (string?)trafficList.Attribute("SelectionMode"));
+        Assert.IsTrue(page.Descendants(xaml + "Button").Any(element => (string?)element.Attribute(x + "Name") == "CopyAllTrafficButton"));
+        Assert.IsTrue(page.Descendants(xaml + "Button").Any(element => (string?)element.Attribute(x + "Name") == "CopySelectedTrafficButton"));
     }
 
     private static string ProjectPath(params string[] segments)

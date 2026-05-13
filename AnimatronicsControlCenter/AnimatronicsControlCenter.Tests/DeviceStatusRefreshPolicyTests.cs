@@ -57,8 +57,15 @@ public class DeviceStatusRefreshPolicyTests
     }
 
     [TestMethod]
-    public void GetIntervalMs_ClampsBelowOneSecond()
+    public void GetIntervalMs_ClampsBelowTenthSecond()
     {
-        Assert.AreEqual(1000, DeviceStatusRefreshPolicy.GetIntervalMs(0));
+        Assert.AreEqual(100, DeviceStatusRefreshPolicy.GetIntervalMs(0));
+    }
+
+    [TestMethod]
+    public void GetIntervalMs_SupportsTenthSecondIntervals()
+    {
+        Assert.AreEqual(100, DeviceStatusRefreshPolicy.GetIntervalMs(0.1));
+        Assert.AreEqual(1500, DeviceStatusRefreshPolicy.GetIntervalMs(1.5));
     }
 }
