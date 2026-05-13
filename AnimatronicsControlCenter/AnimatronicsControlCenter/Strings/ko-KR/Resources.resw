@@ -61,6 +61,12 @@
   <data name="Settings_Title.Text" xml:space="preserve">
     <value>설정</value>
   </data>
+  <data name="OpenSettingsFolder_Button" xml:space="preserve">
+    <value>설정파일 폴더 열기</value>
+  </data>
+  <data name="OpenSettingsFile_Button" xml:space="preserve">
+    <value>설정파일 열기</value>
+  </data>
   <data name="Connection_Header.Header" xml:space="preserve">
     <value>연결</value>
   </data>

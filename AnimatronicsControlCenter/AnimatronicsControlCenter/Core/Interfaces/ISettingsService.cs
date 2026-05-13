@@ -12,9 +12,10 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         string Language { get; set; }
         double ResponseTimeoutSeconds { get; set; }
         bool IsPeriodicPingEnabled { get; set; }
-        int PingIntervalSeconds { get; set; }
+        double PingIntervalSeconds { get; set; }
         string PingCountryCode { get; set; }
         int PingUtcOffsetMinutes { get; set; }
+        string AppSettingsFilePath { get; }
         bool IsBackendSyncEnabled { get; set; }
         string BackendBaseUrl { get; set; }
         string BackendBearerToken { get; set; }

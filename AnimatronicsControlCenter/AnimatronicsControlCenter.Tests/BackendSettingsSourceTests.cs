@@ -80,6 +80,46 @@ public class BackendSettingsSourceTests
     }
 
     [TestMethod]
+    public void AppSettings_SaveAndLoad_UsesSeparateFileBesideBackendSettings()
+    {
+        string backendPath = CreateTempSettingsPath();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(backendPath))
+        {
+            LastComPort = "COM9",
+            LastBaudRate = 57600,
+            Theme = "Dark",
+            IsVirtualModeEnabled = true,
+            Language = "en-US",
+            ResponseTimeoutSeconds = 3.5,
+            IsPeriodicPingEnabled = false,
+            PingIntervalSeconds = 12.5,
+            PingCountryCode = "US",
+            PingUtcOffsetMinutes = -300
+        };
+
+        first.Save();
+
+        string appSettingsPath = Path.Combine(Path.GetDirectoryName(backendPath)!, "app-settings.json");
+        Assert.AreEqual(appSettingsPath, first.AppSettingsFilePath);
+        Assert.IsTrue(File.Exists(appSettingsPath));
+        Assert.AreNotEqual(backendPath, appSettingsPath);
+
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        second.Load();
+
+        Assert.AreEqual("COM9", second.LastComPort);
+        Assert.AreEqual(57600, second.LastBaudRate);
+        Assert.AreEqual("Dark", second.Theme);
+        Assert.IsTrue(second.IsVirtualModeEnabled);
+        Assert.AreEqual("en-US", second.Language);
+        Assert.AreEqual(3.5, second.ResponseTimeoutSeconds);
+        Assert.IsFalse(second.IsPeriodicPingEnabled);
+        Assert.AreEqual(12.5, second.PingIntervalSeconds);
+        Assert.AreEqual("US", second.PingCountryCode);
+        Assert.AreEqual(-300, second.PingUtcOffsetMinutes);
+    }
+
+    [TestMethod]
     public void BackendSettings_InvalidJson_FallsBackToDefaults()
     {
         string path = CreateTempSettingsPath();

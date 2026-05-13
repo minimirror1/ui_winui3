@@ -11,8 +11,23 @@
 
     <ScrollViewer>
         <StackPanel Spacing="8" Padding="20" MaxWidth="800" HorizontalAlignment="Left">
-            <TextBlock Text="{x:Bind ViewModel.Strings.Get('Settings_Title.Text', ViewModel.Strings.Code), Mode=OneWay}"
-                       Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,16"/>
+            <Grid ColumnSpacing="12" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{x:Bind ViewModel.Strings.Get('Settings_Title.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                           Style="{StaticResource TitleTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="OpenAppSettingsFolderButton"
+                            Content="{x:Bind ViewModel.Strings.Get('OpenSettingsFolder_Button', ViewModel.Strings.Code), Mode=OneWay}"
+                            Click="OnOpenAppSettingsFolderClicked" />
+                    <Button x:Name="OpenAppSettingsFileButton"
+                            Content="{x:Bind ViewModel.Strings.Get('OpenSettingsFile_Button', ViewModel.Strings.Code), Mode=OneWay}"
+                            Click="OnOpenAppSettingsFileClicked" />
+                </StackPanel>
+            </Grid>
 
             <TextBlock Text="{x:Bind ViewModel.Strings.Get('Section_Connection.Text', ViewModel.Strings.Code), Mode=OneWay}"
                        Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,4,0,4"/>
@@ -147,9 +162,9 @@
                                        Style="{StaticResource CaptionTextBlockStyle}"/>
                         </tk:SettingsCard.Description>
                         <NumberBox Value="{x:Bind ViewModel.PingIntervalSeconds, Mode=TwoWay}"
-                                   Minimum="1" Maximum="60"
+                                   Minimum="0.1" Maximum="60"
                                    SpinButtonPlacementMode="Inline"
-                                   SmallChange="1" LargeChange="5"
+                                   SmallChange="0.1" LargeChange="1"
                                    MinWidth="120"/>
                     </tk:SettingsCard>
 

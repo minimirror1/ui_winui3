@@ -61,6 +61,12 @@
   <data name="Settings_Title.Text" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="OpenSettingsFolder_Button" xml:space="preserve">
+    <value>Open settings folder</value>
+  </data>
+  <data name="OpenSettingsFile_Button" xml:space="preserve">
+    <value>Open settings file</value>
+  </data>
   <data name="Connection_Header.Header" xml:space="preserve">
     <value>Connection</value>
   </data>

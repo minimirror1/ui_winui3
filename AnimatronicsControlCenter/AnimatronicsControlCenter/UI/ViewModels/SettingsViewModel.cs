@@ -229,7 +229,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         partial void OnPingIntervalSecondsChanged(double value)
         {
             if (!_isInitialized) return;
-            var intervalSeconds = Math.Clamp((int)Math.Round(value), 1, 60);
+            var intervalSeconds = Math.Clamp(Math.Round(value, 1), 0.1, 60);
             if (Math.Abs(value - intervalSeconds) > 0.001)
             {
                 PingIntervalSeconds = intervalSeconds;

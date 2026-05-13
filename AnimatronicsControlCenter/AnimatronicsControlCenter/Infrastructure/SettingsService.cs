@@ -12,6 +12,7 @@ namespace AnimatronicsControlCenter.Infrastructure
 {
     public class SettingsService : ISettingsService
     {
+        private const string AppSettingsFileName = "app-settings.json";
         private const string KeyComPort = "ComPort";
         private const string KeyBaudRate = "BaudRate";
         private const string KeyTheme = "Theme";
@@ -45,9 +46,10 @@ namespace AnimatronicsControlCenter.Infrastructure
         public string Language { get; set; } = "ko-KR";
         public double ResponseTimeoutSeconds { get; set; } = 2.0;
         public bool IsPeriodicPingEnabled { get; set; } = true;
-        public int PingIntervalSeconds { get; set; } = 5;
+        public double PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
+        public string AppSettingsFilePath => GetAppSettingsFilePath();
         public bool IsBackendSyncEnabled { get; set; } = true;
         public string BackendBaseUrl { get; set; } = "https://robot-monitor-api.innergm.com";
         public string BackendBearerToken { get; set; } = string.Empty;
@@ -63,6 +65,8 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         public void Save()
         {
+            SaveAppSettings();
+
 #if WINDOWS
             try
             {
@@ -88,30 +92,112 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         public void Load()
         {
+            bool appSettingsLoaded = LoadAppSettings();
+
 #if WINDOWS
-            try
+            if (!appSettingsLoaded)
             {
-                var localSettings = ApplicationData.Current.LocalSettings;
-                if (localSettings.Values.TryGetValue(KeyComPort, out var port)) LastComPort = (string)port;
-                if (localSettings.Values.TryGetValue(KeyBaudRate, out var rate)) LastBaudRate = (int)rate;
-                if (localSettings.Values.TryGetValue(KeyTheme, out var theme)) Theme = (string)theme;
-                if (localSettings.Values.TryGetValue(KeyIsVirtualModeEnabled, out var isVirtual)) IsVirtualModeEnabled = (bool)isVirtual;
-                if (localSettings.Values.TryGetValue(KeyLanguage, out var lang)) Language = (string)lang;
-                if (localSettings.Values.TryGetValue(KeyResponseTimeout, out var timeout))
+                try
                 {
-                    ResponseTimeoutSeconds = SettingValueConverter.ReadDouble(timeout, ResponseTimeoutSeconds);
+                    var localSettings = ApplicationData.Current.LocalSettings;
+                    if (localSettings.Values.TryGetValue(KeyComPort, out var port)) LastComPort = (string)port;
+                    if (localSettings.Values.TryGetValue(KeyBaudRate, out var rate)) LastBaudRate = (int)rate;
+                    if (localSettings.Values.TryGetValue(KeyTheme, out var theme)) Theme = (string)theme;
+                    if (localSettings.Values.TryGetValue(KeyIsVirtualModeEnabled, out var isVirtual)) IsVirtualModeEnabled = (bool)isVirtual;
+                    if (localSettings.Values.TryGetValue(KeyLanguage, out var lang)) Language = (string)lang;
+                    if (localSettings.Values.TryGetValue(KeyResponseTimeout, out var timeout))
+                    {
+                        ResponseTimeoutSeconds = SettingValueConverter.ReadDouble(timeout, ResponseTimeoutSeconds);
+                    }
+                    if (localSettings.Values.TryGetValue(KeyIsPeriodicPingEnabled, out var pingEnabled)) IsPeriodicPingEnabled = (bool)pingEnabled;
+                    if (localSettings.Values.TryGetValue(KeyPingIntervalSeconds, out var pingInterval))
+                    {
+                        PingIntervalSeconds = SettingValueConverter.ReadDouble(pingInterval, PingIntervalSeconds);
+                    }
+                    if (localSettings.Values.TryGetValue(KeyPingCountryCode, out var pingCountryCode)) PingCountryCode = (string)pingCountryCode;
+                    if (localSettings.Values.TryGetValue(KeyPingUtcOffsetMinutes, out var pingOffset)) PingUtcOffsetMinutes = (int)pingOffset;
                 }
-                if (localSettings.Values.TryGetValue(KeyIsPeriodicPingEnabled, out var pingEnabled)) IsPeriodicPingEnabled = (bool)pingEnabled;
-                if (localSettings.Values.TryGetValue(KeyPingIntervalSeconds, out var pingInterval)) PingIntervalSeconds = (int)pingInterval;
-                if (localSettings.Values.TryGetValue(KeyPingCountryCode, out var pingCountryCode)) PingCountryCode = (string)pingCountryCode;
-                if (localSettings.Values.TryGetValue(KeyPingUtcOffsetMinutes, out var pingOffset)) PingUtcOffsetMinutes = (int)pingOffset;
-            }
-            catch
-            {
+                catch
+                {
+                }
             }
 #endif
 
             LoadBackendSettings();
+        }
+
+        private void SaveAppSettings()
+        {
+            try
+            {
+                string filePath = GetAppSettingsFilePath();
+                string? directory = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                var settings = new AppSettingsFile(
+                    LastComPort,
+                    LastBaudRate,
+                    Theme,
+                    IsVirtualModeEnabled,
+                    Language,
+                    ResponseTimeoutSeconds,
+                    IsPeriodicPingEnabled,
+                    PingIntervalSeconds,
+                    PingCountryCode,
+                    PingUtcOffsetMinutes);
+
+                string json = JsonSerializer.Serialize(settings, BackendJsonOptions);
+                File.WriteAllText(filePath, json);
+            }
+            catch
+            {
+            }
+        }
+
+        private bool LoadAppSettings()
+        {
+            try
+            {
+                string filePath = GetAppSettingsFilePath();
+                if (!File.Exists(filePath))
+                {
+                    return false;
+                }
+
+                string json = File.ReadAllText(filePath);
+                var settings = JsonSerializer.Deserialize<AppSettingsFile>(json, BackendJsonOptions);
+                if (settings is null)
+                {
+                    return false;
+                }
+
+                LastComPort = settings.LastComPort ?? LastComPort;
+                LastBaudRate = settings.LastBaudRate == 0 ? LastBaudRate : settings.LastBaudRate;
+                Theme = settings.Theme ?? Theme;
+                IsVirtualModeEnabled = settings.IsVirtualModeEnabled;
+                Language = settings.Language ?? Language;
+                ResponseTimeoutSeconds = settings.ResponseTimeoutSeconds == 0 ? ResponseTimeoutSeconds : settings.ResponseTimeoutSeconds;
+                IsPeriodicPingEnabled = settings.IsPeriodicPingEnabled;
+                PingIntervalSeconds = settings.PingIntervalSeconds < 0.1 ? PingIntervalSeconds : settings.PingIntervalSeconds;
+                PingCountryCode = settings.PingCountryCode ?? PingCountryCode;
+                PingUtcOffsetMinutes = settings.PingUtcOffsetMinutes;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private string GetAppSettingsFilePath()
+        {
+            string? directory = Path.GetDirectoryName(_backendSettingsPathProvider.BackendSettingsFilePath);
+            return string.IsNullOrWhiteSpace(directory)
+                ? AppSettingsFileName
+                : Path.Combine(directory, AppSettingsFileName);
         }
 
         private void SaveBackendSettings()
@@ -193,5 +279,17 @@ namespace AnimatronicsControlCenter.Infrastructure
             Dictionary<int, string> BackendDeviceObjectMappings,
             List<BackendServerObjectMappingSource>? BackendServerObjects,
             int BackendSyncIntervalSeconds);
+
+        private sealed record AppSettingsFile(
+            string LastComPort,
+            int LastBaudRate,
+            string Theme,
+            bool IsVirtualModeEnabled,
+            string Language,
+            double ResponseTimeoutSeconds,
+            bool IsPeriodicPingEnabled,
+            double PingIntervalSeconds,
+            string PingCountryCode,
+            int PingUtcOffsetMinutes);
     }
 }

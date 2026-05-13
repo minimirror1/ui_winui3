@@ -11,6 +11,8 @@ public class SettingsPageReorganizationTests
         "Section_Connection.Text",
         "Section_Communication.Text",
         "Section_App.Text",
+        "OpenSettingsFolder_Button",
+        "OpenSettingsFile_Button",
         "XBee_Header.Header",
         "XBee_Desc.Text",
         "XBeePort_Header.Header",
@@ -72,6 +74,27 @@ public class SettingsPageReorganizationTests
     }
 
     [TestMethod]
+    public void SettingsPage_ShowsSettingsFileOpenButtonsAtTop()
+    {
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string xaml = page.ToString(SaveOptions.DisableFormatting);
+        string codeBehind = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml.cs"));
+
+        StringAssert.Contains(xaml, "OpenAppSettingsFolderButton");
+        StringAssert.Contains(xaml, "OpenSettingsFolder_Button");
+        StringAssert.Contains(xaml, "OnOpenAppSettingsFolderClicked");
+        StringAssert.Contains(xaml, "OpenAppSettingsFileButton");
+        StringAssert.Contains(xaml, "OpenSettingsFile_Button");
+        StringAssert.Contains(xaml, "OnOpenAppSettingsFileClicked");
+        Assert.IsTrue(xaml.IndexOf("Settings_Title.Text", StringComparison.Ordinal) <
+                      xaml.IndexOf("Section_Connection.Text", StringComparison.Ordinal));
+
+        StringAssert.Contains(codeBehind, "AppSettingsFilePath");
+        StringAssert.Contains(codeBehind, "notepad.exe");
+        StringAssert.Contains(codeBehind, "explorer.exe");
+    }
+
+    [TestMethod]
     public void SettingsPage_ConsolidatesDuplicateComAndXBeePortSettings()
     {
         XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
@@ -102,6 +125,16 @@ public class SettingsPageReorganizationTests
         StringAssert.Contains(xaml, "SelectedValuePath=\"PortName\"");
         StringAssert.Contains(xaml, "SelectedValue=\"{x:Bind ViewModel.SelectedPort, Mode=TwoWay}\"");
         Assert.AreEqual(0, CountOccurrences(xaml, "SelectedItem=\"{x:Bind ViewModel.SelectedPort"));
+    }
+
+    [TestMethod]
+    public void SettingsPage_ResponseTimeoutAndPingIntervalUseTenthSecondSteps()
+    {
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string xaml = page.ToString(SaveOptions.DisableFormatting);
+
+        StringAssert.Contains(xaml, "Value=\"{x:Bind ViewModel.ResponseTimeoutSeconds, Mode=TwoWay}\" Minimum=\"0.1\" Maximum=\"60\" SpinButtonPlacementMode=\"Inline\" SmallChange=\"0.1\"");
+        StringAssert.Contains(xaml, "Value=\"{x:Bind ViewModel.PingIntervalSeconds, Mode=TwoWay}\" Minimum=\"0.1\" Maximum=\"60\" SpinButtonPlacementMode=\"Inline\" SmallChange=\"0.1\"");
     }
 
     [TestMethod]
