@@ -137,6 +137,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                     BinaryCommand.Ping          => HandlePing(hdr),
                     BinaryCommand.Move          => HandleMove(hdr, payload),
                     BinaryCommand.MotionCtrl    => HandleMotionCtrl(hdr, payload),
+                    BinaryCommand.PowerCtrl     => HandlePowerCtrl(hdr, payload),
                     BinaryCommand.GetMotors     => HandleGetMotors(hdr),
                     BinaryCommand.GetMotorState => HandleGetMotorState(hdr),
                     BinaryCommand.GetFiles      => HandleGetFiles(hdr),
@@ -219,6 +220,34 @@ namespace AnimatronicsControlCenter.Infrastructure
             // 응답 payload: action(1) + device_id(1)
             var respPayload = new byte[] { action, hdr.TarId };
             return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.MotionCtrl, respPayload);
+        }
+
+        private byte[] HandlePowerCtrl(RequestHeader hdr, ReadOnlySpan<byte> payload)
+        {
+            if (payload.Length < 1)
+                return BuildErrorResponse(hdr.TarId, hdr.SrcId, hdr.Cmd, BinaryErrorCode.InvalidParam, "POWER_CTRL: payload too short");
+
+            byte action = payload[0];
+            var status = GetPingStatus(hdr.TarId);
+
+            switch ((BinaryPowerAction)action)
+            {
+                case BinaryPowerAction.Off:
+                    status = status with { State = BinaryPingState.Stopped, CurrentMs = 0, PowerStatus = "OFF" };
+                    break;
+                case BinaryPowerAction.On:
+                    status = status with { PowerStatus = "ON" };
+                    break;
+                case BinaryPowerAction.Reboot:
+                    status = status with { State = BinaryPingState.Stopped, CurrentMs = 0, PowerStatus = "ON" };
+                    break;
+                default:
+                    return BuildErrorResponse(hdr.TarId, hdr.SrcId, hdr.Cmd, BinaryErrorCode.InvalidParam, $"POWER_CTRL: invalid action 0x{action:X2}");
+            }
+
+            _devicePingStatuses[hdr.TarId] = status;
+            var respPayload = new byte[] { action, 0x01 };
+            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.PowerCtrl, respPayload);
         }
 
         private byte[] HandleGetMotors(RequestHeader hdr)

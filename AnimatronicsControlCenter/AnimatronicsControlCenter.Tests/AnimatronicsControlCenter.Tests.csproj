@@ -44,6 +44,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendMonitoringService.cs" Link="Core\Interfaces\IBackendMonitoringService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendPowerSseService.cs" Link="Core\Interfaces\IBackendPowerSseService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendServerCatalogClient.cs" Link="Core\Interfaces\IBackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendDashboardSyncService.cs" Link="Core\Interfaces\IBackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendTrafficTap.cs" Link="Core\Interfaces\IBackendTrafficTap.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendObjectIdResolver.cs" Link="Infrastructure\BackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendHttpRequest.cs" Link="Infrastructure\BackendHttpRequest.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendMonitoringService.cs" Link="Infrastructure\BackendMonitoringService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendPowerSseService.cs" Link="Infrastructure\BackendPowerSseService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendServerCatalogClient.cs" Link="Infrastructure\BackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendDashboardSyncService.cs" Link="Infrastructure\BackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendTrafficTap.cs" Link="Infrastructure\BackendTrafficTap.cs" />

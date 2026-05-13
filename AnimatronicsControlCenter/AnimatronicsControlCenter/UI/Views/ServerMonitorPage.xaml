@@ -42,9 +42,25 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Recent backend traffic" Style="{StaticResource SubtitleTextBlockStyle}"/>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Recent backend traffic" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <Button x:Name="CopyAllTrafficButton"
+                        Grid.Column="1"
+                        Content="Copy all"
+                        Click="CopyAllTrafficButton_Click"/>
+                <Button x:Name="CopySelectedTrafficButton"
+                        Grid.Column="2"
+                        Content="Copy selected"
+                        Click="CopySelectedTrafficButton_Click"/>
+            </Grid>
             <ListView x:Name="TrafficList"
                       Grid.Row="1"
+                      SelectionMode="Multiple"
                       ItemsSource="{x:Bind ViewModel.TrafficEntries, Mode=OneWay}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:ServerTrafficEntryViewModel"

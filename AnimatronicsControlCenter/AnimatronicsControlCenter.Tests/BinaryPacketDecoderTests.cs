@@ -90,6 +90,35 @@ public class BinaryPacketDecoderTests
     }
 
     [TestMethod]
+    public void DecodePowerCtrlResponse_IncludesActionAndAccepted()
+    {
+        byte[] packet = BuildResponse(BinaryCommand.PowerCtrl, ResponseStatus.Ok, new byte[] { 0x02, 0x01 });
+
+        BinaryPacketDecodeResult result = BinaryPacketDecoder.Decode(packet);
+
+        Assert.IsTrue(result.IsValid);
+        Assert.AreEqual("PowerCtrl", result.Command);
+        StringAssert.Contains(result.Summary, "POWER_CTRL OK");
+        StringAssert.Contains(result.Details, "action=Reboot");
+        StringAssert.Contains(result.Details, "accepted=True");
+    }
+
+    [TestMethod]
+    public void DecodePowerCtrlRequest_DoesNotTreatActionAsResponseStatus()
+    {
+        byte[] packet = BinarySerializer.EncodePowerCtrl(BinaryProtocolConst.HostId, tarId: 1, BinaryPowerAction.On);
+
+        BinaryPacketDecodeResult result = BinaryPacketDecoder.Decode(packet);
+
+        Assert.IsTrue(result.IsValid);
+        Assert.IsFalse(result.IsResponse);
+        Assert.AreEqual("PowerCtrl", result.Command);
+        Assert.IsNull(result.Status);
+        StringAssert.Contains(result.Summary, "POWER_CTRL REQUEST");
+        StringAssert.Contains(result.Details, "action=On");
+    }
+
+    [TestMethod]
     public void DecodePacket_ReportsPayloadLengthMismatch()
     {
         byte[] packet = BuildResponse(BinaryCommand.Pong, ResponseStatus.Ok, new byte[] { 0x01, 0x03 });

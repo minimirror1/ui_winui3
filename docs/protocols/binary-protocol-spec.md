@@ -120,6 +120,7 @@ JSON                          → Binary
 | `0x02` | CMD_PONG | `"pong"` | RESP |
 | `0x03` | CMD_MOVE | `"move"` | REQ/RESP |
 | `0x04` | CMD_MOTION_CTRL | `"motion_ctrl"` | REQ/RESP |
+| `0x05` | CMD_POWER_CTRL | `"power_ctrl"` | REQ/RESP |
 | `0x10` | CMD_GET_MOTORS | `"get_motors"` | REQ/RESP |
 | `0x11` | CMD_GET_MOTOR_STATE | `"get_motor_state"` | REQ/RESP |
 | `0x20` | CMD_GET_FILES | `"get_files"` | REQ/RESP |
@@ -168,6 +169,16 @@ JSON                          → Binary
 | `0x01` | ACTION_STOP | `"stop"` |
 | `0x02` | ACTION_PAUSE | `"pause"` |
 | `0x03` | ACTION_SEEK | `"seek"` |
+
+### 3.5.1 PowerAction (uint8)
+
+| 값 | 이름 | JSON 문자열 |
+|----|------|-------------|
+| `0x00` | POWER_OFF | `"off"` |
+| `0x01` | POWER_ON | `"on"` |
+| `0x02` | POWER_REBOOT | `"reboot"` |
+
+`POWER_REBOOT` means the receiver turns power output off, waits for its own configured delay, then turns power output on. The delay is not sent by the PC protocol.
 
 ### 3.6 ErrorCode (uint8) — ERROR payload용
 
@@ -356,6 +367,47 @@ Total payload: 2 bytes
 ```
 
 > **매핑:** JSON `payload.status = "executed"` → `ResponseHeader.cmd == MOTION_CTRL && status == OK`
+
+---
+
+### 4.3.1 POWER_CTRL (0x05)
+
+#### Request
+
+Payload (1 byte):
+
+```
+Offset  Size  Field   Type   JSON field       Note
+0       1     action  uint8  payload.action   0x00=OFF, 0x01=ON, 0x02=REBOOT
+```
+
+Binary examples for target device id `2`:
+
+```
+ON:     00 02 05 01 00 01
+OFF:    00 02 05 01 00 00
+REBOOT: 00 02 05 01 00 02
+```
+
+`REBOOT` is handled by the receiving device as OFF -> device-configured delay -> ON. The PC does not send a delay value.
+
+#### Response
+
+Payload (2 bytes):
+
+```
+Offset  Size  Field     Type   Note
+0       1     action    uint8  accepted action
+1       1     accepted  uint8  0x00=false, 0x01=true
+```
+
+Binary response example for device id `2`, `REBOOT` accepted:
+
+```
+02 00 05 00 02 00 02 01
+```
+
+Final power state should be confirmed by a later `PING` / `PONG` power status byte.
 
 ---
 

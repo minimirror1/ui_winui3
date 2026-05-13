@@ -107,6 +107,17 @@ public class BinaryProtocolCompatibilityTests
         Assert.AreEqual((ushort)0, BinaryPrimitives.ReadUInt16LittleEndian(packet.AsSpan(3)));
     }
 
+    [DataTestMethod]
+    [DataRow(BinaryPowerAction.Off, new byte[] { 0x00, 0x02, 0x05, 0x01, 0x00, 0x00 })]
+    [DataRow(BinaryPowerAction.On, new byte[] { 0x00, 0x02, 0x05, 0x01, 0x00, 0x01 })]
+    [DataRow(BinaryPowerAction.Reboot, new byte[] { 0x00, 0x02, 0x05, 0x01, 0x00, 0x02 })]
+    public void EncodePowerCtrl_UsesSingleByteActionPayload(BinaryPowerAction action, byte[] expected)
+    {
+        byte[] packet = BinarySerializer.EncodePowerCtrl(BinaryProtocolConst.HostId, tarId: 2, action);
+
+        CollectionAssert.AreEqual(expected, packet);
+    }
+
     [TestMethod]
     public void ParseErrorResponse_SupportsResponseTooLargeAndTxBusy()
     {

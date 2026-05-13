@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
 
@@ -79,6 +82,33 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
 
     public ObservableCollection<ServerTrafficEntryViewModel> TrafficEntries { get; } = new();
 
+    public string CopyAllTrafficEntries()
+        => FormatTrafficEntries(TrafficEntries);
+
+    public static string FormatTrafficEntries(IEnumerable<ServerTrafficEntryViewModel> entries)
+    {
+        var rows = entries.ToList();
+        if (rows.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder();
+        builder.AppendLine("Time\tPhase\tMethod\tPath\tStatus\tDuration\tMessage");
+        foreach (ServerTrafficEntryViewModel entry in rows)
+        {
+            builder.Append(entry.Time).Append('\t')
+                .Append(entry.Phase).Append('\t')
+                .Append(entry.Method).Append('\t')
+                .Append(entry.Path).Append('\t')
+                .Append(entry.StatusCode).Append('\t')
+                .Append(entry.Duration).Append('\t')
+                .AppendLine(NormalizeCell(entry.Message));
+        }
+
+        return builder.ToString().TrimEnd();
+    }
+
     public void Refresh(DateTimeOffset now)
     {
         var snapshot = _trafficTap.GetSnapshot(now);
@@ -105,4 +135,7 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+
+    private static string NormalizeCell(string value)
+        => value.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal);
 }

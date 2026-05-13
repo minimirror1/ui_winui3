@@ -16,12 +16,17 @@ public static class BinaryPacketDecoder
             return Invalid(false, "", null, 0, 0, 0, "empty packet", rawHex);
         }
 
+        if (IsExactRequest(data) && TryDecodeRequest(data, rawHex, out var request))
+        {
+            return request;
+        }
+
         if (TryDecodeResponse(data, rawHex, out var response))
         {
             return response;
         }
 
-        if (TryDecodeRequest(data, rawHex, out var request))
+        if (TryDecodeRequest(data, rawHex, out request))
         {
             return request;
         }
@@ -97,6 +102,13 @@ public static class BinaryPacketDecoder
             RawHex: rawHex,
             ParseError: null);
         return true;
+    }
+
+    private static bool IsExactRequest(ReadOnlySpan<byte> data)
+    {
+        if (data.Length < BinaryProtocolConst.RequestHeaderSize) return false;
+        if (!BinaryDeserializer.TryParseRequestHeader(data, out var header)) return false;
+        return data.Length - BinaryProtocolConst.RequestHeaderSize == header.PayloadLen;
     }
 
     private static bool TryDecodeRequest(ReadOnlySpan<byte> data, string rawHex, out BinaryPacketDecodeResult result)
@@ -190,6 +202,7 @@ public static class BinaryPacketDecoder
             BinaryCommand.SaveFile => DecodePathPayload(payload, header, "path"),
             BinaryCommand.VerifyFile => DecodeVerify(payload, header),
             BinaryCommand.MotionCtrl => DecodeMotionCtrl(payload, header),
+            BinaryCommand.PowerCtrl => DecodePowerCtrl(payload, header),
             BinaryCommand.Move => DecodeMove(payload, header),
             BinaryCommand.GetMotors => DecodeMotorList(payload, header, fullSnapshot: true),
             BinaryCommand.GetMotorState => DecodeMotorList(payload, header, fullSnapshot: false),
@@ -206,12 +219,30 @@ public static class BinaryPacketDecoder
             return DecodePingRequest(payload, header);
         }
 
+        if (header.Cmd == BinaryCommand.PowerCtrl)
+        {
+            return DecodePowerCtrlRequest(payload, header);
+        }
+
         return Lines(
             $"type=REQUEST",
             $"cmd={header.Cmd}",
             $"src={header.SrcId}",
             $"tar={header.TarId}",
             $"payload_len={header.PayloadLen}",
+            $"raw={ToHex(payload)}");
+    }
+
+    private static string DecodePowerCtrlRequest(ReadOnlySpan<byte> payload, RequestHeader header)
+    {
+        BinaryPowerAction action = payload.Length >= 1 ? (BinaryPowerAction)payload[0] : default;
+        return Lines(
+            $"type=REQUEST",
+            $"cmd={header.Cmd}",
+            $"src={header.SrcId}",
+            $"tar={header.TarId}",
+            $"payload_len={header.PayloadLen}",
+            $"action={action}",
             $"raw={ToHex(payload)}");
     }
 
@@ -342,6 +373,22 @@ public static class BinaryPacketDecoder
             $"payload_len={header.PayloadLen}",
             $"action={action}",
             $"device_id={deviceId}",
+            $"raw={ToHex(payload)}");
+    }
+
+    private static string DecodePowerCtrl(ReadOnlySpan<byte> payload, ResponseHeader header)
+    {
+        BinaryPowerAction action = payload.Length >= 1 ? (BinaryPowerAction)payload[0] : default;
+        bool accepted = payload.Length >= 2 && payload[1] == 0x01;
+        return Lines(
+            $"type=RESPONSE",
+            $"cmd={header.Cmd}",
+            $"status={header.Status}",
+            $"src={header.SrcId}",
+            $"tar={header.TarId}",
+            $"payload_len={header.PayloadLen}",
+            $"action={action}",
+            $"accepted={accepted}",
             $"raw={ToHex(payload)}");
     }
 
@@ -500,6 +547,7 @@ public static class BinaryPacketDecoder
         BinaryCommand.SaveFile => "SAVE_FILE",
         BinaryCommand.VerifyFile => "VERIFY_FILE",
         BinaryCommand.MotionCtrl => "MOTION_CTRL",
+        BinaryCommand.PowerCtrl => "POWER_CTRL",
         _ => command.ToString().ToUpperInvariant(),
     };
 

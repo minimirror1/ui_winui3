@@ -28,6 +28,7 @@ namespace AnimatronicsControlCenter
 
         private readonly ISerialTrafficTap _serialTrafficTap;
         private readonly IBackendTrafficTap _backendTrafficTap;
+        private readonly IBackendPowerSseService _backendPowerSseService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly SerialTrafficIndicatorState _serialTrafficIndicatorState = new();
         private readonly DispatcherTimer _serialTrafficIndicatorTimer;
@@ -36,10 +37,11 @@ namespace AnimatronicsControlCenter
 
         public SettingsViewModel ConnectionViewModel { get; }
 
-        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, SerialMonitorWindowHost serialMonitorWindowHost, SettingsViewModel settingsViewModel)
+        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, SerialMonitorWindowHost serialMonitorWindowHost, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;
             _backendTrafficTap = backendTrafficTap;
+            _backendPowerSseService = backendPowerSseService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
             ConnectionViewModel = settingsViewModel;
 
@@ -316,6 +318,7 @@ namespace AnimatronicsControlCenter
             _serialTrafficIndicatorTimer.Stop();
             _serverTrafficIndicatorTimer.Tick -= ServerTrafficIndicatorTimer_Tick;
             _serverTrafficIndicatorTimer.Stop();
+            _backendPowerSseService.Stop();
             Closed -= MainWindow_Closed;
         }
     }

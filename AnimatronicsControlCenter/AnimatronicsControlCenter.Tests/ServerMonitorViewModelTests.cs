@@ -32,6 +32,24 @@ public class ServerMonitorViewModelTests
         Assert.AreEqual("200", viewModel.TrafficEntries[1].StatusCode);
     }
 
+    [TestMethod]
+    public void FormatTrafficEntries_ProducesTabSeparatedCopyText()
+    {
+        var entry = new ServerTrafficEntryViewModel(new AnimatronicsControlCenter.Core.Models.BackendTrafficEntry(
+            DateTimeOffset.Parse("2026-05-11T10:00:00.123+09:00"),
+            AnimatronicsControlCenter.Core.Models.BackendTrafficPhase.Response,
+            HttpMethod.Get,
+            "/v1/service/objects/obj-1/power",
+            200,
+            TimeSpan.FromMilliseconds(12),
+            "SSE data: {\"power_status\":\"ON\"}"));
+
+        string text = ServerMonitorViewModel.FormatTrafficEntries(new[] { entry });
+
+        StringAssert.Contains(text, "Time\tPhase\tMethod\tPath\tStatus\tDuration\tMessage");
+        StringAssert.Contains(text, "10:00:00.123\tResponse\tGET\t/v1/service/objects/obj-1/power\t200\t12 ms\tSSE data: {\"power_status\":\"ON\"}");
+    }
+
     private sealed class FakeBackendSettingsPathProvider : IBackendSettingsPathProvider
     {
         public FakeBackendSettingsPathProvider(string filePath)

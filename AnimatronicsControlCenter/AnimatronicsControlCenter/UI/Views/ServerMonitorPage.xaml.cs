@@ -1,7 +1,10 @@
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System.Linq;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace AnimatronicsControlCenter.UI.Views;
 
@@ -31,5 +34,28 @@ public sealed partial class ServerMonitorPage : Page
     {
         _trafficTap.TrafficChanged -= TrafficTap_TrafficChanged;
         Unloaded -= ServerMonitorPage_Unloaded;
+    }
+
+    private void CopyAllTrafficButton_Click(object sender, RoutedEventArgs e)
+    {
+        CopyText(ViewModel.CopyAllTrafficEntries());
+    }
+
+    private void CopySelectedTrafficButton_Click(object sender, RoutedEventArgs e)
+    {
+        var selectedEntries = TrafficList.SelectedItems.OfType<ServerTrafficEntryViewModel>();
+        CopyText(ServerMonitorViewModel.FormatTrafficEntries(selectedEntries));
+    }
+
+    private static void CopyText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        var package = new DataPackage();
+        package.SetText(text);
+        Clipboard.SetContent(package);
     }
 }
