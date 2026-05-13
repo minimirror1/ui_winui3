@@ -5,6 +5,7 @@ using AnimatronicsControlCenter.UI.ViewModels;
 using System;
 using System.Diagnostics;
 using System.IO;
+using Windows.Globalization.NumberFormatting;
 
 namespace AnimatronicsControlCenter.UI.Views
 {
@@ -16,6 +17,21 @@ namespace AnimatronicsControlCenter.UI.Views
         {
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetRequiredService<SettingsViewModel>();
+            ResponseTimeoutNumberBox.NumberFormatter = CreateOneDecimalFormatter();
+            PingIntervalNumberBox.NumberFormatter = CreateOneDecimalFormatter();
+        }
+
+        private static DecimalFormatter CreateOneDecimalFormatter()
+        {
+            return new DecimalFormatter
+            {
+                FractionDigits = 1,
+                NumberRounder = new IncrementNumberRounder
+                {
+                    Increment = 0.1,
+                    RoundingAlgorithm = RoundingAlgorithm.RoundHalfUp
+                }
+            };
         }
 
         private void OnOpenAppSettingsFileClicked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

@@ -218,10 +218,19 @@
     <value>Wait time between packets (seconds)</value>
   </data>
   <data name="PingSettings_Header.Header" xml:space="preserve">
-    <value>PING Settings</value>
+    <value>Sync Settings</value>
   </data>
   <data name="PingSettings_Desc.Text" xml:space="preserve">
     <value>Configure periodic status check and PING time payload</value>
+  </data>
+  <data name="ScanRange_Header.Header" xml:space="preserve">
+    <value>Scan Range</value>
+  </data>
+  <data name="ScanStartId_Header.Header" xml:space="preserve">
+    <value>Start ID</value>
+  </data>
+  <data name="ScanEndId_Header.Header" xml:space="preserve">
+    <value>End ID</value>
   </data>
   <data name="PeriodicPing_Header.Header" xml:space="preserve">
     <value>Periodic PING</value>

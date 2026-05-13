@@ -50,6 +50,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendTrafficTap.cs" Link="Core\Interfaces\IBackendTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialService.cs" Link="Core\Interfaces\ISerialService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ILocalizationService.cs" Link="Core\Interfaces\ILocalizationService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendObjectIdResolver.cs" Link="Infrastructure\BackendObjectIdResolver.cs" />
@@ -66,5 +67,7 @@
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendSettingsViewModel.cs" Link="UI\ViewModels\BackendSettingsViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendRegistrationViewModel.cs" Link="UI\ViewModels\BackendRegistrationViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ScanDialogViewModel.cs" Link="UI\ViewModels\ScanDialogViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\Helpers\LocalizedStrings.cs" Link="UI\Helpers\LocalizedStrings.cs" />
   </ItemGroup>
 </Project>

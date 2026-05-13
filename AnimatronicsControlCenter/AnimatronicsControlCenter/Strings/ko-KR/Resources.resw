@@ -218,10 +218,19 @@
     <value>패킷 수신 후 다음 패킷을 기다리는 시간 (초)</value>
   </data>
   <data name="PingSettings_Header.Header" xml:space="preserve">
-    <value>PING 설정</value>
+    <value>동기화 설정</value>
   </data>
   <data name="PingSettings_Desc.Text" xml:space="preserve">
     <value>주기 상태 확인과 PING 시간 페이로드를 설정합니다</value>
+  </data>
+  <data name="ScanRange_Header.Header" xml:space="preserve">
+    <value>스캔 범위</value>
+  </data>
+  <data name="ScanStartId_Header.Header" xml:space="preserve">
+    <value>시작 ID</value>
+  </data>
+  <data name="ScanEndId_Header.Header" xml:space="preserve">
+    <value>끝 ID</value>
   </data>
   <data name="PeriodicPing_Header.Header" xml:space="preserve">
     <value>주기 PING</value>

@@ -20,6 +20,9 @@ public class SettingsPageReorganizationTests
         "ResponseTimeout_Desc.Text",
         "PingSettings_Header.Header",
         "PingSettings_Desc.Text",
+        "ScanRange_Header.Header",
+        "ScanStartId_Header.Header",
+        "ScanEndId_Header.Header",
         "PeriodicPing_Header.Header",
         "PeriodicPing_Desc.Text",
         "PingInterval_Header.Header",
@@ -48,6 +51,16 @@ public class SettingsPageReorganizationTests
                 Assert.IsTrue(names.Contains(key), $"{culture} is missing {key}");
             }
         }
+    }
+
+    [TestMethod]
+    public void Resources_RenamePingSettingsHeaderToSyncSettings()
+    {
+        XDocument ko = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "Strings", "ko-KR", "Resources.resw"));
+        XDocument en = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "Strings", "en-US", "Resources.resw"));
+
+        Assert.AreEqual("동기화 설정", GetResourceValue(ko, "PingSettings_Header.Header"));
+        Assert.AreEqual("Sync Settings", GetResourceValue(en, "PingSettings_Header.Header"));
     }
 
     [TestMethod]
@@ -132,9 +145,32 @@ public class SettingsPageReorganizationTests
     {
         XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
         string xaml = page.ToString(SaveOptions.DisableFormatting);
+        string codeBehind = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml.cs"));
+        string viewModel = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "SettingsViewModel.cs"));
 
         StringAssert.Contains(xaml, "Value=\"{x:Bind ViewModel.ResponseTimeoutSeconds, Mode=TwoWay}\" Minimum=\"0.1\" Maximum=\"60\" SpinButtonPlacementMode=\"Inline\" SmallChange=\"0.1\"");
         StringAssert.Contains(xaml, "Value=\"{x:Bind ViewModel.PingIntervalSeconds, Mode=TwoWay}\" Minimum=\"0.1\" Maximum=\"60\" SpinButtonPlacementMode=\"Inline\" SmallChange=\"0.1\"");
+        StringAssert.Contains(xaml, "x:Name=\"ResponseTimeoutNumberBox\"");
+        StringAssert.Contains(xaml, "x:Name=\"PingIntervalNumberBox\"");
+        StringAssert.Contains(codeBehind, "CreateOneDecimalFormatter");
+        StringAssert.Contains(codeBehind, "FractionDigits = 1");
+        StringAssert.Contains(codeBehind, "Increment = 0.1");
+        StringAssert.Contains(viewModel, "Math.Round(value, 1)");
+    }
+
+    [TestMethod]
+    public void SettingsPage_ShowsScanRangeInputsInSyncSettings()
+    {
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string xaml = page.ToString(SaveOptions.DisableFormatting);
+
+        StringAssert.Contains(xaml, "ScanRange_Header.Header");
+        StringAssert.Contains(xaml, "ScanStartId_Header.Header");
+        StringAssert.Contains(xaml, "Value=\"{x:Bind ViewModel.ScanStartId, Mode=TwoWay}\" Minimum=\"1\" Maximum=\"254\"");
+        StringAssert.Contains(xaml, "ScanEndId_Header.Header");
+        StringAssert.Contains(xaml, "Value=\"{x:Bind ViewModel.ScanEndId, Mode=TwoWay}\" Minimum=\"1\" Maximum=\"254\"");
+        Assert.IsTrue(xaml.IndexOf("PingSettings_Header.Header", StringComparison.Ordinal) <
+                      xaml.IndexOf("ScanRange_Header.Header", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -195,4 +231,11 @@ public class SettingsPageReorganizationTests
 
         return count;
     }
+
+    private static string GetResourceValue(XDocument resources, string name)
+        => resources.Root!
+            .Elements("data")
+            .Single(element => (string?)element.Attribute("name") == name)
+            .Element("value")!
+            .Value;
 }

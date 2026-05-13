@@ -15,6 +15,8 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         double PingIntervalSeconds { get; set; }
         string PingCountryCode { get; set; }
         int PingUtcOffsetMinutes { get; set; }
+        int ScanStartId { get; set; }
+        int ScanEndId { get; set; }
         string AppSettingsFilePath { get; }
         bool IsBackendSyncEnabled { get; set; }
         string BackendBaseUrl { get; set; }

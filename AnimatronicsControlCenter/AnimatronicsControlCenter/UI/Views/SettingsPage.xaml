@@ -129,7 +129,8 @@
                     <TextBlock Text="{x:Bind ViewModel.Strings.Get('ResponseTimeout_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
                                Style="{StaticResource CaptionTextBlockStyle}"/>
                 </tk:SettingsCard.Description>
-                <NumberBox Value="{x:Bind ViewModel.ResponseTimeoutSeconds, Mode=TwoWay}"
+                <NumberBox x:Name="ResponseTimeoutNumberBox"
+                           Value="{x:Bind ViewModel.ResponseTimeoutSeconds, Mode=TwoWay}"
                            Minimum="0.1" Maximum="60"
                            SpinButtonPlacementMode="Inline"
                            SmallChange="0.1" LargeChange="1"
@@ -161,11 +162,29 @@
                             <TextBlock Text="{x:Bind ViewModel.Strings.Get('PingInterval_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
                                        Style="{StaticResource CaptionTextBlockStyle}"/>
                         </tk:SettingsCard.Description>
-                        <NumberBox Value="{x:Bind ViewModel.PingIntervalSeconds, Mode=TwoWay}"
+                        <NumberBox x:Name="PingIntervalNumberBox"
+                                   Value="{x:Bind ViewModel.PingIntervalSeconds, Mode=TwoWay}"
                                    Minimum="0.1" Maximum="60"
                                    SpinButtonPlacementMode="Inline"
                                    SmallChange="0.1" LargeChange="1"
                                    MinWidth="120"/>
+                    </tk:SettingsCard>
+
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('ScanRange_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <NumberBox Header="{x:Bind ViewModel.Strings.Get('ScanStartId_Header.Header', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Value="{x:Bind ViewModel.ScanStartId, Mode=TwoWay}"
+                                       Minimum="1" Maximum="254"
+                                       SpinButtonPlacementMode="Inline"
+                                       SmallChange="1" LargeChange="10"
+                                       MinWidth="120"/>
+                            <NumberBox Header="{x:Bind ViewModel.Strings.Get('ScanEndId_Header.Header', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Value="{x:Bind ViewModel.ScanEndId, Mode=TwoWay}"
+                                       Minimum="1" Maximum="254"
+                                       SpinButtonPlacementMode="Inline"
+                                       SmallChange="1" LargeChange="10"
+                                       MinWidth="120"/>
+                        </StackPanel>
                     </tk:SettingsCard>
 
                     <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('PingCountryCode_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">

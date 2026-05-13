@@ -34,10 +34,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public event Action? RequestClose;
 
-        public ScanDialogViewModel(ISerialService serialService, ILocalizationService localizationService)
+        public ScanDialogViewModel(
+            ISerialService serialService,
+            ILocalizationService localizationService,
+            ISettingsService settingsService)
         {
             _serialService = serialService;
             Strings = new LocalizedStrings(localizationService);
+            StartId = settingsService.ScanStartId;
+            EndId = settingsService.ScanEndId;
         }
 
         [RelayCommand]
@@ -72,4 +77,3 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
     }
 }
-

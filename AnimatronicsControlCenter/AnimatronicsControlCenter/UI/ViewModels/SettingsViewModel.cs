@@ -123,6 +123,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [NotifyPropertyChangedFor(nameof(PingPayloadPreviewText))]
         private int pingUtcOffsetMinutes;
 
+        [ObservableProperty]
+        private int scanStartId = 1;
+
+        [ObservableProperty]
+        private int scanEndId = 10;
+
         public string PingPreviewText
             => PingTimePayloadFactory.FormatPreview(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow);
 
@@ -131,6 +137,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private bool _isInitialized;
         private bool _isUpdatingPingSelection;
+        private bool _isUpdatingScanRange;
 
         public SettingsViewModel(
             ISettingsService settingsService,
@@ -158,6 +165,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             PingIntervalSeconds = _settingsService.PingIntervalSeconds;
             PingCountryCode = _settingsService.PingCountryCode;
             PingUtcOffsetMinutes = _settingsService.PingUtcOffsetMinutes;
+            ScanStartId = _settingsService.ScanStartId;
+            ScanEndId = _settingsService.ScanEndId;
             SelectedPingTimeZoneOption = PingTimeZoneCatalog.FindOrDefault(PingCountryCode, PingUtcOffsetMinutes);
 
             RefreshPorts();
@@ -215,7 +224,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         partial void OnResponseTimeoutSecondsChanged(double value)
         {
             if (!_isInitialized) return;
-            _settingsService.ResponseTimeoutSeconds = value;
+            var timeoutSeconds = Math.Clamp(Math.Round(value, 1), 0.1, 60);
+            if (Math.Abs(value - timeoutSeconds) > 0.001)
+            {
+                ResponseTimeoutSeconds = timeoutSeconds;
+                return;
+            }
+
+            _settingsService.ResponseTimeoutSeconds = timeoutSeconds;
             _settingsService.Save();
         }
 
@@ -287,6 +303,18 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _settingsService.Save();
             OnPropertyChanged(nameof(PingPreviewText));
             OnPropertyChanged(nameof(PingPayloadPreviewText));
+        }
+
+        partial void OnScanStartIdChanged(int value)
+        {
+            if (!_isInitialized || _isUpdatingScanRange) return;
+            SaveNormalizedScanRange(value, ScanEndId);
+        }
+
+        partial void OnScanEndIdChanged(int value)
+        {
+            if (!_isInitialized || _isUpdatingScanRange) return;
+            SaveNormalizedScanRange(ScanStartId, value);
         }
 
         [RelayCommand]
@@ -371,6 +399,29 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 PingTimePayloadFactory.Create(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow));
             var payload = packet.AsSpan(BinaryProtocolConst.RequestHeaderSize);
             return string.Join(" ", payload.ToArray().Select(b => b.ToString("X2")));
+        }
+
+        private void SaveNormalizedScanRange(int startId, int endId)
+        {
+            int clampedStart = Math.Clamp(startId, 1, 254);
+            int clampedEnd = Math.Clamp(endId, 1, 254);
+            int normalizedStart = Math.Min(clampedStart, clampedEnd);
+            int normalizedEnd = Math.Max(clampedStart, clampedEnd);
+
+            _isUpdatingScanRange = true;
+            try
+            {
+                ScanStartId = normalizedStart;
+                ScanEndId = normalizedEnd;
+            }
+            finally
+            {
+                _isUpdatingScanRange = false;
+            }
+
+            _settingsService.ScanStartId = normalizedStart;
+            _settingsService.ScanEndId = normalizedEnd;
+            _settingsService.Save();
         }
     }
 }

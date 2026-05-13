@@ -94,7 +94,9 @@ public class BackendSettingsSourceTests
             IsPeriodicPingEnabled = false,
             PingIntervalSeconds = 12.5,
             PingCountryCode = "US",
-            PingUtcOffsetMinutes = -300
+            PingUtcOffsetMinutes = -300,
+            ScanStartId = 3,
+            ScanEndId = 12
         };
 
         first.Save();
@@ -117,6 +119,27 @@ public class BackendSettingsSourceTests
         Assert.AreEqual(12.5, second.PingIntervalSeconds);
         Assert.AreEqual("US", second.PingCountryCode);
         Assert.AreEqual(-300, second.PingUtcOffsetMinutes);
+        Assert.AreEqual(3, second.ScanStartId);
+        Assert.AreEqual(12, second.ScanEndId);
+    }
+
+    [TestMethod]
+    public void AppSettings_SaveAndLoad_NormalizesScanRange()
+    {
+        string backendPath = CreateTempSettingsPath();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(backendPath))
+        {
+            ScanStartId = 20,
+            ScanEndId = 5
+        };
+
+        first.Save();
+
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        second.Load();
+
+        Assert.AreEqual(5, second.ScanStartId);
+        Assert.AreEqual(20, second.ScanEndId);
     }
 
     [TestMethod]

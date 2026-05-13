@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -23,6 +24,8 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyPingIntervalSeconds = "PingIntervalSeconds";
         private const string KeyPingCountryCode = "PingCountryCode";
         private const string KeyPingUtcOffsetMinutes = "PingUtcOffsetMinutes";
+        private const int MinScanId = 1;
+        private const int MaxScanId = 254;
         private readonly IBackendSettingsPathProvider _backendSettingsPathProvider;
         private static readonly JsonSerializerOptions BackendJsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -49,6 +52,8 @@ namespace AnimatronicsControlCenter.Infrastructure
         public double PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
+        public int ScanStartId { get; set; } = 1;
+        public int ScanEndId { get; set; } = 10;
         public string AppSettingsFilePath => GetAppSettingsFilePath();
         public bool IsBackendSyncEnabled { get; set; } = true;
         public string BackendBaseUrl { get; set; } = "https://robot-monitor-api.innergm.com";
@@ -147,7 +152,9 @@ namespace AnimatronicsControlCenter.Infrastructure
                     IsPeriodicPingEnabled,
                     PingIntervalSeconds,
                     PingCountryCode,
-                    PingUtcOffsetMinutes);
+                    PingUtcOffsetMinutes,
+                    NormalizeScanStartId(ScanStartId, ScanEndId),
+                    NormalizeScanEndId(ScanStartId, ScanEndId));
 
                 string json = JsonSerializer.Serialize(settings, BackendJsonOptions);
                 File.WriteAllText(filePath, json);
@@ -184,6 +191,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                 PingIntervalSeconds = settings.PingIntervalSeconds < 0.1 ? PingIntervalSeconds : settings.PingIntervalSeconds;
                 PingCountryCode = settings.PingCountryCode ?? PingCountryCode;
                 PingUtcOffsetMinutes = settings.PingUtcOffsetMinutes;
+                ScanStartId = NormalizeScanStartId(settings.ScanStartId, settings.ScanEndId);
+                ScanEndId = NormalizeScanEndId(settings.ScanStartId, settings.ScanEndId);
                 return true;
             }
             catch
@@ -198,6 +207,18 @@ namespace AnimatronicsControlCenter.Infrastructure
             return string.IsNullOrWhiteSpace(directory)
                 ? AppSettingsFileName
                 : Path.Combine(directory, AppSettingsFileName);
+        }
+
+        private static int NormalizeScanStartId(int startId, int endId)
+            => Math.Min(ClampScanId(startId, 1), ClampScanId(endId, 10));
+
+        private static int NormalizeScanEndId(int startId, int endId)
+            => Math.Max(ClampScanId(startId, 1), ClampScanId(endId, 10));
+
+        private static int ClampScanId(int value, int fallback)
+        {
+            int id = value == 0 ? fallback : value;
+            return Math.Clamp(id, MinScanId, MaxScanId);
         }
 
         private void SaveBackendSettings()
@@ -290,6 +311,8 @@ namespace AnimatronicsControlCenter.Infrastructure
             bool IsPeriodicPingEnabled,
             double PingIntervalSeconds,
             string PingCountryCode,
-            int PingUtcOffsetMinutes);
+            int PingUtcOffsetMinutes,
+            int ScanStartId,
+            int ScanEndId);
     }
 }
