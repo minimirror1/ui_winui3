@@ -34,6 +34,7 @@ public class ScanDialogViewModelTests
         public int LastBaudRate { get; set; } = 115200;
         public string Theme { get; set; } = "Default";
         public bool IsVirtualModeEnabled { get; set; }
+        public bool IsLastPortAutoConnectEnabled { get; set; }
         public string Language { get; set; } = "ko-KR";
         public double ResponseTimeoutSeconds { get; set; } = 2.0;
         public bool IsPeriodicPingEnabled { get; set; } = true;

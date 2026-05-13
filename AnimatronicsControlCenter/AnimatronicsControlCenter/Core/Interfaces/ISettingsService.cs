@@ -9,6 +9,7 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         int LastBaudRate { get; set; }
         string Theme { get; set; }
         bool IsVirtualModeEnabled { get; set; }
+        bool IsLastPortAutoConnectEnabled { get; set; }
         string Language { get; set; }
         double ResponseTimeoutSeconds { get; set; }
         bool IsPeriodicPingEnabled { get; set; }

@@ -16,6 +16,8 @@ public class SettingsPageReorganizationTests
         "XBee_Header.Header",
         "XBee_Desc.Text",
         "XBeePort_Header.Header",
+        "LastPortAutoConnect_Header.Header",
+        "LastPortAutoConnect_Desc.Text",
         "ResponseTimeout_Header.Header",
         "ResponseTimeout_Desc.Text",
         "PingSettings_Header.Header",
@@ -115,10 +117,12 @@ public class SettingsPageReorganizationTests
 
         StringAssert.Contains(xaml, "XBee_Header.Header");
         StringAssert.Contains(xaml, "XBeePort_Header.Header");
+        StringAssert.Contains(xaml, "LastPortAutoConnect_Header.Header");
         StringAssert.Contains(xaml, "VirtualMode_Header.Header");
 
         Assert.AreEqual(1, CountOccurrences(xaml, "AvailablePortOptions"));
         Assert.AreEqual(1, CountOccurrences(xaml, "AvailableBaudRates"));
+        Assert.AreEqual(1, CountOccurrences(xaml, "IsLastPortAutoConnectEnabled"));
         Assert.AreEqual(1, CountOccurrences(xaml, "ConnectCommand"));
         Assert.AreEqual(0, CountOccurrences(xaml, "SelectedXBeePort"));
         Assert.AreEqual(0, CountOccurrences(xaml, "XBeeConnectCommand"));
@@ -177,11 +181,19 @@ public class SettingsPageReorganizationTests
     public void SettingsViewModel_LoadsComPortsWithoutUsbMetadataScan()
     {
         string source = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "SettingsViewModel.cs"));
+        string dashboardSource = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "DashboardViewModel.cs"));
 
         Assert.IsFalse(source.Contains("RefreshPortsAsync", StringComparison.Ordinal));
         Assert.IsFalse(source.Contains("SerialPortDeviceInfoProvider.GetDeviceInfoByPort", StringComparison.Ordinal));
         Assert.IsFalse(source.Contains("Task.Run", StringComparison.Ordinal));
         StringAssert.Contains(source, "RefreshPorts();");
+        StringAssert.Contains(source, "StartLastPortAutoConnectIfEnabled();");
+        StringAssert.Contains(source, "IsLastPortAutoConnectEnabled");
+        StringAssert.Contains(source, "_lastLoadedComPortForAutoConnect");
+        StringAssert.Contains(source, "ConnectCoreAsync(autoScanAfterConnect: true)");
+        StringAssert.Contains(source, "_dashboardViewModel.ScanConfiguredRangeAsync");
+        StringAssert.Contains(dashboardSource, "ScanConfiguredRangeAsync");
+        StringAssert.Contains(dashboardSource, "_serialService.ScanDevicesAsync(startId, endId)");
         StringAssert.Contains(source, "SerialPortDisplay.CreateOption(portName, deviceInfo: null)");
     }
 

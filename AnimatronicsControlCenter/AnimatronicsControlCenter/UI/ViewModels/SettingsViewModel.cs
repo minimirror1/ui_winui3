@@ -26,6 +26,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ILocalizationService _localizationService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly XBeeService _xbeeService;
+        private readonly DashboardViewModel _dashboardViewModel;
 
         public LocalizedStrings Strings { get; }
 
@@ -46,6 +47,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         [ObservableProperty]
         private bool isVirtualModeEnabled;
+
+        [ObservableProperty]
+        private bool isLastPortAutoConnectEnabled;
 
         [ObservableProperty]
         private bool isConnected;
@@ -138,19 +142,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private bool _isInitialized;
         private bool _isUpdatingPingSelection;
         private bool _isUpdatingScanRange;
+        private string _lastLoadedComPortForAutoConnect = string.Empty;
 
         public SettingsViewModel(
             ISettingsService settingsService,
             ISerialService serialService,
             ILocalizationService localizationService,
             SerialMonitorWindowHost serialMonitorWindowHost,
-            XBeeService xbeeService)
+            XBeeService xbeeService,
+            DashboardViewModel dashboardViewModel)
         {
             _settingsService = settingsService;
             _serialService = serialService;
             _localizationService = localizationService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
             _xbeeService = xbeeService;
+            _dashboardViewModel = dashboardViewModel;
             Strings = new LocalizedStrings(_localizationService);
             
             // Set dispatcher for UI callbacks
@@ -158,8 +165,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             
             _settingsService.Load();
             SelectedPort = _settingsService.LastComPort;
+            _lastLoadedComPortForAutoConnect = _settingsService.LastComPort;
             BaudRate = _settingsService.LastBaudRate == 0 ? 115200 : _settingsService.LastBaudRate;
             IsVirtualModeEnabled = _settingsService.IsVirtualModeEnabled;
+            IsLastPortAutoConnectEnabled = _settingsService.IsLastPortAutoConnectEnabled;
             ResponseTimeoutSeconds = _settingsService.ResponseTimeoutSeconds;
             IsPeriodicPingEnabled = _settingsService.IsPeriodicPingEnabled;
             PingIntervalSeconds = _settingsService.PingIntervalSeconds;
@@ -179,6 +188,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             IsConnectionActive = _serialService.IsConnected;
             IsXBeeConnected = _xbeeService.IsConnected;
             _isInitialized = true;
+            StartLastPortAutoConnectIfEnabled();
         }
 
         partial void OnSelectedLanguageChanged(LanguageOption value)
@@ -209,7 +219,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
              _settingsService.Save();
              if (value)
              {
-                 _ = ConnectAsync();
+                 _ = ConnectCoreAsync(autoScanAfterConnect: false);
              }
              else
              {
@@ -219,6 +229,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     IsConnectionActive = false;
                  }
              }
+        }
+
+        partial void OnIsLastPortAutoConnectEnabledChanged(bool value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.IsLastPortAutoConnectEnabled = value;
+            _settingsService.Save();
         }
 
         partial void OnResponseTimeoutSecondsChanged(double value)
@@ -328,14 +345,33 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 .ToArray();
 
             if (AvailablePortOptions.Any() &&
-                (string.IsNullOrEmpty(SelectedPort) || !AvailablePortOptions.Any(option => option.PortName == SelectedPort)))
+                string.IsNullOrEmpty(SelectedPort))
             {
                 SelectedPort = AvailablePortOptions[0].PortName;
             }
         }
 
+        private void StartLastPortAutoConnectIfEnabled()
+        {
+            if (!IsLastPortAutoConnectEnabled || IsVirtualModeEnabled || string.IsNullOrWhiteSpace(_lastLoadedComPortForAutoConnect))
+            {
+                return;
+            }
+
+            if (!AvailablePortOptions.Any(option => option.PortName.Equals(_lastLoadedComPortForAutoConnect, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            SelectedPort = _lastLoadedComPortForAutoConnect;
+            _ = ConnectCoreAsync(autoScanAfterConnect: true);
+        }
+
         [RelayCommand]
-        private async Task ConnectAsync()
+        private Task ConnectAsync()
+            => ConnectCoreAsync(autoScanAfterConnect: false);
+
+        private async Task ConnectCoreAsync(bool autoScanAfterConnect)
         {
             if (IsConnectionActive)
             {
@@ -354,6 +390,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 _settingsService.LastComPort = SelectedPort;
                 _settingsService.LastBaudRate = BaudRate;
                 _settingsService.Save();
+
+                if (autoScanAfterConnect)
+                {
+                    await _dashboardViewModel.ScanConfiguredRangeAsync(_settingsService.ScanStartId, _settingsService.ScanEndId);
+                }
             }
             catch
             {

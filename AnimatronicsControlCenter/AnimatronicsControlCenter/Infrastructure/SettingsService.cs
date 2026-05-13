@@ -18,6 +18,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyBaudRate = "BaudRate";
         private const string KeyTheme = "Theme";
         private const string KeyIsVirtualModeEnabled = "IsVirtualModeEnabled";
+        private const string KeyIsLastPortAutoConnectEnabled = "IsLastPortAutoConnectEnabled";
         private const string KeyLanguage = "Language";
         private const string KeyResponseTimeout = "ResponseTimeoutSeconds";
         private const string KeyIsPeriodicPingEnabled = "IsPeriodicPingEnabled";
@@ -46,6 +47,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         public int LastBaudRate { get; set; } = 115200;
         public string Theme { get; set; } = "Default";
         public bool IsVirtualModeEnabled { get; set; } = false;
+        public bool IsLastPortAutoConnectEnabled { get; set; } = false;
         public string Language { get; set; } = "ko-KR";
         public double ResponseTimeoutSeconds { get; set; } = 2.0;
         public bool IsPeriodicPingEnabled { get; set; } = true;
@@ -80,6 +82,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 localSettings.Values[KeyBaudRate] = LastBaudRate;
                 localSettings.Values[KeyTheme] = Theme;
                 localSettings.Values[KeyIsVirtualModeEnabled] = IsVirtualModeEnabled;
+                localSettings.Values[KeyIsLastPortAutoConnectEnabled] = IsLastPortAutoConnectEnabled;
                 localSettings.Values[KeyLanguage] = Language;
                 localSettings.Values[KeyResponseTimeout] = ResponseTimeoutSeconds;
                 localSettings.Values[KeyIsPeriodicPingEnabled] = IsPeriodicPingEnabled;
@@ -109,6 +112,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                     if (localSettings.Values.TryGetValue(KeyBaudRate, out var rate)) LastBaudRate = (int)rate;
                     if (localSettings.Values.TryGetValue(KeyTheme, out var theme)) Theme = (string)theme;
                     if (localSettings.Values.TryGetValue(KeyIsVirtualModeEnabled, out var isVirtual)) IsVirtualModeEnabled = (bool)isVirtual;
+                    if (localSettings.Values.TryGetValue(KeyIsLastPortAutoConnectEnabled, out var autoConnect)) IsLastPortAutoConnectEnabled = (bool)autoConnect;
                     if (localSettings.Values.TryGetValue(KeyLanguage, out var lang)) Language = (string)lang;
                     if (localSettings.Values.TryGetValue(KeyResponseTimeout, out var timeout))
                     {
@@ -147,6 +151,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                     LastBaudRate,
                     Theme,
                     IsVirtualModeEnabled,
+                    IsLastPortAutoConnectEnabled,
                     Language,
                     ResponseTimeoutSeconds,
                     IsPeriodicPingEnabled,
@@ -185,6 +190,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 LastBaudRate = settings.LastBaudRate == 0 ? LastBaudRate : settings.LastBaudRate;
                 Theme = settings.Theme ?? Theme;
                 IsVirtualModeEnabled = settings.IsVirtualModeEnabled;
+                IsLastPortAutoConnectEnabled = settings.IsLastPortAutoConnectEnabled;
                 Language = settings.Language ?? Language;
                 ResponseTimeoutSeconds = settings.ResponseTimeoutSeconds == 0 ? ResponseTimeoutSeconds : settings.ResponseTimeoutSeconds;
                 IsPeriodicPingEnabled = settings.IsPeriodicPingEnabled;
@@ -306,6 +312,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             int LastBaudRate,
             string Theme,
             bool IsVirtualModeEnabled,
+            bool IsLastPortAutoConnectEnabled,
             string Language,
             double ResponseTimeoutSeconds,
             bool IsPeriodicPingEnabled,

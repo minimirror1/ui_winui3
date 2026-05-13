@@ -66,6 +66,15 @@
                                   MinWidth="120"/>
                     </tk:SettingsCard>
 
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('LastPortAutoConnect_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <tk:SettingsCard.Description>
+                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('LastPortAutoConnect_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"/>
+                        </tk:SettingsCard.Description>
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.IsLastPortAutoConnectEnabled, Mode=TwoWay}"
+                                      OnContent="" OffContent=""/>
+                    </tk:SettingsCard>
+
                     <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('VirtualMode_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
                         <tk:SettingsCard.Description>
                             <TextBlock Text="{x:Bind ViewModel.Strings.Get('VirtualMode_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"

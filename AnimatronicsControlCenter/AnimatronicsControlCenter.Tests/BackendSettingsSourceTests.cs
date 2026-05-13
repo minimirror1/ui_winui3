@@ -89,6 +89,7 @@ public class BackendSettingsSourceTests
             LastBaudRate = 57600,
             Theme = "Dark",
             IsVirtualModeEnabled = true,
+            IsLastPortAutoConnectEnabled = true,
             Language = "en-US",
             ResponseTimeoutSeconds = 3.5,
             IsPeriodicPingEnabled = false,
@@ -113,6 +114,7 @@ public class BackendSettingsSourceTests
         Assert.AreEqual(57600, second.LastBaudRate);
         Assert.AreEqual("Dark", second.Theme);
         Assert.IsTrue(second.IsVirtualModeEnabled);
+        Assert.IsTrue(second.IsLastPortAutoConnectEnabled);
         Assert.AreEqual("en-US", second.Language);
         Assert.AreEqual(3.5, second.ResponseTimeoutSeconds);
         Assert.IsFalse(second.IsPeriodicPingEnabled);

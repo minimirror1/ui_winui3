@@ -211,6 +211,12 @@
   <data name="XBeePort_Header.Header" xml:space="preserve">
     <value>XBee 포트</value>
   </data>
+  <data name="LastPortAutoConnect_Header.Header" xml:space="preserve">
+    <value>이전 포트 자동연결</value>
+  </data>
+  <data name="LastPortAutoConnect_Desc.Text" xml:space="preserve">
+    <value>프로그램 실행 시 마지막으로 연결한 포트에 자동으로 연결합니다</value>
+  </data>
   <data name="ResponseTimeout_Header.Header" xml:space="preserve">
     <value>응답 타임아웃</value>
   </data>

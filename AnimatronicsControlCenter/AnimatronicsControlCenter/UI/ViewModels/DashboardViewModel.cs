@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -47,6 +48,34 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 
                 var found = dialog.ViewModel.FoundDevices;
                 
+                ReplaceDashboardDevices(found);
+            }
+            finally
+            {
+                IsScanning = false;
+            }
+        }
+
+        public async Task ScanConfiguredRangeAsync(int startId, int endId)
+        {
+            if (IsScanning) return;
+            IsScanning = true;
+
+            try
+            {
+                var found = await _serialService.ScanDevicesAsync(startId, endId);
+                ReplaceDashboardDevices(found);
+            }
+            finally
+            {
+                IsScanning = false;
+            }
+        }
+
+        private void ReplaceDashboardDevices(IEnumerable<Device> found)
+        {
+            void Apply()
+            {
                 Devices.Clear();
                 foreach (var device in found)
                 {
@@ -56,9 +85,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 _backendDashboardSyncService.ReplaceDevices(Devices);
                 _backendDashboardSyncService.Start();
             }
-            finally
+
+            if (_dispatcherQueue.HasThreadAccess)
             {
-                IsScanning = false;
+                Apply();
+            }
+            else
+            {
+                _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, Apply);
             }
         }
     }

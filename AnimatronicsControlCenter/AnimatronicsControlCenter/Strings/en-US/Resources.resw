@@ -211,6 +211,12 @@
   <data name="XBeePort_Header.Header" xml:space="preserve">
     <value>XBee Port</value>
   </data>
+  <data name="LastPortAutoConnect_Header.Header" xml:space="preserve">
+    <value>Auto-connect previous port</value>
+  </data>
+  <data name="LastPortAutoConnect_Desc.Text" xml:space="preserve">
+    <value>Connect to the last successful port when the program starts</value>
+  </data>
   <data name="ResponseTimeout_Header.Header" xml:space="preserve">
     <value>Response Timeout</value>
   </data>
