@@ -126,6 +126,16 @@ namespace AnimatronicsControlCenter.UI.Converters
         public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
     }
 
+    public class MotionStateToButtonIconConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            return value is MotionState s && s == MotionState.Playing ? "\uE769" : "\uE768";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
+    }
+
     public class TimeSpanToShortStringConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
@@ -148,7 +158,6 @@ namespace AnimatronicsControlCenter.UI.Converters
         public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
     }
 }
-
 
 
 
