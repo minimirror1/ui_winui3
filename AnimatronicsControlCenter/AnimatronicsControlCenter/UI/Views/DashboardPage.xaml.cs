@@ -1,7 +1,9 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using AnimatronicsControlCenter.UI.ViewModels;
+using AnimatronicsControlCenter.Core.Models;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 
 namespace AnimatronicsControlCenter.UI.Views
 {
@@ -17,12 +19,25 @@ namespace AnimatronicsControlCenter.UI.Views
 
         private Visibility BoolToVisibility(bool isVisible) => isVisible ? Visibility.Visible : Visibility.Collapsed;
 
-        private void GridView_ItemClick(object sender, ItemClickEventArgs e)
+        private void Card_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            if (e.ClickedItem is Core.Models.Device device)
+            if (sender is FrameworkElement el && el.Tag is Device device)
             {
                 Frame.Navigate(typeof(DeviceDetailPage), device);
             }
+        }
+
+        private void DetailsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement el && el.Tag is Device device)
+            {
+                Frame.Navigate(typeof(DeviceDetailPage), device);
+            }
+        }
+
+        private void PlayStopButton_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: connect play/stop command
         }
     }
 }
