@@ -16,10 +16,12 @@ namespace AnimatronicsControlCenter.Infrastructure;
 
 public sealed class BackendPowerSseService : IBackendPowerSseService, IDisposable
 {
+    private static readonly TimeSpan DefaultReconnectDelay = TimeSpan.FromSeconds(5);
     private readonly ISettingsService _settingsService;
     private readonly IBackendTrafficTap _trafficTap;
     private readonly ISerialService? _serialService;
     private readonly HttpClient _httpClient;
+    private readonly TimeSpan _reconnectDelay;
     private readonly object _lock = new();
     private CancellationTokenSource? _cts;
     private List<Task> _tasks = new();
@@ -35,10 +37,21 @@ public sealed class BackendPowerSseService : IBackendPowerSseService, IDisposabl
     }
 
     public BackendPowerSseService(ISettingsService settingsService, IBackendTrafficTap trafficTap, ISerialService? serialService, HttpMessageHandler handler)
+        : this(settingsService, trafficTap, serialService, handler, DefaultReconnectDelay)
+    {
+    }
+
+    public BackendPowerSseService(
+        ISettingsService settingsService,
+        IBackendTrafficTap trafficTap,
+        ISerialService? serialService,
+        HttpMessageHandler handler,
+        TimeSpan reconnectDelay)
     {
         _settingsService = settingsService;
         _trafficTap = trafficTap;
         _serialService = serialService;
+        _reconnectDelay = reconnectDelay;
         _httpClient = new HttpClient(handler)
         {
             Timeout = Timeout.InfiniteTimeSpan
@@ -101,36 +114,52 @@ public sealed class BackendPowerSseService : IBackendPowerSseService, IDisposabl
             return;
         }
 
-        try
+        while (!cancellationToken.IsCancellationRequested)
         {
-            using HttpRequestMessage request = BackendHttpRequest.Create(_settingsService, HttpMethod.Get, uri);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-            Stopwatch stopwatch = StartTraffic(request.Method, uri);
-            using HttpResponseMessage response = await _httpClient.SendAsync(
-                request,
-                HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken).ConfigureAwait(false);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                RecordResponse(request.Method, uri, response, stopwatch, body);
-                return;
+                using HttpRequestMessage request = BackendHttpRequest.Create(_settingsService, HttpMethod.Get, uri);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+                Stopwatch stopwatch = StartTraffic(request.Method, uri);
+                using HttpResponseMessage response = await _httpClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    RecordResponse(request.Method, uri, response, stopwatch, body);
+                }
+                else
+                {
+                    RecordResponse(request.Method, uri, response, stopwatch, "SSE connected");
+
+                    await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                    using var reader = new StreamReader(stream, Encoding.UTF8);
+                    await ReadSseEventsAsync(request.Method, uri, reader, cancellationToken).ConfigureAwait(false);
+                }
+
+                RecordError(HttpMethod.Get, uri, "SSE disconnected; reconnecting");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+            {
+                RecordError(HttpMethod.Get, uri, $"SSE error; reconnecting: {ex.Message}");
             }
 
-            RecordResponse(request.Method, uri, response, stopwatch, "SSE connected");
-
-            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-            await ReadSseEventsAsync(request.Method, uri, reader, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
-        {
-            RecordError(HttpMethod.Get, uri, ex.Message);
+            try
+            {
+                await Task.Delay(_reconnectDelay, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
     }
 
