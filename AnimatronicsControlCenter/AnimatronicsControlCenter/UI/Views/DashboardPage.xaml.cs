@@ -22,6 +22,11 @@ namespace AnimatronicsControlCenter.UI.Views
 
         private void Card_Tapped(object sender, TappedRoutedEventArgs e)
         {
+            if (IsWithinNamedElement(e.OriginalSource as DependencyObject, "PlayStopButton"))
+            {
+                return;
+            }
+
             if (sender is FrameworkElement el && el.Tag is Device device)
             {
                 Frame.Navigate(typeof(DeviceDetailPage), device);
@@ -101,6 +106,19 @@ namespace AnimatronicsControlCenter.UI.Views
             }
 
             return null;
+        }
+
+        private static bool IsWithinNamedElement(DependencyObject? source, string name)
+        {
+            for (DependencyObject? current = source; current is not null; current = VisualTreeHelper.GetParent(current))
+            {
+                if (current is FrameworkElement element && element.Name == name)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void SetTextForeground(DependencyObject root, Brush foreground)

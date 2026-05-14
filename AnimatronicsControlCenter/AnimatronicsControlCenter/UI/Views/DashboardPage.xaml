@@ -199,6 +199,14 @@
                                     BorderBrush="{StaticResource DashboardPlayButtonBorderBrush}"
                                     Foreground="{StaticResource DashboardPlayButtonForegroundBrush}"
                                     Padding="12,6">
+                                <Button.Resources>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#5BCEFF"/>
+                                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#5BCEFF"/>
+                                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#111111"/>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#47BCEB"/>
+                                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#47BCEB"/>
+                                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#111111"/>
+                                </Button.Resources>
                                 <Button.Content>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <FontIcon Glyph="{x:Bind MotionState, Mode=OneWay, Converter={StaticResource MotionStateToButtonIcon}}"
