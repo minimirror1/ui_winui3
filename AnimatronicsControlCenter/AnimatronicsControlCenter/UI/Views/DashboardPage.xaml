@@ -51,6 +51,13 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
+                        <Border Grid.RowSpan="4"
+                                Width="5"
+                                HorizontalAlignment="Left"
+                                Margin="-14"
+                                CornerRadius="8,0,0,8"
+                                Background="{x:Bind CardStatus, Mode=OneWay, Converter={StaticResource CardStatusToBrush}}"/>
+
                         <!-- Header -->
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -62,16 +69,13 @@
                             <StackPanel Spacing="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                     <!-- ID badge -->
-                                    <Border Width="34" Height="34"
-                                            BorderBrush="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            BorderThickness="1" CornerRadius="4">
-                                        <TextBlock Text="{x:Bind Id, Mode=OneWay, Converter={StaticResource IntToPaddedId}}"
-                                                   FontFamily="Consolas"
-                                                   FontSize="13"
-                                                   FontWeight="SemiBold"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
+                                    <TextBlock Text="{x:Bind Id, Mode=OneWay, Converter={StaticResource IntToPaddedId}}"
+                                               FontFamily="Segoe UI Light"
+                                               FontSize="54"
+                                               FontWeight="Light"
+                                               LineHeight="58"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
                                     <!-- Device name -->
                                     <TextBlock Text="{x:Bind Name, Mode=OneWay}"
                                                FontSize="15.5"
