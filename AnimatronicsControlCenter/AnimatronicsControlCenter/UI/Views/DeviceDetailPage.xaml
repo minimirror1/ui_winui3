@@ -377,262 +377,260 @@
                             </GridView>
                         </Grid>
 
-                        <!-- ══ 전원 릴레이 카드 ══ -->
-                        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                              CornerRadius="8" Padding="20">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- 릴레이 카드 헤더 -->
-                            <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon Glyph="&#xE945;" FontFamily="Segoe Fluent Icons" FontSize="16"
-                                              VerticalAlignment="Center"/>
-                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayControl', ViewModel.Strings.Code), Mode=OneWay}"
-                                               Style="{StaticResource SubtitleTextBlockStyle}"/>
-                                </StackPanel>
-                                <!-- 잠금 상태 표시 -->
-                                <TextBlock Text="● 안전 잠금" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           FontSize="12"
-                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                           Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                                <TextBlock Text="● 제어 활성화" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           FontSize="12"
-                                           Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
-                                           Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                            </Grid>
-
-                            <!-- 서브타이틀 -->
-                            <TextBlock Grid.Row="1"
-                                       Text="장치에 연결된 전원 제어용 릴레이 — 실수 방지를 위해 기본 비활성화"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                       Margin="0,6,0,16"
-                                       TextWrapping="Wrap"/>
-
-                            <!-- 릴레이 본체: 상태(왼쪽) + 제어(오른쪽) -->
-                            <Grid Grid.Row="2" ColumnSpacing="14">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="1.1*"/>
-                                    <ColumnDefinition Width="0.9*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- ── 상태 히어로 (왼쪽) ── -->
-                                <Border CornerRadius="8" Padding="16"
-                                        BorderThickness="1"
-                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                        Background="{ThemeResource LayerFillColorDefaultBrush}">
-                                    <StackPanel Spacing="14">
-
-                                        <!-- 상태 레이블 + 이름 -->
-                                        <Grid>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                                         Fill="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay, Converter={StaticResource PowerStatusToDangerBrushConverter}}"/>
-                                                <TextBlock Text="현재 상태" Style="{StaticResource CaptionTextBlockStyle}"
-                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                           VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                            <TextBlock Text="Main Power" HorizontalAlignment="Right"
-                                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                                       VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <!-- 큰 ON/OFF 텍스트 -->
-                                        <TextBlock Text="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay}"
-                                                   FontSize="52" FontWeight="Bold" LineHeight="56"
-                                                   Foreground="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay, Converter={StaticResource PowerStatusToDangerBrushConverter}}"/>
-
-                                        <!-- 메타 정보: 부하 + 상태 메시지 -->
-                                        <Grid ColumnSpacing="12"
-                                              BorderThickness="0,1,0,1"
-                                              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                              Padding="0,12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel>
-                                                <TextBlock Text="부하" FontSize="11" FontWeight="Medium"
-                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                           Margin="0,0,0,3"/>
-                                                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='—', Mode=OneWay}"
-                                                           FontSize="13" TextWrapping="Wrap"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1">
-                                                <TextBlock Text="상태" FontSize="11" FontWeight="Medium"
-                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                           Margin="0,0,0,3"/>
-                                                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay}"
-                                                           FontSize="13"
-                                                           Foreground="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay, Converter={StaticResource PowerStatusToBrushConverter}}"/>
-                                            </StackPanel>
-                                        </Grid>
-
-                                        <!-- 계측 값 그리드 (4개) -->
-                                        <Grid ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                    CornerRadius="6" Padding="8,10">
-                                                <StackPanel>
-                                                    <TextBlock Text="전압" FontSize="10" FontWeight="Medium"
-                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                               Margin="0,0,0,4"/>
-                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <Border Grid.Column="1"
-                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                    CornerRadius="6" Padding="8,10">
-                                                <StackPanel>
-                                                    <TextBlock Text="전류" FontSize="10" FontWeight="Medium"
-                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                               Margin="0,0,0,4"/>
-                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <Border Grid.Column="2"
-                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                    CornerRadius="6" Padding="8,10">
-                                                <StackPanel>
-                                                    <TextBlock Text="전력" FontSize="10" FontWeight="Medium"
-                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                               Margin="0,0,0,4"/>
-                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <Border Grid.Column="3"
-                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                    CornerRadius="6" Padding="8,10">
-                                                <StackPanel>
-                                                    <TextBlock Text="사이클" FontSize="10" FontWeight="Medium"
-                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                               Margin="0,0,0,4"/>
-                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- ── 안전 제어 (오른쪽) ── -->
-                                <Grid Grid.Column="1" RowSpacing="12">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <!-- 잠금 상태 헤더 -->
-                                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                        <Border Width="36" Height="36" CornerRadius="8"
-                                                BorderThickness="1"
-                                                BorderBrush="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
-                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
-                                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <FontIcon FontFamily="Segoe Fluent Icons" FontSize="16"
-                                                          Glyph="&#xE72E;"
-                                                          Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                          Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                                                <FontIcon FontFamily="Segoe Fluent Icons" FontSize="16"
-                                                          Glyph="&#xE73E;"
-                                                          Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
-                                                          Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                            </Grid>
-                                        </Border>
-                                        <StackPanel>
-                                            <TextBlock FontWeight="SemiBold" FontSize="14"
-                                                       Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelaySafeLock', ViewModel.Strings.Code), Mode=OneWay}"
-                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                                            <TextBlock FontWeight="SemiBold" FontSize="14"
-                                                       Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayUnlocked', ViewModel.Strings.Code), Mode=OneWay}"
-                                                       Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
-                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                       Text="실수 클릭 방지를 위해 비활성화됨"
-                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                       Text="조작 후 15초 뒤 자동 재잠금"
-                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <!-- 슬라이드-투-언락 컨트롤 -->
-                                    <controls:SlideToUnlockControl Grid.Row="1"
-                                        IsUnlocked="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay}"
-                                        Unlocked="SlideToUnlock_Unlocked"/>
-
-                                    <!-- 자동 잠금 카운트다운 -->
-                                    <StackPanel Grid.Row="2" Spacing="6"
-                                                Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
-                                            <Run Text="{x:Bind ViewModel.RelayAutoLockSecondsRemaining, Mode=OneWay}"/>
-                                            <Run Text="초 후 자동 잠금"/>
-                                        </TextBlock>
-                                        <ProgressBar Value="{x:Bind ViewModel.RelayAutoLockSecondsRemaining, Mode=OneWay}"
-                                                     Maximum="15" Height="4" CornerRadius="2"/>
-                                    </StackPanel>
-
-                                    <!-- ON / OFF 버튼 -->
-                                    <Grid Grid.Row="3" ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <Button Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayPowerOff', ViewModel.Strings.Code), Mode=OneWay}"
-                                                Command="{x:Bind ViewModel.SetPowerOffCommand}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"/>
-
-                                        <Button Grid.Column="1"
-                                                Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayPowerOn', ViewModel.Strings.Code), Mode=OneWay}"
-                                                Command="{x:Bind ViewModel.SetPowerOnCommand}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"/>
-                                    </Grid>
-
-                                    <!-- 경고 박스 -->
-                                    <Border Grid.Row="4" CornerRadius="8" Padding="12"
-                                            Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
-                                            BorderThickness="1"
-                                            BorderBrush="{ThemeResource SystemFillColorCautionBrush}">
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <FontIcon Glyph="&#xE7BA;" FontFamily="Segoe Fluent Icons"
-                                                      FontSize="14" VerticalAlignment="Top"
-                                                      Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                                      Margin="0,2,0,0"/>
-                                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayWarning', ViewModel.Strings.Code), Mode=OneWay}"
-                                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                                       TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </Grid>
-                        </Grid>
 
                     </StackPanel>
                     </ScrollViewer>
                 </Grid>
+            </PivotItem>
+
+            <!-- ── 전원 탭 ── -->
+            <PivotItem Header="{x:Bind ViewModel.Strings.Get('DeviceDetail_Tab_Power', ViewModel.Strings.Code), Mode=OneWay}" Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <!-- ══ 전원 릴레이 카드 ══ -->
+                                        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                              CornerRadius="8" Padding="20">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                
+                                            <!-- 릴레이 카드 헤더 -->
+                                            <Grid>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon Glyph="&#xE945;" FontFamily="Segoe Fluent Icons" FontSize="16"
+                                                              VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayControl', ViewModel.Strings.Code), Mode=OneWay}"
+                                                               Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                                </StackPanel>
+                                                <!-- 잠금 상태 표시 -->
+                                                <TextBlock Text="● 안전 잠금" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                           Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                <TextBlock Text="● 제어 활성화" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
+                                                           Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                            </Grid>
+                
+                                            <!-- 릴레이 본체: 상태(왼쪽) + 제어(오른쪽) -->
+                                            <Grid Grid.Row="2" ColumnSpacing="14">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="1.1*"/>
+                                                    <ColumnDefinition Width="0.9*"/>
+                                                </Grid.ColumnDefinitions>
+                
+                                                <!-- ── 상태 히어로 (왼쪽) ── -->
+                                                <Border CornerRadius="8" Padding="16"
+                                                        BorderThickness="1"
+                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        Background="{ThemeResource LayerFillColorDefaultBrush}">
+                                                    <StackPanel Spacing="14">
+                
+                                                        <!-- 상태 레이블 + 이름 -->
+                                                        <Grid>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                                                                         Fill="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay, Converter={StaticResource PowerStatusToDangerBrushConverter}}"/>
+                                                                <TextBlock Text="현재 상태" Style="{StaticResource CaptionTextBlockStyle}"
+                                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                           VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                            <TextBlock Text="Main Power" HorizontalAlignment="Right"
+                                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Grid>
+                
+                                                        <!-- 큰 ON/OFF 텍스트 -->
+                                                        <TextBlock Text="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay}"
+                                                                   FontSize="52" FontWeight="Bold" LineHeight="56"
+                                                                   Foreground="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay, Converter={StaticResource PowerStatusToDangerBrushConverter}}"/>
+                
+                                                        <!-- 메타 정보: 부하 + 상태 메시지 -->
+                                                        <Grid ColumnSpacing="12"
+                                                              BorderThickness="0,1,0,1"
+                                                              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                              Padding="0,12">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                
+                                                            <StackPanel>
+                                                                <TextBlock Text="부하" FontSize="11" FontWeight="Medium"
+                                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                           Margin="0,0,0,3"/>
+                                                                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.StatusMessage, FallbackValue='—', Mode=OneWay}"
+                                                                           FontSize="13" TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="상태" FontSize="11" FontWeight="Medium"
+                                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                           Margin="0,0,0,3"/>
+                                                                <TextBlock Text="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay}"
+                                                                           FontSize="13"
+                                                                           Foreground="{x:Bind ViewModel.SelectedDevice.PowerStatus, FallbackValue='OFF', Mode=OneWay, Converter={StaticResource PowerStatusToBrushConverter}}"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                
+                                                        <!-- 계측 값 그리드 (4개) -->
+                                                        <Grid ColumnSpacing="8">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                
+                                                            <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                                    CornerRadius="6" Padding="8,10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="전압" FontSize="10" FontWeight="Medium"
+                                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                               Margin="0,0,0,4"/>
+                                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
+                                                                </StackPanel>
+                                                            </Border>
+                
+                                                            <Border Grid.Column="1"
+                                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                                    CornerRadius="6" Padding="8,10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="전류" FontSize="10" FontWeight="Medium"
+                                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                               Margin="0,0,0,4"/>
+                                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
+                                                                </StackPanel>
+                                                            </Border>
+                
+                                                            <Border Grid.Column="2"
+                                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                                    CornerRadius="6" Padding="8,10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="전력" FontSize="10" FontWeight="Medium"
+                                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                               Margin="0,0,0,4"/>
+                                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
+                                                                </StackPanel>
+                                                            </Border>
+                
+                                                            <Border Grid.Column="3"
+                                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                                    CornerRadius="6" Padding="8,10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="사이클" FontSize="10" FontWeight="Medium"
+                                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                               Margin="0,0,0,4"/>
+                                                                    <TextBlock Text="—" FontSize="16" FontWeight="SemiBold"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Border>
+                
+                                                <!-- ── 안전 제어 (오른쪽) ── -->
+                                                <Grid Grid.Column="1" RowSpacing="12">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                
+                                                    <!-- 잠금 상태 헤더 -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                                BorderThickness="1"
+                                                                BorderBrush="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
+                                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <FontIcon FontFamily="Segoe Fluent Icons" FontSize="16"
+                                                                          Glyph="&#xE72E;"
+                                                                          Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                          Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                                <FontIcon FontFamily="Segoe Fluent Icons" FontSize="16"
+                                                                          Glyph="&#xE73E;"
+                                                                          Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
+                                                                          Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel>
+                                                            <TextBlock FontWeight="SemiBold" FontSize="14"
+                                                                       Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelaySafeLock', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                            <TextBlock FontWeight="SemiBold" FontSize="14"
+                                                                       Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayUnlocked', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                       Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
+                                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                       Text="실수 클릭 방지를 위해 비활성화됨"
+                                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                       Text="조작 후 15초 뒤 자동 재잠금"
+                                                                       Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                
+                                                    <!-- 슬라이드-투-언락 컨트롤 -->
+                                                    <controls:SlideToUnlockControl Grid.Row="1"
+                                                        IsUnlocked="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay}"
+                                                        Unlocked="SlideToUnlock_Unlocked"/>
+                
+                                                    <!-- 자동 잠금 카운트다운 -->
+                                                    <StackPanel Grid.Row="2" Spacing="6"
+                                                                Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                                                            <Run Text="{x:Bind ViewModel.RelayAutoLockSecondsRemaining, Mode=OneWay}"/>
+                                                            <Run Text="초 후 자동 잠금"/>
+                                                        </TextBlock>
+                                                        <ProgressBar Value="{x:Bind ViewModel.RelayAutoLockSecondsRemaining, Mode=OneWay}"
+                                                                     Maximum="15" Height="4" CornerRadius="2"/>
+                                                    </StackPanel>
+                
+                                                    <!-- ON / OFF 버튼 -->
+                                                    <Grid Grid.Row="3" ColumnSpacing="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                
+                                                        <Button Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayPowerOff', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                Command="{x:Bind ViewModel.SetPowerOffCommand}"
+                                                                HorizontalAlignment="Stretch"
+                                                                HorizontalContentAlignment="Center"/>
+                
+                                                        <Button Grid.Column="1"
+                                                                Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayPowerOn', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                Command="{x:Bind ViewModel.SetPowerOnCommand}"
+                                                                HorizontalAlignment="Stretch"
+                                                                HorizontalContentAlignment="Center"/>
+                                                    </Grid>
+                
+                                                    <!-- 경고 박스 -->
+                                                    <Border Grid.Row="4" CornerRadius="8" Padding="12"
+                                                            Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                                                            BorderThickness="1"
+                                                            BorderBrush="{ThemeResource SystemFillColorCautionBrush}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <FontIcon Glyph="&#xE7BA;" FontFamily="Segoe Fluent Icons"
+                                                                      FontSize="14" VerticalAlignment="Top"
+                                                                      Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                                      Margin="0,2,0,0"/>
+                                                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayWarning', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                                       TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Grid>
+                                            </Grid>
+                                        </Grid>
+                </ScrollViewer>
             </PivotItem>
 
             <!-- ── 파일 탭 ── -->

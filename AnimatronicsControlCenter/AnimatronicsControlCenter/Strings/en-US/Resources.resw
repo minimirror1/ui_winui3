@@ -265,6 +265,9 @@
   <data name="DeviceDetail_Tab_Overview" xml:space="preserve">
     <value>Overview</value>
   </data>
+  <data name="DeviceDetail_Tab_Power" xml:space="preserve">
+    <value>Power</value>
+  </data>
   <data name="DeviceDetail_Tab_Files" xml:space="preserve">
     <value>Files</value>
   </data>
