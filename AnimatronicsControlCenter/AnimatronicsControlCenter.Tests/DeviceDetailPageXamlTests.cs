@@ -50,6 +50,23 @@ public class DeviceDetailPageXamlTests
         }
     }
 
+    [TestMethod]
+    public void DeviceDetailPage_RelayWarningTextHasConstrainedColumnForWrapping()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "DeviceDetailPage.xaml"));
+
+        int warningIndex = xaml.IndexOf("DeviceDetail_RelayWarning", StringComparison.Ordinal);
+
+        Assert.IsTrue(warningIndex >= 0, "Relay warning text should exist.");
+
+        string warningLayout = xaml[Math.Max(0, warningIndex - 1200)..warningIndex];
+
+        StringAssert.Contains(warningLayout, "<Grid.ColumnDefinitions>");
+        StringAssert.Contains(warningLayout, "<ColumnDefinition Width=\"Auto\"/>");
+        StringAssert.Contains(warningLayout, "<ColumnDefinition Width=\"*\"/>");
+        StringAssert.Contains(xaml[Math.Max(0, warningIndex - 160)..Math.Min(xaml.Length, warningIndex + 240)], "Grid.Column=\"1\"");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

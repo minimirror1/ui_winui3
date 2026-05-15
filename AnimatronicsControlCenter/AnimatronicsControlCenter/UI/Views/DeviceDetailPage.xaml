@@ -617,15 +617,20 @@
                                                             Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
                                                             BorderThickness="1"
                                                             BorderBrush="{ThemeResource SystemFillColorCautionBrush}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <Grid ColumnSpacing="10">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
                                                             <FontIcon Glyph="&#xE7BA;" FontFamily="Segoe Fluent Icons"
                                                                       FontSize="14" VerticalAlignment="Top"
                                                                       Foreground="{ThemeResource SystemFillColorCautionBrush}"
                                                                       Margin="0,2,0,0"/>
-                                                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayWarning', ViewModel.Strings.Code), Mode=OneWay}"
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayWarning', ViewModel.Strings.Code), Mode=OneWay}"
                                                                        Style="{StaticResource CaptionTextBlockStyle}"
                                                                        TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                                        </StackPanel>
+                                                        </Grid>
                                                     </Border>
                                                 </Grid>
                                             </Grid>
