@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +17,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
     {
         private readonly ISerialService _serialService;
         private readonly IBackendDashboardSyncService _backendDashboardSyncService;
+        private readonly ISettingsService _settingsService;
         private readonly DispatcherQueue _dispatcherQueue;
 
         [ObservableProperty]
@@ -23,10 +25,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public ObservableCollection<Device> Devices { get; } = new();
 
-        public DashboardViewModel(ISerialService serialService, IBackendDashboardSyncService backendDashboardSyncService)
+        public DashboardViewModel(ISerialService serialService, IBackendDashboardSyncService backendDashboardSyncService, ISettingsService settingsService)
         {
             _serialService = serialService;
             _backendDashboardSyncService = backendDashboardSyncService;
+            _settingsService = settingsService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         }
 
@@ -35,7 +38,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             if (IsScanning) return;
             IsScanning = true;
-            
+
             try
             {
                 var dialog = new ScanDialog();
@@ -43,11 +46,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 {
                     dialog.XamlRoot = element.XamlRoot;
                 }
-                
+
                 await dialog.ShowAsync();
-                
+
                 var found = dialog.ViewModel.FoundDevices;
-                
+
                 ReplaceDashboardDevices(found);
             }
             finally
@@ -72,12 +75,30 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
         }
 
+        private void ApplyDeviceNames(IEnumerable<Device> devices)
+        {
+            var mappings = _settingsService.BackendDeviceObjectMappings;
+            var serverObjects = _settingsService.BackendServerObjects
+                .ToDictionary(o => o.ObjectId, o => o.ObjectName ?? string.Empty);
+
+            foreach (var device in devices)
+            {
+                if (mappings.TryGetValue(device.Id, out var objectId) &&
+                    serverObjects.TryGetValue(objectId, out var name))
+                {
+                    device.Name = name;
+                }
+            }
+        }
+
         private void ReplaceDashboardDevices(IEnumerable<Device> found)
         {
             void Apply()
             {
                 Devices.Clear();
-                foreach (var device in found)
+                var list = found.ToList();
+                ApplyDeviceNames(list);
+                foreach (var device in list)
                 {
                     Devices.Add(device);
                 }

@@ -1,6 +1,8 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using AnimatronicsControlCenter.UI.ViewModels;
+using AnimatronicsControlCenter.UI.Controls;
 using Microsoft.UI.Xaml.Input;
 using AnimatronicsControlCenter.Core.Models;
 using Microsoft.UI.Xaml.Navigation;
@@ -87,6 +89,17 @@ namespace AnimatronicsControlCenter.UI.Views
             // Only poll in Overview.
             var isOverview = MainPivot.SelectedIndex == 0;
             ViewModel.SetMotorsPollingAllowed(isOverview);
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Frame.CanGoBack)
+                Frame.GoBack();
+        }
+
+        private void SlideToUnlock_Unlocked(object sender, EventArgs e)
+        {
+            ViewModel.OnRelayUnlocked();
         }
     }
 }

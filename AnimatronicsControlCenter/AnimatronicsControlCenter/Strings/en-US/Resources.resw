@@ -265,6 +265,9 @@
   <data name="DeviceDetail_Tab_Overview" xml:space="preserve">
     <value>Overview</value>
   </data>
+  <data name="DeviceDetail_Tab_Power" xml:space="preserve">
+    <value>Power</value>
+  </data>
   <data name="DeviceDetail_Tab_Files" xml:space="preserve">
     <value>Files</value>
   </data>
@@ -312,6 +315,33 @@
   </data>
   <data name="DeviceDetail_VerifyDialogOK" xml:space="preserve">
     <value>OK</value>
+  </data>
+  <data name="DeviceDetail_Tab_Logs" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="DeviceDetail_RelayControl" xml:space="preserve">
+    <value>Power Relay</value>
+  </data>
+  <data name="DeviceDetail_RelaySafeLock" xml:space="preserve">
+    <value>Safety Lock (default)</value>
+  </data>
+  <data name="DeviceDetail_RelayUnlocked" xml:space="preserve">
+    <value>Relay Control Active</value>
+  </data>
+  <data name="DeviceDetail_RelaySlideHint" xml:space="preserve">
+    <value>▶ Slide to unlock relay</value>
+  </data>
+  <data name="DeviceDetail_RelayPowerOn" xml:space="preserve">
+    <value>Apply Power (ON)</value>
+  </data>
+  <data name="DeviceDetail_RelayPowerOff" xml:space="preserve">
+    <value>Cut Power (OFF)</value>
+  </data>
+  <data name="DeviceDetail_RelayWarning" xml:space="preserve">
+    <value>The relay directly cuts or supplies device power. Avoid switching OFF during motion playback, and verify load safety before switching ON.</value>
+  </data>
+  <data name="DeviceDetail_AutoLockSec" xml:space="preserve">
+    <value>Auto-lock in {0}s</value>
   </data>
   <data name="ScanDialog_Title" xml:space="preserve">
     <value>Scan Devices</value>

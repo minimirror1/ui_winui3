@@ -265,6 +265,9 @@
   <data name="DeviceDetail_Tab_Overview" xml:space="preserve">
     <value>개요</value>
   </data>
+  <data name="DeviceDetail_Tab_Power" xml:space="preserve">
+    <value>전원</value>
+  </data>
   <data name="DeviceDetail_Tab_Files" xml:space="preserve">
     <value>파일</value>
   </data>
@@ -312,6 +315,33 @@
   </data>
   <data name="DeviceDetail_VerifyDialogOK" xml:space="preserve">
     <value>확인</value>
+  </data>
+  <data name="DeviceDetail_Tab_Logs" xml:space="preserve">
+    <value>로그</value>
+  </data>
+  <data name="DeviceDetail_RelayControl" xml:space="preserve">
+    <value>전원 릴레이</value>
+  </data>
+  <data name="DeviceDetail_RelaySafeLock" xml:space="preserve">
+    <value>안전 잠금 (기본값)</value>
+  </data>
+  <data name="DeviceDetail_RelayUnlocked" xml:space="preserve">
+    <value>릴레이 제어 가능</value>
+  </data>
+  <data name="DeviceDetail_RelaySlideHint" xml:space="preserve">
+    <value>▶ 밀어서 릴레이 잠금 해제</value>
+  </data>
+  <data name="DeviceDetail_RelayPowerOn" xml:space="preserve">
+    <value>전원 인가 (ON)</value>
+  </data>
+  <data name="DeviceDetail_RelayPowerOff" xml:space="preserve">
+    <value>전원 차단 (OFF)</value>
+  </data>
+  <data name="DeviceDetail_RelayWarning" xml:space="preserve">
+    <value>릴레이는 장치 전원을 직접 차단·공급합니다. 모션 재생 중에는 OFF 전환을 피하고, ON 전환 시 연결 부하의 안전을 먼저 확인하세요.</value>
+  </data>
+  <data name="DeviceDetail_AutoLockSec" xml:space="preserve">
+    <value>{0}초 후 자동 잠금</value>
   </data>
   <data name="ScanDialog_Title" xml:space="preserve">
     <value>장치 검색</value>

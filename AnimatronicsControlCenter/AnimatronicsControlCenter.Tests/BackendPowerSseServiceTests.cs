@@ -82,6 +82,29 @@ public class BackendPowerSseServiceTests
         CollectionAssert.AreEqual(new byte[] { 0x00, 0x02, 0x05, 0x01, 0x00, 0x02 }, serial.SentPackets[0]);
     }
 
+    [TestMethod]
+    public async Task Start_ReconnectsWhenPowerSseStreamEnds()
+    {
+        using var handler = new QueueSseHandler(
+            "data: {\"eventType\":\"COMMAND\",\"data\":\"{\\\"power_status\\\":\\\"ON\\\",\\\"object_id\\\":\\\"obj-1\\\"}\"}\n\n",
+            "data: {\"eventType\":\"COMMAND\",\"data\":\"{\\\"power_status\\\":\\\"OFF\\\",\\\"object_id\\\":\\\"obj-1\\\"}\"}\n\n");
+        var settings = TestSettings("https://example.invalid");
+        settings.BackendDeviceObjectMappings = new Dictionary<int, string> { [2] = "obj-1" };
+        var trafficTap = new BackendTrafficTap();
+        var serial = new FakeSerialService();
+        using var service = new BackendPowerSseService(settings, trafficTap, serial, handler, TimeSpan.FromMilliseconds(10));
+
+        service.Start();
+
+        await WaitUntilAsync(() => handler.RequestCount >= 2 && serial.SentPackets.Count >= 2);
+        service.Stop();
+
+        Assert.IsTrue(handler.RequestCount >= 2);
+        CollectionAssert.AreEqual(new byte[] { 0x00, 0x02, 0x05, 0x01, 0x00, 0x01 }, serial.SentPackets[0]);
+        CollectionAssert.AreEqual(new byte[] { 0x00, 0x02, 0x05, 0x01, 0x00, 0x00 }, serial.SentPackets[1]);
+        Assert.IsTrue(trafficTap.GetEntries().Any(entry => entry.Message.Contains("SSE disconnected; reconnecting", StringComparison.Ordinal)));
+    }
+
     private static SettingsService TestSettings(string baseUrl)
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_power_sse_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
@@ -128,6 +151,28 @@ public class BackendPowerSseServiceTests
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(_body)
+            });
+        }
+    }
+
+    private sealed class QueueSseHandler : HttpMessageHandler
+    {
+        private readonly Queue<string> _bodies;
+
+        public QueueSseHandler(params string[] bodies)
+        {
+            _bodies = new Queue<string>(bodies);
+        }
+
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            string body = _bodies.Count > 0 ? _bodies.Dequeue() : string.Empty;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(body)
             });
         }
     }
