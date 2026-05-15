@@ -10,6 +10,8 @@ namespace AnimatronicsControlCenter.Infrastructure
     {
         private readonly object _lock = new();
         private readonly Queue<SerialTrafficEntry> _buffer;
+        private int _txCount;
+        private int _rxCount;
 
         public int Capacity { get; }
 
@@ -29,11 +31,28 @@ namespace AnimatronicsControlCenter.Infrastructure
             }
         }
 
+        public SerialTrafficCounts GetCounts()
+        {
+            lock (_lock)
+            {
+                return new SerialTrafficCounts(_txCount, _rxCount);
+            }
+        }
+
         public void Clear()
         {
             lock (_lock)
             {
                 _buffer.Clear();
+            }
+        }
+
+        public void ClearCounts()
+        {
+            lock (_lock)
+            {
+                _txCount = 0;
+                _rxCount = 0;
             }
         }
 
@@ -59,10 +78,20 @@ namespace AnimatronicsControlCenter.Infrastructure
             lock (_lock)
             {
                 _buffer.Enqueue(entry);
+                if (direction == SerialTrafficDirection.Tx)
+                {
+                    _txCount++;
+                }
+                else
+                {
+                    _rxCount++;
+                }
+
                 while (_buffer.Count > Capacity)
                 {
                     _buffer.Dequeue();
                 }
+
                 handler = EntryRecorded;
             }
 
@@ -77,9 +106,3 @@ namespace AnimatronicsControlCenter.Infrastructure
         }
     }
 }
-
-
-
-
-
-

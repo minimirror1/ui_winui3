@@ -119,6 +119,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private bool isParseErrorOnly;
 
+        [ObservableProperty]
+        private int txCount;
+
+        [ObservableProperty]
+        private int rxCount;
+
+        [ObservableProperty]
+        private int totalCount;
+
         public string PauseButtonText => IsPaused
             ? Strings.Get("SerialMonitor_Resume", Strings.Code)
             : Strings.Get("SerialMonitor_Pause", Strings.Code);
@@ -144,6 +153,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 AppendToComRawAll(entry);
             }
 
+            RefreshCounts();
             RebuildVisible();
 
             _tap.EntryRecorded += TapOnEntryRecorded;
@@ -270,7 +280,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
 
             if (drained.Count == 0 && drainedComRaw.Count == 0) return;
+            RefreshCounts();
             TrimIfNeeded();
+        }
+
+        private void RefreshCounts()
+        {
+            SerialTrafficCounts counts = _tap.GetCounts();
+            TxCount = counts.TxCount;
+            RxCount = counts.RxCount;
+            TotalCount = counts.TotalCount;
         }
 
         private void AppendToAll(SerialTrafficEntry entry)
@@ -447,6 +466,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             ParseErrorCount = 0;
             SelectedEntry = null;
             SelectedPacket = null;
+            RefreshCounts();
+        }
+
+        [RelayCommand]
+        private void ClearCounts()
+        {
+            _tap.ClearCounts();
+            RefreshCounts();
         }
 
         [RelayCommand]
@@ -562,7 +589,6 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                $"Raw: {packet.RawHex}";
     }
 }
-
 
 
 

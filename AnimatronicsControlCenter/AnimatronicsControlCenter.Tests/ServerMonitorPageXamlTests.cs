@@ -21,6 +21,11 @@ public class ServerMonitorPageXamlTests
         StringAssert.Contains(text, "Recent backend traffic");
         StringAssert.Contains(text, "Copy all");
         StringAssert.Contains(text, "Copy selected");
+        StringAssert.Contains(text, "Request");
+        StringAssert.Contains(text, "Response");
+        StringAssert.Contains(text, "Error");
+        StringAssert.Contains(text, "Total");
+        StringAssert.Contains(text, "Clear counts");
 
         XElement trafficList = page.Descendants(xaml + "ListView").Single(element => (string?)element.Attribute(x + "Name") == "TrafficList");
         Assert.AreEqual("Multiple", (string?)trafficList.Attribute("SelectionMode"));

@@ -10,6 +10,11 @@ public enum BackendTrafficPhase
     Error
 }
 
+public readonly record struct BackendTrafficCounts(int RequestCount, int ResponseCount, int ErrorCount)
+{
+    public int TotalCount => RequestCount + ResponseCount + ErrorCount;
+}
+
 public sealed record BackendTrafficEntry(
     DateTimeOffset Timestamp,
     BackendTrafficPhase Phase,

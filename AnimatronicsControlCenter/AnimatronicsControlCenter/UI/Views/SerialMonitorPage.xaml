@@ -10,6 +10,7 @@
     <Grid Padding="12" RowSpacing="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -74,8 +75,78 @@
                     Click="SaveButton_Click"/>
         </Grid>
 
+        <Grid Grid.Row="1" ColumnSpacing="10" Margin="0,4,0,2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,8">
+                <StackPanel>
+                    <TextBlock Text="TX"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.TxCount, Mode=OneWay}"
+                               FontFamily="Consolas"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,8">
+                <StackPanel>
+                    <TextBlock Text="RX"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.RxCount, Mode=OneWay}"
+                               FontFamily="Consolas"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,8">
+                <StackPanel>
+                    <TextBlock Text="Total"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}"
+                               FontFamily="Consolas"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+
+            <Button Grid.Column="4"
+                    Command="{x:Bind ViewModel.ClearCountsCommand}"
+                    VerticalAlignment="Center"
+                    Padding="12,8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE894;" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                    <TextBlock Text="Clear counts"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
         <Pivot x:Name="MainPivot"
-               Grid.Row="1"
+               Grid.Row="2"
                SelectionChanged="MainPivot_SelectionChanged">
             <PivotItem Header="{x:Bind ViewModel.Strings.Get('SerialMonitor_Tab_Serial', ViewModel.Strings.Code), Mode=OneWay}">
                 <Grid>
@@ -205,7 +276,6 @@
         </Pivot>
     </Grid>
 </Page>
-
 
 
 

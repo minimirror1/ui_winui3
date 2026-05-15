@@ -8,6 +8,11 @@ namespace AnimatronicsControlCenter.Core.Models
         Rx = 1
     }
 
+    public readonly record struct SerialTrafficCounts(int TxCount, int RxCount)
+    {
+        public int TotalCount => TxCount + RxCount;
+    }
+
     public sealed record SerialTrafficEntry(
         DateTimeOffset Timestamp,
         SerialTrafficDirection Direction,
@@ -21,9 +26,3 @@ namespace AnimatronicsControlCenter.Core.Models
         public string DisplayLine => $"{Prefix}[{TimestampText}]{Line}";
     }
 }
-
-
-
-
-
-

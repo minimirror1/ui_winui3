@@ -28,6 +28,21 @@ public class SerialMonitorPageAutoScrollTests
         StringAssert.Contains(code, "listView.ScrollIntoView(items[^1])");
     }
 
+    [TestMethod]
+    public void SerialMonitorPage_ShowsTrafficCountsAndClearCountsButton()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SerialMonitorPage.xaml"));
+
+        StringAssert.Contains(xaml, "TX");
+        StringAssert.Contains(xaml, "RX");
+        StringAssert.Contains(xaml, "Total");
+        StringAssert.Contains(xaml, "Clear counts");
+        StringAssert.Contains(xaml, "ViewModel.TxCount");
+        StringAssert.Contains(xaml, "ViewModel.RxCount");
+        StringAssert.Contains(xaml, "ViewModel.TotalCount");
+        StringAssert.Contains(xaml, "ViewModel.ClearCountsCommand");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

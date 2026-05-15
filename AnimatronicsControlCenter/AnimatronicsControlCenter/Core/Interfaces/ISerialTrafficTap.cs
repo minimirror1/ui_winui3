@@ -12,7 +12,11 @@ namespace AnimatronicsControlCenter.Core.Interfaces
 
         IReadOnlyList<SerialTrafficEntry> GetSnapshot();
 
+        SerialTrafficCounts GetCounts();
+
         void Clear();
+
+        void ClearCounts();
 
         void RecordTx(string line);
 
@@ -23,9 +27,3 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         void RecordRxBytes(byte[] data);
     }
 }
-
-
-
-
-
-

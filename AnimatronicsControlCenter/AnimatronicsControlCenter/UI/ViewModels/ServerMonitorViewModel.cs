@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
+using CommunityToolkit.Mvvm.Input;
 
 namespace AnimatronicsControlCenter.UI.ViewModels;
 
@@ -41,12 +42,17 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
     private string _lastSuccess = "-";
     private string _lastFailure = "-";
     private string _latestError = "-";
+    private int _requestCount;
+    private int _responseCount;
+    private int _errorCount;
+    private int _totalCount;
     private readonly List<BackendTrafficEntry> _visibleTrafficEntries = new();
 
     public ServerMonitorViewModel(IBackendTrafficTap trafficTap, ISettingsService settingsService)
     {
         _trafficTap = trafficTap;
         _settingsService = settingsService;
+        ClearCountsCommand = new RelayCommand(ClearCounts);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -81,7 +87,33 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
         private set => SetProperty(ref _latestError, value);
     }
 
+    public int RequestCount
+    {
+        get => _requestCount;
+        private set => SetProperty(ref _requestCount, value);
+    }
+
+    public int ResponseCount
+    {
+        get => _responseCount;
+        private set => SetProperty(ref _responseCount, value);
+    }
+
+    public int ErrorCount
+    {
+        get => _errorCount;
+        private set => SetProperty(ref _errorCount, value);
+    }
+
+    public int TotalCount
+    {
+        get => _totalCount;
+        private set => SetProperty(ref _totalCount, value);
+    }
+
     public ObservableCollection<ServerTrafficEntryViewModel> TrafficEntries { get; } = new();
+
+    public IRelayCommand ClearCountsCommand { get; }
 
     public string CopyAllTrafficEntries()
         => FormatTrafficEntries(TrafficEntries);
@@ -118,8 +150,24 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
         LastSuccess = snapshot.LastSuccessAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
         LastFailure = snapshot.LastFailureAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
         LatestError = string.IsNullOrWhiteSpace(snapshot.LastErrorMessage) ? "-" : snapshot.LastErrorMessage;
+        RefreshCounts();
 
         SyncTrafficEntries(_trafficTap.GetEntries());
+    }
+
+    private void RefreshCounts()
+    {
+        BackendTrafficCounts counts = _trafficTap.GetCounts();
+        RequestCount = counts.RequestCount;
+        ResponseCount = counts.ResponseCount;
+        ErrorCount = counts.ErrorCount;
+        TotalCount = counts.TotalCount;
+    }
+
+    private void ClearCounts()
+    {
+        _trafficTap.ClearCounts();
+        RefreshCounts();
     }
 
     private void SyncTrafficEntries(IReadOnlyList<BackendTrafficEntry> latestEntries)
@@ -163,9 +211,9 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
         return true;
     }
 
-    private void SetProperty(ref string field, string value, [CallerMemberName] string? propertyName = null)
+    private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (field == value)
+        if (EqualityComparer<T>.Default.Equals(field, value))
         {
             return;
         }

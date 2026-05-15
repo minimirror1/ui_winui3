@@ -52,11 +52,29 @@ public sealed class BackendTrafficTap : IBackendTrafficTap
         }
     }
 
+    public BackendTrafficCounts GetCounts()
+    {
+        lock (_lock)
+        {
+            return _state.GetCounts();
+        }
+    }
+
     public IReadOnlyList<BackendTrafficEntry> GetEntries()
     {
         lock (_lock)
         {
             return _state.GetEntries();
         }
+    }
+
+    public void ClearCounts()
+    {
+        lock (_lock)
+        {
+            _state.ClearCounts();
+        }
+
+        TrafficChanged?.Invoke(this, EventArgs.Empty);
     }
 }

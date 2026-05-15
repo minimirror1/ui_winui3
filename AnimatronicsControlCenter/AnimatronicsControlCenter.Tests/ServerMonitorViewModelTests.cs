@@ -78,6 +78,44 @@ public class ServerMonitorViewModelTests
         Assert.AreEqual("Response", viewModel.TrafficEntries[1].Phase);
     }
 
+    [TestMethod]
+    public void Refresh_ProjectsTrafficCounts()
+    {
+        var trafficTap = new BackendTrafficTap();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(CreateTempSettingsPath()));
+        var now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        trafficTap.RecordRequest(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), now);
+        trafficTap.RecordResponse(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), 200, TimeSpan.FromMilliseconds(25), "OK", now);
+        trafficTap.RecordError(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), TimeSpan.Zero, "Failed", now);
+        var viewModel = new ServerMonitorViewModel(trafficTap, settings);
+
+        viewModel.Refresh(now);
+
+        Assert.AreEqual(1, viewModel.RequestCount);
+        Assert.AreEqual(1, viewModel.ResponseCount);
+        Assert.AreEqual(1, viewModel.ErrorCount);
+        Assert.AreEqual(3, viewModel.TotalCount);
+    }
+
+    [TestMethod]
+    public void ClearCountsCommand_ResetsCountsWithoutClearingTrafficEntries()
+    {
+        var trafficTap = new BackendTrafficTap();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(CreateTempSettingsPath()));
+        var now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        trafficTap.RecordRequest(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), now);
+        var viewModel = new ServerMonitorViewModel(trafficTap, settings);
+        viewModel.Refresh(now);
+
+        viewModel.ClearCountsCommand.Execute(null);
+
+        Assert.AreEqual(0, viewModel.RequestCount);
+        Assert.AreEqual(0, viewModel.ResponseCount);
+        Assert.AreEqual(0, viewModel.ErrorCount);
+        Assert.AreEqual(0, viewModel.TotalCount);
+        Assert.AreEqual(1, viewModel.TrafficEntries.Count);
+    }
+
     private sealed class FakeBackendSettingsPathProvider : IBackendSettingsPathProvider
     {
         public FakeBackendSettingsPathProvider(string filePath)
