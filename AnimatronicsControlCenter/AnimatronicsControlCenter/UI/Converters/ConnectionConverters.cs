@@ -157,6 +157,38 @@ namespace AnimatronicsControlCenter.UI.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// Relay LED/text color: ON → danger red, OFF → muted gray
+    /// </summary>
+    public class PowerStatusToDangerBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush On  = new(Windows.UI.Color.FromArgb(255, 248, 113, 113)); // red-400
+        private static readonly SolidColorBrush Off = new(Windows.UI.Color.FromArgb(255, 90,  90,  90));  // dim gray
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            return value is string s && s.Equals("ON", StringComparison.OrdinalIgnoreCase) ? On : Off;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Relay lock state: true (unlocked) → accent green, false → muted
+    /// </summary>
+    public class BoolToRelayLockBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush Unlocked = new(Windows.UI.Color.FromArgb(255, 108, 203, 95));
+        private static readonly SolidColorBrush Locked   = new(Windows.UI.Color.FromArgb(180, 138, 138, 138));
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            return value is bool b && b ? Unlocked : Locked;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
+    }
 }
 
 

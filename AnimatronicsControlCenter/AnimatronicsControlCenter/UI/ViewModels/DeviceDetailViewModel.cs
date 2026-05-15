@@ -31,6 +31,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private Task? _statusPollingTask;
         private CancellationTokenSource? _deviceLoadCts;
 
+        private Device? _trackedDevice;
+        private Microsoft.UI.Dispatching.DispatcherQueueTimer? _relayAutoLockTimer;
+        private int _relayAutoLockCountdown;
+        private const int RelayAutoLockSeconds = 15;
+
         [ObservableProperty]
         private Device? selectedDevice;
 
@@ -72,6 +77,17 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private int motorPollingIntervalMs = 1000;
 
+        [ObservableProperty]
+        private bool isRelayUnlocked;
+
+        [ObservableProperty]
+        private int relayAutoLockSecondsRemaining;
+
+        public bool IsRelayOn => SelectedDevice?.PowerStatus == "ON";
+
+        public string SelectedDeviceAddress => SelectedDevice?.Address64 is ulong addr && addr != 0
+            ? $"0x{addr:X16}" : "—";
+
         public string MotionTotalTimeDisplay
             => SelectedDevice == null || SelectedDevice.MotionTotalTime == TimeSpan.Zero
                 ? "Unavailable"
@@ -92,8 +108,35 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             Strings = new LocalizedStrings(localizationService);
         }
 
+        partial void OnIsRelayUnlockedChanged(bool value)
+        {
+            SetPowerOnCommand.NotifyCanExecuteChanged();
+            SetPowerOffCommand.NotifyCanExecuteChanged();
+        }
+
+        private void TrackedDevice_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Device.PowerStatus))
+            {
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    OnPropertyChanged(nameof(IsRelayOn));
+                    SetPowerOnCommand.NotifyCanExecuteChanged();
+                    SetPowerOffCommand.NotifyCanExecuteChanged();
+                });
+            }
+        }
+
         partial void OnSelectedDeviceChanged(Device? value)
         {
+            if (_trackedDevice != null)
+                _trackedDevice.PropertyChanged -= TrackedDevice_PropertyChanged;
+            _trackedDevice = value;
+            if (value != null)
+                value.PropertyChanged += TrackedDevice_PropertyChanged;
+
+            LockRelay();
+
             CancelPendingLoads();
             StopMotorsPolling();
             StopStatusPolling();
@@ -644,6 +687,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             target.MotionCurrentTime = source.MotionCurrentTime;
             target.MotionTotalTime = source.MotionTotalTime;
             target.Address64 = source.Address64;
+            target.PowerStatus = source.PowerStatus;
         }
 
         private void ResetSnapshotState(Device device)
@@ -702,7 +746,66 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             OnPropertyChanged(nameof(MotionTotalTimeDisplay));
             OnPropertyChanged(nameof(MotionDataCountDisplay));
             OnPropertyChanged(nameof(MotionCreatedAtDisplay));
+            OnPropertyChanged(nameof(IsRelayOn));
+            OnPropertyChanged(nameof(SelectedDeviceAddress));
+            SetPowerOnCommand.NotifyCanExecuteChanged();
+            SetPowerOffCommand.NotifyCanExecuteChanged();
         }
+
+        public void OnRelayUnlocked()
+        {
+            IsRelayUnlocked = true;
+            StartRelayAutoLockTimer();
+        }
+
+        public void LockRelay()
+        {
+            IsRelayUnlocked = false;
+            RelayAutoLockSecondsRemaining = 0;
+            _relayAutoLockTimer?.Stop();
+        }
+
+        private void StartRelayAutoLockTimer()
+        {
+            _relayAutoLockTimer?.Stop();
+            _relayAutoLockCountdown = RelayAutoLockSeconds;
+            RelayAutoLockSecondsRemaining = RelayAutoLockSeconds;
+
+            _relayAutoLockTimer = _dispatcherQueue.CreateTimer();
+            _relayAutoLockTimer.Interval = TimeSpan.FromSeconds(1);
+            _relayAutoLockTimer.IsRepeating = true;
+            _relayAutoLockTimer.Tick += (_, _) =>
+            {
+                _relayAutoLockCountdown--;
+                RelayAutoLockSecondsRemaining = _relayAutoLockCountdown;
+                if (_relayAutoLockCountdown <= 0) LockRelay();
+            };
+            _relayAutoLockTimer.Start();
+        }
+
+        [RelayCommand(CanExecute = nameof(CanSetPowerOn))]
+        private async Task SetPowerOnAsync()
+        {
+            if (SelectedDevice == null) return;
+            var packet = BinarySerializer.EncodePowerCtrl(
+                BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryPowerAction.On);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
+            StartRelayAutoLockTimer();
+        }
+        private bool CanSetPowerOn() => IsRelayUnlocked && !IsRelayOn;
+
+        [RelayCommand(CanExecute = nameof(CanSetPowerOff))]
+        private async Task SetPowerOffAsync()
+        {
+            if (SelectedDevice == null) return;
+            var packet = BinarySerializer.EncodePowerCtrl(
+                BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryPowerAction.Off);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
+            StartRelayAutoLockTimer();
+        }
+        private bool CanSetPowerOff() => IsRelayUnlocked && IsRelayOn;
 
         private static bool TryGetOkPayload(byte[]? responseBytes, out ResponseHeader header, out byte[] payload, out string errorMessage)
         {
