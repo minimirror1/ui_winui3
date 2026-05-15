@@ -208,8 +208,22 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12">
-                        <TextBlock Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_ParseErrors', ViewModel.Strings.Code), Mode=OneWay}"/>
-                        <TextBlock Text="{x:Bind ViewModel.ParseErrorCount, Mode=OneWay}"/>
+                        <TextBlock Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_ParseErrors', ViewModel.Strings.Code), Mode=OneWay}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Bind ViewModel.ParseErrorCount, Mode=OneWay}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="방향" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{x:Bind ViewModel.PacketDirectionFilters, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPacketDirectionFilter, Mode=TwoWay}"
+                                  MinWidth="100"/>
+                        <TextBlock Text="송신 ID" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{x:Bind ViewModel.PacketSrcIdFilters, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPacketSrcIdFilter, Mode=TwoWay}"
+                                  MinWidth="80"/>
+                        <TextBlock Text="수신 ID" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{x:Bind ViewModel.PacketTarIdFilters, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPacketTarIdFilter, Mode=TwoWay}"
+                                  MinWidth="80"/>
                         <TextBlock Text="Command" VerticalAlignment="Center"/>
                         <ComboBox ItemsSource="{x:Bind ViewModel.PacketCommandFilters, Mode=OneWay}"
                                   SelectedItem="{x:Bind ViewModel.SelectedPacketCommandFilter, Mode=TwoWay}"
@@ -218,7 +232,7 @@
                         <ComboBox ItemsSource="{x:Bind ViewModel.PacketStatusFilters, Mode=OneWay}"
                                   SelectedItem="{x:Bind ViewModel.SelectedPacketStatusFilter, Mode=TwoWay}"
                                   MinWidth="100"/>
-                        <ToggleSwitch Header="Errors only"
+                        <ToggleSwitch Header="오류만"
                                       IsOn="{x:Bind ViewModel.IsParseErrorOnly, Mode=TwoWay}"/>
                     </StackPanel>
 
