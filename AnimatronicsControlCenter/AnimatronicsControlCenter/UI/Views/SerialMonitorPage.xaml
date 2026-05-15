@@ -7,11 +7,12 @@
     xmlns:cv="using:AnimatronicsControlCenter.UI.Converters"
     mc:Ignorable="d">
 
-    <Grid Padding="12" RowSpacing="8">
+    <Grid Padding="12,12,12,0" RowSpacing="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
@@ -332,6 +333,56 @@
                 </Grid>
             </PivotItem>
         </Pivot>
+
+        <!-- Status bar -->
+        <Border x:Name="statusbar"
+                Grid.Row="3"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,5"
+                Margin="-12,0,-12,0">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Ellipse Width="7" Height="7" Fill="#4CC180"/>
+                    <TextBlock Text="연결됨" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+                <TextBlock VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                    <Run Text="TX "/>
+                    <Run Text="{x:Bind ViewModel.TxCount, Mode=OneWay}"
+                         FontWeight="SemiBold"
+                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                </TextBlock>
+                <TextBlock VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                    <Run Text="RX "/>
+                    <Run Text="{x:Bind ViewModel.RxCount, Mode=OneWay}"
+                         FontWeight="SemiBold"
+                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                </TextBlock>
+                <TextBlock VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                    <Run Text="Total "/>
+                    <Run Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}"
+                         FontWeight="SemiBold"
+                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                </TextBlock>
+                <!-- LIVE indicator (not paused) -->
+                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center"
+                            Visibility="{x:Bind BoolToCollapsed(ViewModel.IsPaused), Mode=OneWay}">
+                    <Ellipse Width="6" Height="6" Fill="#4CC180"/>
+                    <TextBlock Text="LIVE" FontSize="12" FontWeight="SemiBold" Foreground="#4CC180"/>
+                </StackPanel>
+                <!-- Paused indicator -->
+                <TextBlock Text="● 일시정지"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{ThemeResource SystemAccentColor}"
+                           VerticalAlignment="Center"
+                           Visibility="{x:Bind BoolToVisible(ViewModel.IsPaused), Mode=OneWay}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Page>
 
