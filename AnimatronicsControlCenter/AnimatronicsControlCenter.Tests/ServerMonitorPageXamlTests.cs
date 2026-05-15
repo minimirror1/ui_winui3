@@ -28,6 +28,17 @@ public class ServerMonitorPageXamlTests
         Assert.IsTrue(page.Descendants(xaml + "Button").Any(element => (string?)element.Attribute(x + "Name") == "CopySelectedTrafficButton"));
     }
 
+    [TestMethod]
+    public void ServerMonitorPage_AutoScrollsTrafficListToNewestEntry()
+    {
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "ServerMonitorPage.xaml.cs"));
+
+        StringAssert.Contains(code, "ViewModel.TrafficEntries.CollectionChanged += TrafficEntries_CollectionChanged");
+        StringAssert.Contains(code, "ScrollTrafficListToLastItemAfterLayout");
+        StringAssert.Contains(code, "TrafficList.ScrollIntoView(ViewModel.TrafficEntries[^1])");
+        StringAssert.Contains(code, "DispatcherQueue.TryEnqueue");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

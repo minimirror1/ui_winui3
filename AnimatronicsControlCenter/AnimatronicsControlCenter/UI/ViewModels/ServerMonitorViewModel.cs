@@ -41,6 +41,7 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
     private string _lastSuccess = "-";
     private string _lastFailure = "-";
     private string _latestError = "-";
+    private readonly List<BackendTrafficEntry> _visibleTrafficEntries = new();
 
     public ServerMonitorViewModel(IBackendTrafficTap trafficTap, ISettingsService settingsService)
     {
@@ -118,11 +119,48 @@ public sealed class ServerMonitorViewModel : INotifyPropertyChanged
         LastFailure = snapshot.LastFailureAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
         LatestError = string.IsNullOrWhiteSpace(snapshot.LastErrorMessage) ? "-" : snapshot.LastErrorMessage;
 
-        TrafficEntries.Clear();
-        foreach (BackendTrafficEntry entry in _trafficTap.GetEntries())
+        SyncTrafficEntries(_trafficTap.GetEntries());
+    }
+
+    private void SyncTrafficEntries(IReadOnlyList<BackendTrafficEntry> latestEntries)
+    {
+        while (_visibleTrafficEntries.Count > 0 &&
+            !latestEntries.Contains(_visibleTrafficEntries[0]))
         {
+            _visibleTrafficEntries.RemoveAt(0);
+            TrafficEntries.RemoveAt(0);
+        }
+
+        if (!VisibleEntriesMatchPrefix(latestEntries))
+        {
+            _visibleTrafficEntries.Clear();
+            TrafficEntries.Clear();
+        }
+
+        for (int i = _visibleTrafficEntries.Count; i < latestEntries.Count; i++)
+        {
+            BackendTrafficEntry entry = latestEntries[i];
+            _visibleTrafficEntries.Add(entry);
             TrafficEntries.Add(new ServerTrafficEntryViewModel(entry));
         }
+    }
+
+    private bool VisibleEntriesMatchPrefix(IReadOnlyList<BackendTrafficEntry> latestEntries)
+    {
+        if (_visibleTrafficEntries.Count > latestEntries.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _visibleTrafficEntries.Count; i++)
+        {
+            if (!Equals(_visibleTrafficEntries[i], latestEntries[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void SetProperty(ref string field, string value, [CallerMemberName] string? propertyName = null)
