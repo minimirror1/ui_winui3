@@ -29,17 +29,28 @@ public class SerialMonitorPageAutoScrollTests
     }
 
     [TestMethod]
-    public void SerialMonitorPage_ShowsTrafficCountsAndClearCountsButton()
+    public void SerialMonitorPage_RemovesTopCountsButKeepsStatusBarCounts()
     {
         string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SerialMonitorPage.xaml"));
 
+        StringAssert.Contains(xaml, "x:Name=\"statusbar\"");
         StringAssert.Contains(xaml, "TX");
         StringAssert.Contains(xaml, "RX");
         StringAssert.Contains(xaml, "Total");
-        StringAssert.Contains(xaml, "Clear counts");
         StringAssert.Contains(xaml, "ViewModel.TxCount");
         StringAssert.Contains(xaml, "ViewModel.RxCount");
         StringAssert.Contains(xaml, "ViewModel.TotalCount");
+    }
+
+    [TestMethod]
+    public void SerialMonitorPage_StatusBarCountsHaveClearCountsContextMenu()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SerialMonitorPage.xaml"));
+
+        StringAssert.Contains(xaml, "x:Name=\"StatusBarCounts\"");
+        StringAssert.Contains(xaml, "ContextFlyout");
+        StringAssert.Contains(xaml, "MenuFlyoutItem");
+        StringAssert.Contains(xaml, "카운터 초기화");
         StringAssert.Contains(xaml, "ViewModel.ClearCountsCommand");
     }
 
