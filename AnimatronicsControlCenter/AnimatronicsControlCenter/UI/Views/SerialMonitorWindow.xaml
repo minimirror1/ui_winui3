@@ -7,7 +7,7 @@
     xmlns:views="using:AnimatronicsControlCenter.UI.Views"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <views:SerialMonitorPage />
     </Grid>
 </Window>

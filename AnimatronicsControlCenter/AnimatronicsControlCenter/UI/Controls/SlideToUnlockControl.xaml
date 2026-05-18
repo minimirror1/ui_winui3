@@ -7,12 +7,41 @@
     mc:Ignorable="d"
     d:DesignWidth="320" d:DesignHeight="56">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SlideLockTrackBackgroundBrush" Color="#F3F4F6"/>
+                    <SolidColorBrush x:Key="SlideLockTrackBorderBrush" Color="#CBD5E1"/>
+                    <Color x:Key="SlideLockShimmerColor">#26000000</Color>
+                    <SolidColorBrush x:Key="SlideLockHintBrush" Color="#64748B"/>
+                    <SolidColorBrush x:Key="SlideLockThumbBackgroundBrush" Color="#16A34A"/>
+                    <SolidColorBrush x:Key="SlideLockThumbForegroundBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="SlideUnlockTrackBackgroundBrush" Color="#DCFCE7"/>
+                    <SolidColorBrush x:Key="SlideUnlockTrackBorderBrush" Color="#86EFAC"/>
+                    <SolidColorBrush x:Key="SlideUnlockHintBrush" Color="#15803D"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SlideLockTrackBackgroundBrush" Color="#2A2A2A"/>
+                    <SolidColorBrush x:Key="SlideLockTrackBorderBrush" Color="#1A1A1A"/>
+                    <Color x:Key="SlideLockShimmerColor">#18FFFFFF</Color>
+                    <SolidColorBrush x:Key="SlideLockHintBrush" Color="#8A8A8A"/>
+                    <SolidColorBrush x:Key="SlideLockThumbBackgroundBrush" Color="#4ADE80"/>
+                    <SolidColorBrush x:Key="SlideLockThumbForegroundBrush" Color="#06210F"/>
+                    <SolidColorBrush x:Key="SlideUnlockTrackBackgroundBrush" Color="#284ADE80"/>
+                    <SolidColorBrush x:Key="SlideUnlockTrackBorderBrush" Color="#734ADE80"/>
+                    <SolidColorBrush x:Key="SlideUnlockHintBrush" Color="#4ADE80"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid x:Name="RootGrid" Height="56" SizeChanged="RootGrid_SizeChanged">
 
         <!-- Track background -->
         <Border x:Name="TrackBorder" CornerRadius="28"
-                Background="#2a2a2a"
-                BorderBrush="#1a1a1a" BorderThickness="1"/>
+                Background="{ThemeResource SlideLockTrackBackgroundBrush}"
+                BorderBrush="{ThemeResource SlideLockTrackBorderBrush}" BorderThickness="1"/>
 
         <!-- Shimmer sweep (shown while locked) -->
         <Border x:Name="ShimmerHost" CornerRadius="28" IsHitTestVisible="False">
@@ -20,7 +49,7 @@
                 <Rectangle.Fill>
                     <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
                         <GradientStop Color="Transparent" Offset="0"/>
-                        <GradientStop Color="#18FFFFFF" Offset="0.5"/>
+                        <GradientStop Color="{ThemeResource SlideLockShimmerColor}" Offset="0.5"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
                 </Rectangle.Fill>
@@ -35,7 +64,7 @@
                    HorizontalAlignment="Center" VerticalAlignment="Center"
                    FontSize="13" IsHitTestVisible="False"
                    Text="▶ 밀어서 잠금 해제"
-                   Foreground="#8a8a8a"/>
+                   Foreground="{ThemeResource SlideLockHintBrush}"/>
 
         <!-- Draggable thumb -->
         <Canvas x:Name="ThumbCanvas">
@@ -43,7 +72,7 @@
                     Width="48" Height="48"
                     CornerRadius="24"
                     Canvas.Left="4" Canvas.Top="4"
-                    Background="#4ade80"
+                    Background="{ThemeResource SlideLockThumbBackgroundBrush}"
                     PointerPressed="Thumb_PointerPressed"
                     PointerMoved="Thumb_PointerMoved"
                     PointerReleased="Thumb_PointerReleased"
@@ -52,7 +81,7 @@
                           Glyph="&#xE72E;"
                           FontFamily="Segoe Fluent Icons"
                           FontSize="18"
-                          Foreground="#06210f"
+                          Foreground="{ThemeResource SlideLockThumbForegroundBrush}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"/>
             </Border>

@@ -18,14 +18,16 @@ public class SerialMonitorImproveTests
     }
 
     [TestMethod]
-    public void SerialDirectionBrushConverter_UsesTxBlueRxGreen()
+    public void SerialDirectionBrushConverter_UsesThemeAwareTxBlueRxGreen()
     {
         string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter",
             "UI", "Converters", "SerialDirectionToBrushConverter.cs"));
 
-        // TX = 107,163,214 (blue), RX = 110,196,160 (green)
-        StringAssert.Contains(code, "107, 163, 214");
-        StringAssert.Contains(code, "110, 196, 160");
+        StringAssert.Contains(code, "DarkTxBrush");
+        StringAssert.Contains(code, "DarkRxBrush");
+        StringAssert.Contains(code, "LightTxBrush");
+        StringAssert.Contains(code, "LightRxBrush");
+        StringAssert.Contains(code, "AppThemeHelper.IsLightTheme()");
     }
 
     // ── Task 2 ──────────────────────────────────────────────────────────────
@@ -42,6 +44,17 @@ public class SerialMonitorImproveTests
     }
 
     // ── Task 3 ──────────────────────────────────────────────────────────────
+    [TestMethod]
+    public void SerialPage_LineTextUsesThemeForegroundInsteadOfDirectionBrush()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter",
+            "UI", "Views", "SerialMonitorPage.xaml"));
+        string normalizedXaml = xaml.Replace("\r\n", "\n", StringComparison.Ordinal);
+
+        Assert.AreEqual(2, CountOccurrences(normalizedXaml, "Text=\"{x:Bind Line}\""));
+        Assert.AreEqual(2, CountOccurrences(normalizedXaml, "Text=\"{x:Bind Line}\"\n                                                   FontFamily=\"Consolas\"\n                                                   FontSize=\"12\"\n                                                   Foreground=\"{ThemeResource SystemControlForegroundBaseHighBrush}\""));
+    }
+
     [TestMethod]
     public void SerialMonitorViewModel_HasPacketDirectionFilter()
     {
@@ -122,5 +135,18 @@ public class SerialMonitorImproveTests
         }
         Assert.Fail($"Could not find project file: {Path.Combine(segments)}");
         return string.Empty;
+    }
+
+    private static int CountOccurrences(string value, string search)
+    {
+        int count = 0;
+        int index = 0;
+        while ((index = value.IndexOf(search, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += search.Length;
+        }
+
+        return count;
     }
 }

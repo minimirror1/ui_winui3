@@ -1,6 +1,7 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
 
@@ -30,6 +31,7 @@ namespace AnimatronicsControlCenter.UI.Controls
         public SlideToUnlockControl()
         {
             this.InitializeComponent();
+            ActualThemeChanged += (_, _) => ApplyUnlockedState(IsUnlocked);
             StartSweepAnimation();
         }
 
@@ -51,26 +53,20 @@ namespace AnimatronicsControlCenter.UI.Controls
                 _sweepStoryboard?.Stop();
                 ShimmerHost.Visibility = Visibility.Collapsed;
                 Canvas.SetLeft(ThumbBorder, _maxThumbX);
-                TrackBorder.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(40, 74, 222, 128));
-                TrackBorder.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(115, 74, 222, 128));
+                TrackBorder.Background = GetBrush("SlideUnlockTrackBackgroundBrush");
+                TrackBorder.BorderBrush = GetBrush("SlideUnlockTrackBorderBrush");
                 HintText.Text = "잠금 해제됨 — 릴레이 제어 가능";
-                HintText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(255, 74, 222, 128));
+                HintText.Foreground = GetBrush("SlideUnlockHintBrush");
                 ThumbIcon.Glyph = "";
             }
             else
             {
                 Canvas.SetLeft(ThumbBorder, 4.0);
                 _thumbStartX = 4.0;
-                TrackBorder.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(255, 42, 42, 42));
-                TrackBorder.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(255, 26, 26, 26));
+                TrackBorder.Background = GetBrush("SlideLockTrackBackgroundBrush");
+                TrackBorder.BorderBrush = GetBrush("SlideLockTrackBorderBrush");
                 HintText.Text = "▶ 밀어서 잠금 해제";
-                HintText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Windows.UI.Color.FromArgb(255, 138, 138, 138));
+                HintText.Foreground = GetBrush("SlideLockHintBrush");
                 ThumbIcon.Glyph = "";
                 ShimmerHost.Visibility = Visibility.Visible;
                 StartSweepAnimation();
@@ -99,6 +95,23 @@ namespace AnimatronicsControlCenter.UI.Controls
             _sweepStoryboard = new Storyboard();
             _sweepStoryboard.Children.Add(anim);
             _sweepStoryboard.Begin();
+        }
+
+        private SolidColorBrush GetBrush(string resourceKey)
+            => ResolveThemeBrush(resourceKey);
+
+        private SolidColorBrush ResolveThemeBrush(string resourceKey)
+        {
+            string themeKey = ActualTheme == ElementTheme.Light ? "Light" : "Dark";
+            if (Resources.ThemeDictionaries.TryGetValue(themeKey, out object? themeResources) &&
+                themeResources is ResourceDictionary themeDictionary &&
+                themeDictionary.TryGetValue(resourceKey, out object? brush) &&
+                brush is SolidColorBrush resolvedBrush)
+            {
+                return resolvedBrush;
+            }
+
+            return (SolidColorBrush)Resources[resourceKey];
         }
 
         private void Thumb_PointerPressed(object sender, PointerRoutedEventArgs e)

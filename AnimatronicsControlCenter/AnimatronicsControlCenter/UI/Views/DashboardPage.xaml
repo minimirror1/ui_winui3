@@ -9,22 +9,38 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
-        <cv:DeviceCardStatusToBrushConverter x:Key="CardStatusToBrush"/>
-        <cv:DeviceCardStatusToLabelConverter x:Key="CardStatusToLabel"/>
-        <cv:MotionStateToBrushConverter x:Key="MotionStateToBrush"/>
-        <cv:PowerStatusToBrushConverter x:Key="PowerStatusToBrush"/>
-        <cv:MotionStateToButtonLabelConverter x:Key="MotionStateToButtonLabel"/>
-        <cv:MotionStateToButtonIconConverter x:Key="MotionStateToButtonIcon"/>
-        <cv:TimeSpanToShortStringConverter x:Key="TimeSpanToShortString"/>
-        <cv:IntToPaddedIdConverter x:Key="IntToPaddedId"/>
-        <SolidColorBrush x:Key="DashboardDeviceCardBackgroundBrush" Color="#2A2A2A"/>
-        <SolidColorBrush x:Key="DashboardDeviceCardHoverBackgroundBrush" Color="#303030"/>
-        <SolidColorBrush x:Key="DashboardPlayButtonBackgroundBrush" Color="#3A3A3A"/>
-        <SolidColorBrush x:Key="DashboardPlayButtonBorderBrush" Color="#4A4A4A"/>
-        <SolidColorBrush x:Key="DashboardPlayButtonForegroundBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="DashboardPlayButtonHoverBackgroundBrush" Color="#5BCEFF"/>
-        <SolidColorBrush x:Key="DashboardPlayButtonHoverForegroundBrush" Color="#111111"/>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="DashboardDeviceCardBackgroundBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="DashboardDeviceCardHoverBackgroundBrush" Color="#E5F0FF"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonBackgroundBrush" Color="#F8FAFC"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonBorderBrush" Color="#D0D7DE"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonForegroundBrush" Color="#1F2937"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonHoverBackgroundBrush" Color="#0078D4"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonHoverForegroundBrush" Color="#FFFFFF"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="DashboardDeviceCardBackgroundBrush" Color="#2A2A2A"/>
+                    <SolidColorBrush x:Key="DashboardDeviceCardHoverBackgroundBrush" Color="#303030"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonBackgroundBrush" Color="#3A3A3A"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonBorderBrush" Color="#4A4A4A"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonForegroundBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonHoverBackgroundBrush" Color="#5BCEFF"/>
+                    <SolidColorBrush x:Key="DashboardPlayButtonHoverForegroundBrush" Color="#111111"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
+            <cv:DeviceCardStatusToBrushConverter x:Key="CardStatusToBrush"/>
+            <cv:DeviceCardStatusToLabelConverter x:Key="CardStatusToLabel"/>
+            <cv:MotionStateToBrushConverter x:Key="MotionStateToBrush"/>
+            <cv:PowerStatusToBrushConverter x:Key="PowerStatusToBrush"/>
+            <cv:MotionStateToButtonLabelConverter x:Key="MotionStateToButtonLabel"/>
+            <cv:MotionStateToButtonIconConverter x:Key="MotionStateToButtonIcon"/>
+            <cv:TimeSpanToShortStringConverter x:Key="TimeSpanToShortString"/>
+            <cv:IntToPaddedIdConverter x:Key="IntToPaddedId"/>
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
@@ -46,7 +62,7 @@
                 <DataTemplate x:DataType="models:Device">
                     <!-- Card root: 320x216, tapped for navigation -->
                     <Grid Width="320" Height="216"
-                          Background="{StaticResource DashboardDeviceCardBackgroundBrush}"
+                          Background="{ThemeResource DashboardDeviceCardBackgroundBrush}"
                           CornerRadius="8" Padding="14"
                           BorderThickness="1"
                           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -195,27 +211,41 @@
                                     Click="PlayStopButton_Click"
                                     Tag="{x:Bind}"
                                     HorizontalAlignment="Left"
-                                    Background="{StaticResource DashboardPlayButtonBackgroundBrush}"
-                                    BorderBrush="{StaticResource DashboardPlayButtonBorderBrush}"
-                                    Foreground="{StaticResource DashboardPlayButtonForegroundBrush}"
+                                    Background="{ThemeResource DashboardPlayButtonBackgroundBrush}"
+                                    BorderBrush="{ThemeResource DashboardPlayButtonBorderBrush}"
+                                    Foreground="{ThemeResource DashboardPlayButtonForegroundBrush}"
                                     Padding="12,6">
                                 <Button.Resources>
-                                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#5BCEFF"/>
-                                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#5BCEFF"/>
-                                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#111111"/>
-                                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#47BCEB"/>
-                                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#47BCEB"/>
-                                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#111111"/>
+                                    <ResourceDictionary>
+                                        <ResourceDictionary.ThemeDictionaries>
+                                            <ResourceDictionary x:Key="Light">
+                                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#0078D4"/>
+                                                <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#0078D4"/>
+                                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FFFFFF"/>
+                                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#005A9E"/>
+                                                <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#005A9E"/>
+                                                <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#FFFFFF"/>
+                                            </ResourceDictionary>
+                                            <ResourceDictionary x:Key="Dark">
+                                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#5BCEFF"/>
+                                                <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#5BCEFF"/>
+                                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#111111"/>
+                                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#47BCEB"/>
+                                                <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#47BCEB"/>
+                                                <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#111111"/>
+                                            </ResourceDictionary>
+                                        </ResourceDictionary.ThemeDictionaries>
+                                    </ResourceDictionary>
                                 </Button.Resources>
                                 <Button.Content>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <FontIcon Glyph="{x:Bind MotionState, Mode=OneWay, Converter={StaticResource MotionStateToButtonIcon}}"
                                                   FontFamily="Segoe Fluent Icons"
                                                   FontSize="12"
-                                                  Foreground="{StaticResource DashboardPlayButtonForegroundBrush}"/>
+                                                  Foreground="{ThemeResource DashboardPlayButtonForegroundBrush}"/>
                                         <TextBlock Text="{x:Bind MotionState, Mode=OneWay, Converter={StaticResource MotionStateToButtonLabel}}"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{StaticResource DashboardPlayButtonForegroundBrush}"/>
+                                                   Foreground="{ThemeResource DashboardPlayButtonForegroundBrush}"/>
                                     </StackPanel>
                                 </Button.Content>
                             </Button>

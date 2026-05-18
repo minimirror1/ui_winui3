@@ -10,15 +10,61 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
-        <cv:MotorErrorBrushConverter x:Key="MotorErrorBrushConverter"/>
-        <cv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <cv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
-        <cv:PowerStatusToBrushConverter x:Key="PowerStatusToBrushConverter"/>
-        <cv:PowerStatusToDangerBrushConverter x:Key="PowerStatusToDangerBrushConverter"/>
-        <cv:BoolToRelayLockBrushConverter x:Key="BoolToRelayLockBrushConverter"/>
-        <cv:MotionStateToBrushConverter x:Key="MotionStateToBrushConverter"/>
-        <cv:IntToPaddedIdConverter x:Key="IntToPaddedIdConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="RelayControlIconBackgroundBrush" Color="#F8FAFC"/>
+                    <SolidColorBrush x:Key="RelayControlPrimaryTextBrush" Color="#111827"/>
+                    <SolidColorBrush x:Key="RelayControlSecondaryTextBrush" Color="#475569"/>
+                    <SolidColorBrush x:Key="RelayControlUnlockedTextBrush" Color="#047857"/>
+                    <SolidColorBrush x:Key="RelayPowerOffButtonBackgroundBrush" Color="#FEF2F2"/>
+                    <SolidColorBrush x:Key="RelayPowerOffButtonForegroundBrush" Color="#991B1B"/>
+                    <SolidColorBrush x:Key="RelayPowerOffButtonBorderBrush" Color="#FCA5A5"/>
+                    <SolidColorBrush x:Key="RelayPowerOnButtonBackgroundBrush" Color="#ECFDF5"/>
+                    <SolidColorBrush x:Key="RelayPowerOnButtonForegroundBrush" Color="#065F46"/>
+                    <SolidColorBrush x:Key="RelayPowerOnButtonBorderBrush" Color="#86EFAC"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="RelayControlIconBackgroundBrush" Color="#242424"/>
+                    <SolidColorBrush x:Key="RelayControlPrimaryTextBrush" Color="#F3F4F6"/>
+                    <SolidColorBrush x:Key="RelayControlSecondaryTextBrush" Color="#A3A3A3"/>
+                    <SolidColorBrush x:Key="RelayControlUnlockedTextBrush" Color="#6CCB5F"/>
+                    <SolidColorBrush x:Key="RelayPowerOffButtonBackgroundBrush" Color="#3A1F24"/>
+                    <SolidColorBrush x:Key="RelayPowerOffButtonForegroundBrush" Color="#FFB4AB"/>
+                    <SolidColorBrush x:Key="RelayPowerOffButtonBorderBrush" Color="#A94343"/>
+                    <SolidColorBrush x:Key="RelayPowerOnButtonBackgroundBrush" Color="#173524"/>
+                    <SolidColorBrush x:Key="RelayPowerOnButtonForegroundBrush" Color="#86EFAC"/>
+                    <SolidColorBrush x:Key="RelayPowerOnButtonBorderBrush" Color="#2F7D50"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <cv:BoolToColorBrushConverter x:Key="ConnectionColorConverter"/>
+            <cv:MotorErrorBrushConverter x:Key="MotorErrorBrushConverter"/>
+            <cv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <cv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <cv:PowerStatusToBrushConverter x:Key="PowerStatusToBrushConverter"/>
+            <cv:PowerStatusToDangerBrushConverter x:Key="PowerStatusToDangerBrushConverter"/>
+            <cv:BoolToRelayLockBrushConverter x:Key="BoolToRelayLockBrushConverter"/>
+            <cv:MotionStateToBrushConverter x:Key="MotionStateToBrushConverter"/>
+            <cv:IntToPaddedIdConverter x:Key="IntToPaddedIdConverter"/>
+
+            <Style x:Key="RelayPowerOffButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource RelayPowerOffButtonBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{ThemeResource RelayPowerOffButtonForegroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource RelayPowerOffButtonBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="12,8"/>
+            </Style>
+            <Style x:Key="RelayPowerOnButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource RelayPowerOnButtonBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{ThemeResource RelayPowerOnButtonForegroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource RelayPowerOnButtonBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="12,8"/>
+            </Style>
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid Padding="24">
@@ -545,32 +591,33 @@
                                                         <Border Width="36" Height="36" CornerRadius="8"
                                                                 BorderThickness="1"
                                                                 BorderBrush="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
-                                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                                                Background="{ThemeResource RelayControlIconBackgroundBrush}">
                                                             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                 <FontIcon FontFamily="Segoe Fluent Icons" FontSize="16"
                                                                           Glyph="&#xE72E;"
-                                                                          Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                          Foreground="{ThemeResource RelayControlSecondaryTextBrush}"
                                                                           Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                                                                 <FontIcon FontFamily="Segoe Fluent Icons" FontSize="16"
                                                                           Glyph="&#xE73E;"
-                                                                          Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
+                                                                          Foreground="{ThemeResource RelayControlUnlockedTextBrush}"
                                                                           Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                             </Grid>
                                                         </Border>
                                                         <StackPanel>
                                                             <TextBlock FontWeight="SemiBold" FontSize="14"
+                                                                       Foreground="{ThemeResource RelayControlPrimaryTextBrush}"
                                                                        Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelaySafeLock', ViewModel.Strings.Code), Mode=OneWay}"
                                                                        Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                                                             <TextBlock FontWeight="SemiBold" FontSize="14"
                                                                        Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayUnlocked', ViewModel.Strings.Code), Mode=OneWay}"
-                                                                       Foreground="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToRelayLockBrushConverter}}"
+                                                                       Foreground="{ThemeResource RelayControlUnlockedTextBrush}"
                                                                        Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                             <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                       Foreground="{ThemeResource RelayControlSecondaryTextBrush}"
                                                                        Text="실수 클릭 방지를 위해 비활성화됨"
                                                                        Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                                                             <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                                       Foreground="{ThemeResource RelayControlSecondaryTextBrush}"
                                                                        Text="조작 후 15초 뒤 자동 재잠금"
                                                                        Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                         </StackPanel>
@@ -585,7 +632,7 @@
                                                     <StackPanel Grid.Row="2" Spacing="6"
                                                                 Visibility="{x:Bind ViewModel.IsRelayUnlocked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                                         <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                                                                   Foreground="{ThemeResource RelayControlSecondaryTextBrush}">
                                                             <Run Text="{x:Bind ViewModel.RelayAutoLockSecondsRemaining, Mode=OneWay}"/>
                                                             <Run Text="초 후 자동 잠금"/>
                                                         </TextBlock>
@@ -602,14 +649,74 @@
                 
                                                         <Button Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayPowerOff', ViewModel.Strings.Code), Mode=OneWay}"
                                                                 Command="{x:Bind ViewModel.SetPowerOffCommand}"
+                                                                Style="{StaticResource RelayPowerOffButtonStyle}"
                                                                 HorizontalAlignment="Stretch"
-                                                                HorizontalContentAlignment="Center"/>
+                                                                HorizontalContentAlignment="Center">
+                                                            <Button.Resources>
+                                                                <ResourceDictionary>
+                                                                    <ResourceDictionary.ThemeDictionaries>
+                                                                        <ResourceDictionary x:Key="Light">
+                                                                            <SolidColorBrush x:Key="ButtonBackground" Color="#FEF2F2"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FEE2E2"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FECACA"/>
+                                                                            <SolidColorBrush x:Key="ButtonForeground" Color="#991B1B"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#7F1D1D"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#7F1D1D"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#FCA5A5"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#F87171"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#EF4444"/>
+                                                                        </ResourceDictionary>
+                                                                        <ResourceDictionary x:Key="Dark">
+                                                                            <SolidColorBrush x:Key="ButtonBackground" Color="#3A1F24"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#4A252C"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#5A2A33"/>
+                                                                            <SolidColorBrush x:Key="ButtonForeground" Color="#FFB4AB"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FFDAD6"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#FFDAD6"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#A94343"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#C65A5A"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#E36A6A"/>
+                                                                        </ResourceDictionary>
+                                                                    </ResourceDictionary.ThemeDictionaries>
+                                                                </ResourceDictionary>
+                                                            </Button.Resources>
+                                                        </Button>
                 
                                                         <Button Grid.Column="1"
                                                                 Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_RelayPowerOn', ViewModel.Strings.Code), Mode=OneWay}"
                                                                 Command="{x:Bind ViewModel.SetPowerOnCommand}"
+                                                                Style="{StaticResource RelayPowerOnButtonStyle}"
                                                                 HorizontalAlignment="Stretch"
-                                                                HorizontalContentAlignment="Center"/>
+                                                                HorizontalContentAlignment="Center">
+                                                            <Button.Resources>
+                                                                <ResourceDictionary>
+                                                                    <ResourceDictionary.ThemeDictionaries>
+                                                                        <ResourceDictionary x:Key="Light">
+                                                                            <SolidColorBrush x:Key="ButtonBackground" Color="#ECFDF5"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#D1FAE5"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#A7F3D0"/>
+                                                                            <SolidColorBrush x:Key="ButtonForeground" Color="#065F46"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#064E3B"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#064E3B"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#86EFAC"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#34D399"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#10B981"/>
+                                                                        </ResourceDictionary>
+                                                                        <ResourceDictionary x:Key="Dark">
+                                                                            <SolidColorBrush x:Key="ButtonBackground" Color="#173524"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1D432D"/>
+                                                                            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#245439"/>
+                                                                            <SolidColorBrush x:Key="ButtonForeground" Color="#86EFAC"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#A7F3D0"/>
+                                                                            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#A7F3D0"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#2F7D50"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#3E9C63"/>
+                                                                            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#50B878"/>
+                                                                        </ResourceDictionary>
+                                                                    </ResourceDictionary.ThemeDictionaries>
+                                                                </ResourceDictionary>
+                                                            </Button.Resources>
+                                                        </Button>
                                                     </Grid>
                 
                                                     <!-- 경고 박스 -->

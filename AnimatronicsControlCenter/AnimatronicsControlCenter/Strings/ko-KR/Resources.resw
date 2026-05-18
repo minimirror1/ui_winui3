@@ -202,6 +202,21 @@
   <data name="Section_App.Text" xml:space="preserve">
     <value>앱 설정</value>
   </data>
+  <data name="Theme_Header.Header" xml:space="preserve">
+    <value>화면 모드</value>
+  </data>
+  <data name="Theme_Desc.Text" xml:space="preserve">
+    <value>앱 색상 모드를 선택합니다</value>
+  </data>
+  <data name="Theme_Default" xml:space="preserve">
+    <value>Windows 설정 사용</value>
+  </data>
+  <data name="Theme_Light" xml:space="preserve">
+    <value>라이트</value>
+  </data>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>다크</value>
+  </data>
   <data name="XBee_Header.Header" xml:space="preserve">
     <value>XBee DigiMesh</value>
   </data>
