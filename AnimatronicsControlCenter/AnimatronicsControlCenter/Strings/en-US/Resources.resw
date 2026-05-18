@@ -217,6 +217,24 @@
   <data name="Theme_Dark" xml:space="preserve">
     <value>Dark</value>
   </data>
+  <data name="ThemeRestart_Title" xml:space="preserve">
+    <value>Restart the app?</value>
+  </data>
+  <data name="ThemeRestart_Content" xml:space="preserve">
+    <value>The theme has been saved. Restart the app to apply it completely to every window and surface.</value>
+  </data>
+  <data name="ThemeRestartNow_Button" xml:space="preserve">
+    <value>Restart now</value>
+  </data>
+  <data name="ThemeRestartLater_Button" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="ThemeRestartFailed_Title" xml:space="preserve">
+    <value>Restart unavailable</value>
+  </data>
+  <data name="ThemeRestartFailed_Content" xml:space="preserve">
+    <value>Automatic restart could not be started. Restart the app manually.</value>
+  </data>
   <data name="XBee_Header.Header" xml:space="preserve">
     <value>XBee DigiMesh</value>
   </data>

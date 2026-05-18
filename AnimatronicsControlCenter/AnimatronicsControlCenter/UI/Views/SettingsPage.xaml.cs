@@ -5,18 +5,25 @@ using AnimatronicsControlCenter.UI.ViewModels;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
 using Windows.Globalization.NumberFormatting;
 
 namespace AnimatronicsControlCenter.UI.Views
 {
     public sealed partial class SettingsPage : Page
     {
+        private bool _isThemeRestartDialogOpen;
+
         public SettingsViewModel ViewModel { get; }
 
         public SettingsPage()
         {
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetRequiredService<SettingsViewModel>();
+            ViewModel.ThemeRestartRequested += ViewModel_ThemeRestartRequested;
+            Unloaded += SettingsPage_Unloaded;
             ResponseTimeoutNumberBox.NumberFormatter = CreateOneDecimalFormatter();
             PingIntervalNumberBox.NumberFormatter = CreateOneDecimalFormatter();
         }
@@ -81,6 +88,79 @@ namespace AnimatronicsControlCenter.UI.Views
             catch
             {
             }
+        }
+
+        private void SettingsPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ThemeRestartRequested -= ViewModel_ThemeRestartRequested;
+            Unloaded -= SettingsPage_Unloaded;
+        }
+
+        private async void ViewModel_ThemeRestartRequested(object? sender, EventArgs e)
+        {
+            await ShowThemeRestartDialogAsync();
+        }
+
+        private async Task ShowThemeRestartDialogAsync()
+        {
+            if (_isThemeRestartDialogOpen)
+            {
+                return;
+            }
+
+            _isThemeRestartDialogOpen = true;
+            try
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = ViewModel.Strings.Get("ThemeRestart_Title", ViewModel.Strings.Code),
+                    Content = ViewModel.Strings.Get("ThemeRestart_Content", ViewModel.Strings.Code),
+                    PrimaryButtonText = ViewModel.Strings.Get("ThemeRestartNow_Button", ViewModel.Strings.Code),
+                    CloseButtonText = ViewModel.Strings.Get("ThemeRestartLater_Button", ViewModel.Strings.Code),
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = XamlRoot
+                };
+
+                ContentDialogResult result = await dialog.ShowAsync().AsTask();
+                if (result == ContentDialogResult.Primary)
+                {
+                    await RestartApplicationAsync();
+                }
+            }
+            finally
+            {
+                _isThemeRestartDialogOpen = false;
+            }
+        }
+
+        private async Task RestartApplicationAsync()
+        {
+            try
+            {
+                object? result = AppInstance.Restart(string.Empty);
+                if (!string.Equals(result?.ToString(), "RestartPending", StringComparison.Ordinal))
+                {
+                    await ShowThemeRestartFailedDialogAsync(result?.ToString() ?? "Unknown");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowThemeRestartFailedDialogAsync(ex.Message);
+            }
+        }
+
+        private async Task ShowThemeRestartFailedDialogAsync(string detail)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = ViewModel.Strings.Get("ThemeRestartFailed_Title", ViewModel.Strings.Code),
+                Content = $"{ViewModel.Strings.Get("ThemeRestartFailed_Content", ViewModel.Strings.Code)}\n\n{detail}",
+                CloseButtonText = "OK",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = XamlRoot
+            };
+
+            await dialog.ShowAsync().AsTask();
         }
     }
 }

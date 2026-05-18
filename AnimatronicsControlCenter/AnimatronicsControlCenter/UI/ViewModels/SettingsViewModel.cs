@@ -29,6 +29,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly XBeeService _xbeeService;
         private readonly DashboardViewModel _dashboardViewModel;
 
+        public event EventHandler? ThemeRestartRequested;
+
         public LocalizedStrings Strings { get; }
 
         [ObservableProperty]
@@ -241,6 +243,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
 
             _serialMonitorWindowHost.ApplyTheme();
+            ThemeRestartRequested?.Invoke(this, EventArgs.Empty);
         }
 
         partial void OnIsVirtualModeEnabledChanged(bool value)
