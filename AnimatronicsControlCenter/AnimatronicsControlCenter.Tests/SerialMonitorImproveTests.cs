@@ -84,6 +84,20 @@ public class SerialMonitorImproveTests
 
     // ── Task 4 ──────────────────────────────────────────────────────────────
     [TestMethod]
+    public void SerialMonitorViewModel_Clear_ResetsAllPacketFilters()
+    {
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter",
+            "UI", "ViewModels", "SerialMonitorViewModel.cs"));
+        int clearStart = code.IndexOf("private void Clear()", StringComparison.Ordinal);
+        int clearEnd = code.IndexOf("private void ClearCounts()", clearStart, StringComparison.Ordinal);
+        string clearBody = code[clearStart..clearEnd];
+
+        StringAssert.Contains(clearBody, "SelectedPacketCommandFilter = \"All\"");
+        StringAssert.Contains(clearBody, "SelectedPacketStatusFilter = \"All\"");
+        StringAssert.Contains(clearBody, "IsParseErrorOnly = false");
+    }
+
+    [TestMethod]
     public void SerialPage_PacketTab_HasDirectionSrcTarFilterControls()
     {
         string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter",

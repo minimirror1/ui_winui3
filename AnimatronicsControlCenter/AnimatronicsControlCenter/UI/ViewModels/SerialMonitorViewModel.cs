@@ -519,6 +519,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             SelectedPacketDirectionFilter = "전체";
             SelectedPacketSrcIdFilter = "전체";
             SelectedPacketTarIdFilter = "전체";
+            SelectedPacketCommandFilter = "All";
+            SelectedPacketStatusFilter = "All";
+            IsParseErrorOnly = false;
             Entries.Clear();
             ComRawEntries.Clear();
             Packets.Clear();
@@ -648,7 +651,6 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                $"Raw: {packet.RawHex}";
     }
 }
-
 
 
 
