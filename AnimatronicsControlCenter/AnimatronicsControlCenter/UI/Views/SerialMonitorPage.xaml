@@ -116,7 +116,7 @@
                                                    Text="{x:Bind Line}"
                                                    FontFamily="Consolas"
                                                    FontSize="12"
-                                                   Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                    TextWrapping="NoWrap"/>
                                     </Grid>
                                 </DataTemplate>
@@ -264,7 +264,7 @@
                                                    Text="{x:Bind Line}"
                                                    FontFamily="Consolas"
                                                    FontSize="12"
-                                                   Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                    TextWrapping="NoWrap"/>
                                     </Grid>
                                 </DataTemplate>
@@ -285,7 +285,7 @@
                 Margin="-12,0,-12,0">
             <StackPanel Orientation="Horizontal" Spacing="16">
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <Ellipse Width="7" Height="7" Fill="#4CC180"/>
+                    <Ellipse Width="7" Height="7" Fill="{ThemeResource SystemFillColorSuccessBrush}"/>
                     <TextBlock Text="연결됨" FontSize="12"
                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                 </StackPanel>
@@ -324,8 +324,8 @@
                 <!-- LIVE indicator (not paused) -->
                 <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center"
                             Visibility="{x:Bind BoolToCollapsed(ViewModel.IsPaused), Mode=OneWay}">
-                    <Ellipse Width="6" Height="6" Fill="#4CC180"/>
-                    <TextBlock Text="LIVE" FontSize="12" FontWeight="SemiBold" Foreground="#4CC180"/>
+                    <Ellipse Width="6" Height="6" Fill="{ThemeResource SystemFillColorSuccessBrush}"/>
+                    <TextBlock Text="LIVE" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
                 </StackPanel>
                 <!-- Paused indicator -->
                 <TextBlock Text="● 일시정지"
@@ -337,4 +337,3 @@
         </Border>
     </Grid>
 </Page>
-

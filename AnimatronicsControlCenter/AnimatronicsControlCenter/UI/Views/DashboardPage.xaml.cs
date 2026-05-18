@@ -53,7 +53,7 @@ namespace AnimatronicsControlCenter.UI.Views
                 return;
             }
 
-            card.SetValue(Panel.BackgroundProperty, Resources["DashboardDeviceCardHoverBackgroundBrush"]);
+            card.SetValue(Panel.BackgroundProperty, GetDashboardBrush(card, "DashboardDeviceCardHoverBackgroundBrush"));
             SetPlayButtonHoverState(card, isHovered: true);
         }
 
@@ -64,7 +64,7 @@ namespace AnimatronicsControlCenter.UI.Views
                 return;
             }
 
-            card.SetValue(Panel.BackgroundProperty, Resources["DashboardDeviceCardBackgroundBrush"]);
+            card.SetValue(Panel.BackgroundProperty, GetDashboardBrush(card, "DashboardDeviceCardBackgroundBrush"));
             SetPlayButtonHoverState(card, isHovered: false);
         }
 
@@ -75,15 +75,29 @@ namespace AnimatronicsControlCenter.UI.Views
                 return;
             }
 
-            button.Background = (Brush)Resources[isHovered
+            button.Background = GetDashboardBrush(button, isHovered
                 ? "DashboardPlayButtonHoverBackgroundBrush"
-                : "DashboardPlayButtonBackgroundBrush"];
-            button.BorderBrush = (Brush)Resources[isHovered
+                : "DashboardPlayButtonBackgroundBrush");
+            button.BorderBrush = GetDashboardBrush(button, isHovered
                 ? "DashboardPlayButtonHoverBackgroundBrush"
-                : "DashboardPlayButtonBorderBrush"];
-            SetTextForeground(button, (Brush)Resources[isHovered
+                : "DashboardPlayButtonBorderBrush");
+            SetTextForeground(button, GetDashboardBrush(button, isHovered
                 ? "DashboardPlayButtonHoverForegroundBrush"
-                : "DashboardPlayButtonForegroundBrush"]);
+                : "DashboardPlayButtonForegroundBrush"));
+        }
+
+        private Brush GetDashboardBrush(FrameworkElement element, string resourceKey)
+        {
+            string themeKey = element.ActualTheme == ElementTheme.Light ? "Light" : "Dark";
+            if (Resources.ThemeDictionaries.TryGetValue(themeKey, out object? themeResources) &&
+                themeResources is ResourceDictionary themeDictionary &&
+                themeDictionary.TryGetValue(resourceKey, out object? brush) &&
+                brush is Brush resolvedBrush)
+            {
+                return resolvedBrush;
+            }
+
+            return (Brush)Resources[resourceKey];
         }
 
         private static T? FindDescendantByName<T>(DependencyObject root, string name)

@@ -126,6 +126,80 @@ public class BackendSettingsSourceTests
     }
 
     [TestMethod]
+    public void AppSettings_LoadsDefaultThemeWhenThemeIsMissing()
+    {
+        string backendPath = CreateTempSettingsPath();
+        string appSettingsPath = Path.Combine(Path.GetDirectoryName(backendPath)!, "app-settings.json");
+        File.WriteAllText(appSettingsPath, """
+            {
+              "lastComPort": "COM3",
+              "lastBaudRate": 115200,
+              "isVirtualModeEnabled": false,
+              "isLastPortAutoConnectEnabled": false,
+              "language": "ko-KR",
+              "responseTimeoutSeconds": 2,
+              "isPeriodicPingEnabled": true,
+              "pingIntervalSeconds": 5,
+              "pingCountryCode": "KR",
+              "pingUtcOffsetMinutes": 540,
+              "scanStartId": 1,
+              "scanEndId": 10
+            }
+            """);
+
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        settings.Load();
+
+        Assert.AreEqual("Default", settings.Theme);
+    }
+
+    [TestMethod]
+    public void AppSettings_LoadsDefaultThemeWhenThemeIsUnknown()
+    {
+        string backendPath = CreateTempSettingsPath();
+        string appSettingsPath = Path.Combine(Path.GetDirectoryName(backendPath)!, "app-settings.json");
+        File.WriteAllText(appSettingsPath, """
+            {
+              "theme": "Blue",
+              "lastComPort": "COM3",
+              "lastBaudRate": 115200,
+              "isVirtualModeEnabled": false,
+              "isLastPortAutoConnectEnabled": false,
+              "language": "ko-KR",
+              "responseTimeoutSeconds": 2,
+              "isPeriodicPingEnabled": true,
+              "pingIntervalSeconds": 5,
+              "pingCountryCode": "KR",
+              "pingUtcOffsetMinutes": 540,
+              "scanStartId": 1,
+              "scanEndId": 10
+            }
+            """);
+
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        settings.Load();
+
+        Assert.AreEqual("Default", settings.Theme);
+    }
+
+    [TestMethod]
+    public void AppSettings_SaveAndLoad_RoundTripsLightTheme()
+    {
+        string backendPath = CreateTempSettingsPath();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(backendPath))
+        {
+            Theme = "Light"
+        };
+
+        first.Save();
+
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(backendPath));
+        second.Load();
+
+        Assert.AreEqual("Light", second.Theme);
+    }
+
+    [TestMethod]
     public void AppSettings_SaveAndLoad_NormalizesScanRange()
     {
         string backendPath = CreateTempSettingsPath();

@@ -18,6 +18,7 @@ using Windows.UI;
 namespace AnimatronicsControlCenter.UI.ViewModels
 {
     public record LanguageOption(string Code, string Name);
+    public record ThemeOption(string Value, string Name);
 
     public partial class SettingsViewModel : ObservableObject
     {
@@ -27,6 +28,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly XBeeService _xbeeService;
         private readonly DashboardViewModel _dashboardViewModel;
+
+        public event EventHandler? ThemeRestartRequested;
 
         public LocalizedStrings Strings { get; }
 
@@ -98,8 +101,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             new LanguageOption("en-US", "English")
         };
 
+        public List<ThemeOption> ThemeOptions { get; }
+
         [ObservableProperty]
         private LanguageOption selectedLanguage;
+
+        [ObservableProperty]
+        private ThemeOption? selectedThemeOption;
 
         [ObservableProperty]
         private double responseTimeoutSeconds;
@@ -159,6 +167,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _xbeeService = xbeeService;
             _dashboardViewModel = dashboardViewModel;
             Strings = new LocalizedStrings(_localizationService);
+            ThemeOptions = new List<ThemeOption>
+            {
+                new(AppThemeHelper.DefaultTheme, _localizationService.GetString("Theme_Default")),
+                new(AppThemeHelper.LightTheme, _localizationService.GetString("Theme_Light")),
+                new(AppThemeHelper.DarkTheme, _localizationService.GetString("Theme_Dark"))
+            };
             
             // Set dispatcher for UI callbacks
             _xbeeService.SetDispatcherQueue(DispatcherQueue.GetForCurrentThread());
@@ -184,6 +198,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             SelectedLanguage = Languages.FirstOrDefault(l => l.Code.Equals(currentCode, System.StringComparison.OrdinalIgnoreCase)) 
                              ?? Languages.FirstOrDefault(l => l.Code == "ko-KR") 
                              ?? Languages.First();
+            SelectedThemeOption = ThemeOptions.FirstOrDefault(theme =>
+                theme.Value.Equals(_settingsService.Theme, StringComparison.OrdinalIgnoreCase))
+                ?? ThemeOptions.First();
             
             IsConnectionActive = _serialService.IsConnected;
             IsXBeeConnected = _xbeeService.IsConnected;
@@ -211,6 +228,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     mainWindow.UpdateLanguage();
                 }
             }
+        }
+
+        partial void OnSelectedThemeOptionChanged(ThemeOption? value)
+        {
+            if (!_isInitialized || value is null) return;
+
+            _settingsService.Theme = value.Value;
+            _settingsService.Save();
+
+            if (App.Current.m_window is MainWindow mainWindow)
+            {
+                mainWindow.ApplyTheme();
+            }
+
+            _serialMonitorWindowHost.ApplyTheme();
+            ThemeRestartRequested?.Invoke(this, EventArgs.Empty);
         }
 
         partial void OnIsVirtualModeEnabledChanged(bool value)

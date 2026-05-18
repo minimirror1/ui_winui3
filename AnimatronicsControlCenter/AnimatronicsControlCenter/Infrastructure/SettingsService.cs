@@ -25,9 +25,13 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyPingIntervalSeconds = "PingIntervalSeconds";
         private const string KeyPingCountryCode = "PingCountryCode";
         private const string KeyPingUtcOffsetMinutes = "PingUtcOffsetMinutes";
+        private const string ThemeDefault = "Default";
+        private const string ThemeLight = "Light";
+        private const string ThemeDark = "Dark";
         private const int MinScanId = 1;
         private const int MaxScanId = 254;
         private readonly IBackendSettingsPathProvider _backendSettingsPathProvider;
+        private string _theme = ThemeDefault;
         private static readonly JsonSerializerOptions BackendJsonOptions = new(JsonSerializerDefaults.Web)
         {
             WriteIndented = true
@@ -45,7 +49,11 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         public string LastComPort { get; set; } = "COM1";
         public int LastBaudRate { get; set; } = 115200;
-        public string Theme { get; set; } = "Default";
+        public string Theme
+        {
+            get => _theme;
+            set => _theme = NormalizeTheme(value);
+        }
         public bool IsVirtualModeEnabled { get; set; } = false;
         public bool IsLastPortAutoConnectEnabled { get; set; } = false;
         public string Language { get; set; } = "ko-KR";
@@ -188,7 +196,7 @@ namespace AnimatronicsControlCenter.Infrastructure
 
                 LastComPort = settings.LastComPort ?? LastComPort;
                 LastBaudRate = settings.LastBaudRate == 0 ? LastBaudRate : settings.LastBaudRate;
-                Theme = settings.Theme ?? Theme;
+                Theme = settings.Theme;
                 IsVirtualModeEnabled = settings.IsVirtualModeEnabled;
                 IsLastPortAutoConnectEnabled = settings.IsLastPortAutoConnectEnabled;
                 Language = settings.Language ?? Language;
@@ -225,6 +233,21 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             int id = value == 0 ? fallback : value;
             return Math.Clamp(id, MinScanId, MaxScanId);
+        }
+
+        private static string NormalizeTheme(string? theme)
+        {
+            if (string.Equals(theme, ThemeLight, StringComparison.OrdinalIgnoreCase))
+            {
+                return ThemeLight;
+            }
+
+            if (string.Equals(theme, ThemeDark, StringComparison.OrdinalIgnoreCase))
+            {
+                return ThemeDark;
+            }
+
+            return ThemeDefault;
         }
 
         private void SaveBackendSettings()

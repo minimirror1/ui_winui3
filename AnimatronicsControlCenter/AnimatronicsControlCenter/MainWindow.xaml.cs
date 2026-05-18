@@ -18,18 +18,21 @@ namespace AnimatronicsControlCenter
 {
     public sealed partial class MainWindow : Window
     {
-        private static readonly SolidColorBrush InactiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0x73, 0x73, 0x73));
+        private static readonly SolidColorBrush DarkInactiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0x73, 0x73, 0x73));
+        private static readonly SolidColorBrush LightInactiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0x78, 0x78, 0x78));
         private static readonly SolidColorBrush RxActiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0x33, 0xD1, 0xC4));
         private static readonly SolidColorBrush TxActiveTrafficBrush = new(ColorHelper.FromArgb(0xFF, 0xFF, 0xA3, 0x3A));
         private static readonly SolidColorBrush ServerOnlineBrush = new(ColorHelper.FromArgb(0xFF, 0x4C, 0xD9, 0x64));
-        private static readonly SolidColorBrush ServerOfflineBrush = new(ColorHelper.FromArgb(0xFF, 0x73, 0x73, 0x73));
-        private static readonly SolidColorBrush IdleTrafficChromeBrush = new(ColorHelper.FromArgb(0x18, 0xFF, 0xFF, 0xFF));
-        private static readonly SolidColorBrush ActiveTrafficChromeBrush = new(ColorHelper.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
+        private static readonly SolidColorBrush DarkIdleTrafficChromeBrush = new(ColorHelper.FromArgb(0x18, 0xFF, 0xFF, 0xFF));
+        private static readonly SolidColorBrush LightIdleTrafficChromeBrush = new(ColorHelper.FromArgb(0x14, 0x00, 0x00, 0x00));
+        private static readonly SolidColorBrush DarkActiveTrafficChromeBrush = new(ColorHelper.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
+        private static readonly SolidColorBrush LightActiveTrafficChromeBrush = new(ColorHelper.FromArgb(0x1F, 0x00, 0x00, 0x00));
 
         private readonly ISerialTrafficTap _serialTrafficTap;
         private readonly IBackendTrafficTap _backendTrafficTap;
         private readonly IBackendPowerSseService _backendPowerSseService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
+        private readonly ISettingsService _settingsService;
         private readonly SerialTrafficIndicatorState _serialTrafficIndicatorState = new();
         private readonly DispatcherTimer _serialTrafficIndicatorTimer;
         private readonly DispatcherTimer _serverTrafficIndicatorTimer;
@@ -37,15 +40,17 @@ namespace AnimatronicsControlCenter
 
         public SettingsViewModel ConnectionViewModel { get; }
 
-        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, SerialMonitorWindowHost serialMonitorWindowHost, SettingsViewModel settingsViewModel)
+        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, SerialMonitorWindowHost serialMonitorWindowHost, ISettingsService settingsService, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;
             _backendTrafficTap = backendTrafficTap;
             _backendPowerSseService = backendPowerSseService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
+            _settingsService = settingsService;
             ConnectionViewModel = settingsViewModel;
 
             this.InitializeComponent();
+            ApplyTheme();
             UpdateLanguage(); // Set initial strings
             
             this.SystemBackdrop = new MicaBackdrop();
@@ -67,11 +72,19 @@ namespace AnimatronicsControlCenter
             _backendTrafficTap.TrafficChanged += BackendTrafficTap_TrafficChanged;
             Closed += MainWindow_Closed;
             ContentFrame.Navigated += ContentFrame_Navigated;
+            RootGrid.ActualThemeChanged += RootGrid_ActualThemeChanged;
 
             UpdateSerialTrafficIndicator();
             UpdateServerTrafficIndicator();
             UpdateConnectionIconVisibility();
             ConnectionViewModel.PropertyChanged += ConnectionViewModel_PropertyChanged;
+        }
+
+        public void ApplyTheme()
+        {
+            RootGrid.RequestedTheme = AppThemeHelper.ToElementTheme(_settingsService.Theme);
+            UpdateSerialTrafficIndicator();
+            UpdateServerTrafficIndicator();
         }
 
         public void UpdateLanguage()
@@ -196,6 +209,12 @@ namespace AnimatronicsControlCenter
             ContentFrame.Navigate(typeof(BackendSettingsPage));
         }
 
+        private void RootGrid_ActualThemeChanged(FrameworkElement sender, object args)
+        {
+            UpdateSerialTrafficIndicator();
+            UpdateServerTrafficIndicator();
+        }
+
         private void ServerTrafficButton_Click(object sender, RoutedEventArgs e)
         {
             ContentFrame.Navigate(typeof(ServerMonitorPage));
@@ -280,7 +299,7 @@ namespace AnimatronicsControlCenter
         {
             var snapshot = _backendTrafficTap.GetSnapshot(DateTimeOffset.Now);
 
-            ServerStatusDot.Background = snapshot.IsServerOnline ? ServerOnlineBrush : ServerOfflineBrush;
+            ServerStatusDot.Background = snapshot.IsServerOnline ? ServerOnlineBrush : InactiveTrafficBrush;
             ServerUplinkDot.Background = snapshot.IsUplinkActive ? TxActiveTrafficBrush : InactiveTrafficBrush;
             ServerDownlinkDot.Background = snapshot.IsDownlinkActive ? RxActiveTrafficBrush : InactiveTrafficBrush;
             ServerStatusDot.Opacity = snapshot.IsServerOnline ? 1.0 : 0.45;
@@ -309,6 +328,15 @@ namespace AnimatronicsControlCenter
             return $"Server activity\n{status}\n{uplink}\n{downlink}\nClick to open monitor";
         }
 
+        private SolidColorBrush InactiveTrafficBrush
+            => RootGrid.ActualTheme == ElementTheme.Light ? LightInactiveTrafficBrush : DarkInactiveTrafficBrush;
+
+        private SolidColorBrush IdleTrafficChromeBrush
+            => RootGrid.ActualTheme == ElementTheme.Light ? LightIdleTrafficChromeBrush : DarkIdleTrafficChromeBrush;
+
+        private SolidColorBrush ActiveTrafficChromeBrush
+            => RootGrid.ActualTheme == ElementTheme.Light ? LightActiveTrafficChromeBrush : DarkActiveTrafficChromeBrush;
+
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
             ConnectionViewModel.PropertyChanged -= ConnectionViewModel_PropertyChanged;
@@ -319,6 +347,7 @@ namespace AnimatronicsControlCenter
             _serverTrafficIndicatorTimer.Tick -= ServerTrafficIndicatorTimer_Tick;
             _serverTrafficIndicatorTimer.Stop();
             _backendPowerSseService.Stop();
+            RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
             Closed -= MainWindow_Closed;
         }
     }

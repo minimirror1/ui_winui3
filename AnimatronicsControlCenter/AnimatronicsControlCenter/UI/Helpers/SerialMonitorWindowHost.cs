@@ -26,6 +26,11 @@ namespace AnimatronicsControlCenter.UI.Helpers
 
             _window.Activate();
         }
+
+        public void ApplyTheme()
+        {
+            _window?.ApplyTheme();
+        }
     }
 }
 

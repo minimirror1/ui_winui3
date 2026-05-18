@@ -13,6 +13,17 @@ public class SettingsPageReorganizationTests
         "Section_App.Text",
         "OpenSettingsFolder_Button",
         "OpenSettingsFile_Button",
+        "Theme_Header.Header",
+        "Theme_Desc.Text",
+        "Theme_Default",
+        "Theme_Light",
+        "Theme_Dark",
+        "ThemeRestart_Title",
+        "ThemeRestart_Content",
+        "ThemeRestartNow_Button",
+        "ThemeRestartLater_Button",
+        "ThemeRestartFailed_Title",
+        "ThemeRestartFailed_Content",
         "XBee_Header.Header",
         "XBee_Desc.Text",
         "XBeePort_Header.Header",
@@ -107,6 +118,39 @@ public class SettingsPageReorganizationTests
         StringAssert.Contains(codeBehind, "AppSettingsFilePath");
         StringAssert.Contains(codeBehind, "notepad.exe");
         StringAssert.Contains(codeBehind, "explorer.exe");
+    }
+
+    [TestMethod]
+    public void SettingsPage_ShowsThemeSelectorInAppSection()
+    {
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml"));
+        string xaml = page.ToString(SaveOptions.DisableFormatting);
+        string viewModel = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "SettingsViewModel.cs"));
+
+        StringAssert.Contains(xaml, "Theme_Header.Header");
+        StringAssert.Contains(xaml, "Theme_Desc.Text");
+        StringAssert.Contains(xaml, "ThemeOptions");
+        StringAssert.Contains(xaml, "SelectedThemeOption");
+        Assert.IsTrue(xaml.IndexOf("Section_App.Text", StringComparison.Ordinal) <
+                      xaml.IndexOf("Theme_Header.Header", StringComparison.Ordinal));
+
+        StringAssert.Contains(viewModel, "ThemeOptions");
+        StringAssert.Contains(viewModel, "SelectedThemeOption");
+    }
+
+    [TestMethod]
+    public void SettingsPage_OffersRestartWhenThemeChanges()
+    {
+        string viewModel = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "SettingsViewModel.cs"));
+        string codeBehind = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "SettingsPage.xaml.cs"));
+
+        StringAssert.Contains(viewModel, "ThemeRestartRequested");
+        StringAssert.Contains(viewModel, "ThemeRestartRequested?.Invoke");
+        StringAssert.Contains(codeBehind, "ViewModel.ThemeRestartRequested +=");
+        StringAssert.Contains(codeBehind, "ContentDialog");
+        StringAssert.Contains(codeBehind, "ThemeRestartNow_Button");
+        StringAssert.Contains(codeBehind, "AppInstance.Restart");
+        StringAssert.Contains(codeBehind, "RestartPending");
     }
 
     [TestMethod]
