@@ -84,6 +84,19 @@ public class SerialMonitorImproveTests
         StringAssert.Contains(xaml, "SelectedPacketTarIdFilter");
     }
 
+    [TestMethod]
+    public void SerialPage_PacketTab_FilterControlsUseCenteredAlignment()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter",
+            "UI", "Views", "SerialMonitorPage.xaml"));
+
+        StringAssert.Contains(xaml, "x:Name=\"PacketFilterBar\"");
+        StringAssert.Contains(xaml, "VerticalAlignment=\"Center\"");
+        StringAssert.Contains(xaml, "ComboBox VerticalAlignment=\"Center\"");
+        Assert.IsFalse(xaml.Contains("ToggleSwitch Header=\"오류만\"", StringComparison.Ordinal));
+        StringAssert.Contains(xaml, "Text=\"오류만\"");
+    }
+
     // ── Task 5 ──────────────────────────────────────────────────────────────
     [TestMethod]
     public void SerialPage_HasStatusBar()
