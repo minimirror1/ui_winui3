@@ -78,6 +78,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         public ObservableCollection<PacketItem> Packets { get; } = new();
         public ObservableCollection<string> PacketCommandFilters { get; } = new() { "All" };
         public ObservableCollection<string> PacketStatusFilters { get; } = new() { "All", "Ok", "Error" };
+        public ObservableCollection<string> PacketDirectionFilters { get; } = new() { "전체", "↑ 송신", "↓ 수신" };
+        public ObservableCollection<string> PacketSrcIdFilters { get; } = new() { "전체" };
+        public ObservableCollection<string> PacketTarIdFilters { get; } = new() { "전체" };
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(PauseButtonText))]
@@ -119,6 +122,24 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [ObservableProperty]
         private bool isParseErrorOnly;
 
+        [ObservableProperty]
+        private string selectedPacketDirectionFilter = "전체";
+
+        [ObservableProperty]
+        private string selectedPacketSrcIdFilter = "전체";
+
+        [ObservableProperty]
+        private string selectedPacketTarIdFilter = "전체";
+
+        [ObservableProperty]
+        private int txCount;
+
+        [ObservableProperty]
+        private int rxCount;
+
+        [ObservableProperty]
+        private int totalCount;
+
         public string PauseButtonText => IsPaused
             ? Strings.Get("SerialMonitor_Resume", Strings.Code)
             : Strings.Get("SerialMonitor_Pause", Strings.Code);
@@ -144,6 +165,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 AppendToComRawAll(entry);
             }
 
+            RefreshCounts();
             RebuildVisible();
 
             _tap.EntryRecorded += TapOnEntryRecorded;
@@ -232,6 +254,21 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             RebuildVisible();
         }
 
+        partial void OnSelectedPacketDirectionFilterChanged(string value)
+        {
+            RebuildVisible();
+        }
+
+        partial void OnSelectedPacketSrcIdFilterChanged(string value)
+        {
+            RebuildVisible();
+        }
+
+        partial void OnSelectedPacketTarIdFilterChanged(string value)
+        {
+            RebuildVisible();
+        }
+
         private void FlushPendingToUi(bool force = false)
         {
             if (IsPaused && !force) return;
@@ -270,7 +307,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
 
             if (drained.Count == 0 && drainedComRaw.Count == 0) return;
+            RefreshCounts();
             TrimIfNeeded();
+        }
+
+        private void RefreshCounts()
+        {
+            SerialTrafficCounts counts = _tap.GetCounts();
+            TxCount = counts.TxCount;
+            RxCount = counts.RxCount;
+            TotalCount = counts.TotalCount;
         }
 
         private void AppendToAll(SerialTrafficEntry entry)
@@ -283,6 +329,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 _allPackets.Add(packet);
                 if (packet.ParseError != null) ParseErrorCount++;
                 AddPacketCommandFilter(packet.Command);
+                AddPacketSrcIdFilter(packet.SrcId);
+                AddPacketTarIdFilter(packet.TarId);
                 if (MatchesPacketFilter(packet))
                 {
                     Packets.Add(packet);
@@ -322,6 +370,20 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             PacketCommandFilters.Add(command);
         }
 
+        private void AddPacketSrcIdFilter(int? srcId)
+        {
+            if (!srcId.HasValue) return;
+            var s = srcId.Value.ToString();
+            if (!PacketSrcIdFilters.Contains(s)) PacketSrcIdFilters.Add(s);
+        }
+
+        private void AddPacketTarIdFilter(int? tarId)
+        {
+            if (!tarId.HasValue) return;
+            var s = tarId.Value.ToString();
+            if (!PacketTarIdFilters.Contains(s)) PacketTarIdFilters.Add(s);
+        }
+
         private bool MatchesFilter(SerialTrafficEntry entry) =>
             Filter switch
             {
@@ -332,10 +394,19 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         private bool MatchesPacketFilter(PacketItem packet)
         {
-            if (!MatchesFilter(packet.Traffic)) return false;
             if (IsParseErrorOnly && packet.ParseError == null) return false;
             if (SelectedPacketCommandFilter != "All" && packet.Command != SelectedPacketCommandFilter) return false;
             if (SelectedPacketStatusFilter != "All" && packet.Status != SelectedPacketStatusFilter) return false;
+            if (SelectedPacketDirectionFilter == "↑ 송신" && packet.Traffic.Direction != SerialTrafficDirection.Tx) return false;
+            if (SelectedPacketDirectionFilter == "↓ 수신" && packet.Traffic.Direction != SerialTrafficDirection.Rx) return false;
+            if (SelectedPacketSrcIdFilter != "전체")
+            {
+                if (!int.TryParse(SelectedPacketSrcIdFilter, out var srcId) || packet.SrcId != srcId) return false;
+            }
+            if (SelectedPacketTarIdFilter != "전체")
+            {
+                if (!int.TryParse(SelectedPacketTarIdFilter, out var tarId) || packet.TarId != tarId) return false;
+            }
             return true;
         }
 
@@ -441,12 +512,27 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _allComRawEntries.Clear();
             PacketCommandFilters.Clear();
             PacketCommandFilters.Add("All");
+            PacketSrcIdFilters.Clear();
+            PacketSrcIdFilters.Add("전체");
+            PacketTarIdFilters.Clear();
+            PacketTarIdFilters.Add("전체");
+            SelectedPacketDirectionFilter = "전체";
+            SelectedPacketSrcIdFilter = "전체";
+            SelectedPacketTarIdFilter = "전체";
             Entries.Clear();
             ComRawEntries.Clear();
             Packets.Clear();
             ParseErrorCount = 0;
             SelectedEntry = null;
             SelectedPacket = null;
+            RefreshCounts();
+        }
+
+        [RelayCommand]
+        private void ClearCounts()
+        {
+            _tap.ClearCounts();
+            RefreshCounts();
         }
 
         [RelayCommand]
@@ -562,7 +648,6 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                $"Raw: {packet.RawHex}";
     }
 }
-
 
 
 

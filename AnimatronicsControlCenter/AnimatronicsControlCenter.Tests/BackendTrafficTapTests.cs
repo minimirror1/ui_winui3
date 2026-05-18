@@ -44,4 +44,21 @@ public class BackendTrafficTapTests
         Assert.AreEqual(201, entry.StatusCode);
         Assert.AreEqual("/v1/logs", entry.Path);
     }
+
+    [TestMethod]
+    public void ClearCounts_RaisesTrafficChanged_AndKeepsEntries()
+    {
+        IBackendTrafficTap tap = new BackendTrafficTap();
+        int changedCount = 0;
+        var now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        tap.RecordRequest(HttpMethod.Get, new Uri("https://server.test/v1/stores"), now);
+        tap.TrafficChanged += (_, _) => changedCount++;
+
+        tap.ClearCounts();
+
+        var counts = tap.GetCounts();
+        Assert.AreEqual(1, changedCount);
+        Assert.AreEqual(0, counts.TotalCount);
+        Assert.AreEqual(1, tap.GetEntries().Count);
+    }
 }

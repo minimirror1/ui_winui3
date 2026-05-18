@@ -18,5 +18,9 @@ public interface IBackendTrafficTap
 
     BackendTrafficSnapshot GetSnapshot(DateTimeOffset now);
 
+    BackendTrafficCounts GetCounts();
+
     IReadOnlyList<BackendTrafficEntry> GetEntries();
+
+    void ClearCounts();
 }

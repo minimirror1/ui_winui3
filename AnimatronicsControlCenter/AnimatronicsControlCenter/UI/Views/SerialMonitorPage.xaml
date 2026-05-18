@@ -7,10 +7,11 @@
     xmlns:cv="using:AnimatronicsControlCenter.UI.Converters"
     mc:Ignorable="d">
 
-    <Grid Padding="12" RowSpacing="8">
+    <Grid Padding="12,12,12,0" RowSpacing="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
@@ -92,10 +93,32 @@
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="models:SerialTrafficEntry" xmlns:models="using:AnimatronicsControlCenter.Core.Models">
-                                    <TextBlock Text="{x:Bind DisplayLine}"
-                                               FontFamily="Consolas"
-                                               Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
-                                               TextWrapping="NoWrap"/>
+                                    <Grid ColumnSpacing="8" Padding="0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="86"/>
+                                            <ColumnDefinition Width="14"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{x:Bind TimestampText}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                   TextWrapping="NoWrap"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{x:Bind DirectionArrow}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                                   TextWrapping="NoWrap"/>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{x:Bind Line}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                                   TextWrapping="NoWrap"/>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
@@ -114,19 +137,45 @@
                         <ColumnDefinition Width="3*"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12">
-                        <TextBlock Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_ParseErrors', ViewModel.Strings.Code), Mode=OneWay}"/>
-                        <TextBlock Text="{x:Bind ViewModel.ParseErrorCount, Mode=OneWay}"/>
+                    <StackPanel x:Name="PacketFilterBar"
+                                Grid.Row="0"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal"
+                                Spacing="12"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{x:Bind ViewModel.Strings.Get('SerialMonitor_ParseErrors', ViewModel.Strings.Code), Mode=OneWay}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Bind ViewModel.ParseErrorCount, Mode=OneWay}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="방향" VerticalAlignment="Center"/>
+                        <ComboBox VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.PacketDirectionFilters, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPacketDirectionFilter, Mode=TwoWay}"
+                                  MinWidth="100"/>
+                        <TextBlock Text="송신 ID" VerticalAlignment="Center"/>
+                        <ComboBox VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.PacketSrcIdFilters, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPacketSrcIdFilter, Mode=TwoWay}"
+                                  MinWidth="80"/>
+                        <TextBlock Text="수신 ID" VerticalAlignment="Center"/>
+                        <ComboBox VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.PacketTarIdFilters, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedPacketTarIdFilter, Mode=TwoWay}"
+                                  MinWidth="80"/>
                         <TextBlock Text="Command" VerticalAlignment="Center"/>
-                        <ComboBox ItemsSource="{x:Bind ViewModel.PacketCommandFilters, Mode=OneWay}"
+                        <ComboBox VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.PacketCommandFilters, Mode=OneWay}"
                                   SelectedItem="{x:Bind ViewModel.SelectedPacketCommandFilter, Mode=TwoWay}"
                                   MinWidth="140"/>
                         <TextBlock Text="Status" VerticalAlignment="Center"/>
-                        <ComboBox ItemsSource="{x:Bind ViewModel.PacketStatusFilters, Mode=OneWay}"
+                        <ComboBox VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.PacketStatusFilters, Mode=OneWay}"
                                   SelectedItem="{x:Bind ViewModel.SelectedPacketStatusFilter, Mode=TwoWay}"
                                   MinWidth="100"/>
-                        <ToggleSwitch Header="Errors only"
-                                      IsOn="{x:Bind ViewModel.IsParseErrorOnly, Mode=TwoWay}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="오류만" VerticalAlignment="Center"/>
+                            <ToggleSwitch IsOn="{x:Bind ViewModel.IsParseErrorOnly, Mode=TwoWay}"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <ListView x:Name="PacketList"
@@ -192,10 +241,32 @@
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="models:SerialTrafficEntry" xmlns:models="using:AnimatronicsControlCenter.Core.Models">
-                                    <TextBlock Text="{x:Bind DisplayLine}"
-                                               FontFamily="Consolas"
-                                               Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
-                                               TextWrapping="NoWrap"/>
+                                    <Grid ColumnSpacing="8" Padding="0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="86"/>
+                                            <ColumnDefinition Width="14"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{x:Bind TimestampText}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                                   TextWrapping="NoWrap"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{x:Bind DirectionArrow}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                                   TextWrapping="NoWrap"/>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{x:Bind Line}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   Foreground="{Binding Direction, Converter={StaticResource SerialDirectionToBrushConverter}}"
+                                                   TextWrapping="NoWrap"/>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
@@ -203,10 +274,67 @@
                 </Grid>
             </PivotItem>
         </Pivot>
+
+        <!-- Status bar -->
+        <Border x:Name="statusbar"
+                Grid.Row="2"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,5"
+                Margin="-12,0,-12,0">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Ellipse Width="7" Height="7" Fill="#4CC180"/>
+                    <TextBlock Text="연결됨" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+                <StackPanel x:Name="StatusBarCounts"
+                            Orientation="Horizontal"
+                            Spacing="16"
+                            VerticalAlignment="Center">
+                    <StackPanel.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="카운터 초기화"
+                                            Command="{x:Bind ViewModel.ClearCountsCommand}"/>
+                        </MenuFlyout>
+                    </StackPanel.ContextFlyout>
+                    <TextBlock VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                        <Run Text="TX "/>
+                        <Run Text="{x:Bind ViewModel.TxCount, Mode=OneWay}"
+                             FontWeight="SemiBold"
+                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                        <Run Text="RX "/>
+                        <Run Text="{x:Bind ViewModel.RxCount, Mode=OneWay}"
+                             FontWeight="SemiBold"
+                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                        <Run Text="Total "/>
+                        <Run Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}"
+                             FontWeight="SemiBold"
+                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                    </TextBlock>
+                </StackPanel>
+                <!-- LIVE indicator (not paused) -->
+                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center"
+                            Visibility="{x:Bind BoolToCollapsed(ViewModel.IsPaused), Mode=OneWay}">
+                    <Ellipse Width="6" Height="6" Fill="#4CC180"/>
+                    <TextBlock Text="LIVE" FontSize="12" FontWeight="SemiBold" Foreground="#4CC180"/>
+                </StackPanel>
+                <!-- Paused indicator -->
+                <TextBlock Text="● 일시정지"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{ThemeResource SystemAccentColor}"
+                           VerticalAlignment="Center"
+                           Visibility="{x:Bind BoolToVisible(ViewModel.IsPaused), Mode=OneWay}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Page>
-
-
-
-
 

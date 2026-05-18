@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net.Http;
 using AnimatronicsControlCenter.Core.Interfaces;
@@ -48,6 +49,71 @@ public class ServerMonitorViewModelTests
 
         StringAssert.Contains(text, "Time\tPhase\tMethod\tPath\tStatus\tDuration\tMessage");
         StringAssert.Contains(text, "10:00:00.123\tResponse\tGET\t/v1/service/objects/obj-1/power\t200\t12 ms\tSSE data: {\"power_status\":\"ON\"}");
+    }
+
+    [TestMethod]
+    public void Refresh_AppendsNewTrafficWithoutResettingList()
+    {
+        var trafficTap = new BackendTrafficTap();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(CreateTempSettingsPath()));
+        var now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        trafficTap.RecordRequest(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), now);
+        var viewModel = new ServerMonitorViewModel(trafficTap, settings);
+        viewModel.Refresh(now);
+
+        int resetCount = 0;
+        int addCount = 0;
+        viewModel.TrafficEntries.CollectionChanged += (_, e) =>
+        {
+            if (e.Action == NotifyCollectionChangedAction.Reset) resetCount++;
+            if (e.Action == NotifyCollectionChangedAction.Add) addCount++;
+        };
+
+        trafficTap.RecordResponse(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), 200, TimeSpan.FromMilliseconds(25), "OK", now.AddMilliseconds(10));
+        viewModel.Refresh(now.AddMilliseconds(20));
+
+        Assert.AreEqual(0, resetCount);
+        Assert.AreEqual(1, addCount);
+        Assert.AreEqual(2, viewModel.TrafficEntries.Count);
+        Assert.AreEqual("Response", viewModel.TrafficEntries[1].Phase);
+    }
+
+    [TestMethod]
+    public void Refresh_ProjectsTrafficCounts()
+    {
+        var trafficTap = new BackendTrafficTap();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(CreateTempSettingsPath()));
+        var now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        trafficTap.RecordRequest(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), now);
+        trafficTap.RecordResponse(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), 200, TimeSpan.FromMilliseconds(25), "OK", now);
+        trafficTap.RecordError(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), TimeSpan.Zero, "Failed", now);
+        var viewModel = new ServerMonitorViewModel(trafficTap, settings);
+
+        viewModel.Refresh(now);
+
+        Assert.AreEqual(1, viewModel.RequestCount);
+        Assert.AreEqual(1, viewModel.ResponseCount);
+        Assert.AreEqual(1, viewModel.ErrorCount);
+        Assert.AreEqual(3, viewModel.TotalCount);
+    }
+
+    [TestMethod]
+    public void ClearCountsCommand_ResetsCountsWithoutClearingTrafficEntries()
+    {
+        var trafficTap = new BackendTrafficTap();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(CreateTempSettingsPath()));
+        var now = DateTimeOffset.Parse("2026-05-11T10:00:00+09:00");
+        trafficTap.RecordRequest(HttpMethod.Get, new Uri("https://example.invalid/v1/service/stores"), now);
+        var viewModel = new ServerMonitorViewModel(trafficTap, settings);
+        viewModel.Refresh(now);
+
+        viewModel.ClearCountsCommand.Execute(null);
+
+        Assert.AreEqual(0, viewModel.RequestCount);
+        Assert.AreEqual(0, viewModel.ResponseCount);
+        Assert.AreEqual(0, viewModel.ErrorCount);
+        Assert.AreEqual(0, viewModel.TotalCount);
+        Assert.AreEqual(1, viewModel.TrafficEntries.Count);
     }
 
     private sealed class FakeBackendSettingsPathProvider : IBackendSettingsPathProvider

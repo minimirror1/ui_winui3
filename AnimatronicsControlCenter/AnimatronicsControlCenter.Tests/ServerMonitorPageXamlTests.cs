@@ -21,11 +21,27 @@ public class ServerMonitorPageXamlTests
         StringAssert.Contains(text, "Recent backend traffic");
         StringAssert.Contains(text, "Copy all");
         StringAssert.Contains(text, "Copy selected");
+        StringAssert.Contains(text, "Request");
+        StringAssert.Contains(text, "Response");
+        StringAssert.Contains(text, "Error");
+        StringAssert.Contains(text, "Total");
+        StringAssert.Contains(text, "Clear counts");
 
         XElement trafficList = page.Descendants(xaml + "ListView").Single(element => (string?)element.Attribute(x + "Name") == "TrafficList");
         Assert.AreEqual("Multiple", (string?)trafficList.Attribute("SelectionMode"));
         Assert.IsTrue(page.Descendants(xaml + "Button").Any(element => (string?)element.Attribute(x + "Name") == "CopyAllTrafficButton"));
         Assert.IsTrue(page.Descendants(xaml + "Button").Any(element => (string?)element.Attribute(x + "Name") == "CopySelectedTrafficButton"));
+    }
+
+    [TestMethod]
+    public void ServerMonitorPage_AutoScrollsTrafficListToNewestEntry()
+    {
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "ServerMonitorPage.xaml.cs"));
+
+        StringAssert.Contains(code, "ViewModel.TrafficEntries.CollectionChanged += TrafficEntries_CollectionChanged");
+        StringAssert.Contains(code, "ScrollTrafficListToLastItemAfterLayout");
+        StringAssert.Contains(code, "TrafficList.ScrollIntoView(ViewModel.TrafficEntries[^1])");
+        StringAssert.Contains(code, "DispatcherQueue.TryEnqueue");
     }
 
     private static string ProjectPath(params string[] segments)

@@ -101,6 +101,9 @@ namespace AnimatronicsControlCenter.UI.Views
             ViewModel.IsComRawCaptureEnabled = false;
         }
 
+        private Visibility BoolToVisible(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+        private Visibility BoolToCollapsed(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
+
         private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             // Use the main window handle for picker ownership if we cannot access the current Window handle.

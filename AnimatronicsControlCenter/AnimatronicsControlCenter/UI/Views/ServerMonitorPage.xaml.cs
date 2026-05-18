@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Linq;
+using System.Collections.Specialized;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace AnimatronicsControlCenter.UI.Views;
@@ -19,6 +20,7 @@ public sealed partial class ServerMonitorPage : Page
 
         InitializeComponent();
         ViewModel.Refresh(System.DateTimeOffset.Now);
+        ViewModel.TrafficEntries.CollectionChanged += TrafficEntries_CollectionChanged;
         _trafficTap.TrafficChanged += TrafficTap_TrafficChanged;
         Unloaded += ServerMonitorPage_Unloaded;
     }
@@ -30,8 +32,32 @@ public sealed partial class ServerMonitorPage : Page
         DispatcherQueue.TryEnqueue(() => ViewModel.Refresh(System.DateTimeOffset.Now));
     }
 
+    private void TrafficEntries_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        ScrollTrafficListToLastItemAfterLayout();
+    }
+
+    private void ScrollTrafficListToLastItemAfterLayout()
+    {
+        void ScrollToLastItem()
+        {
+            if (ViewModel.TrafficEntries.Count == 0)
+            {
+                return;
+            }
+
+            TrafficList.ScrollIntoView(ViewModel.TrafficEntries[^1]);
+        }
+
+        if (!DispatcherQueue.TryEnqueue(ScrollToLastItem))
+        {
+            ScrollToLastItem();
+        }
+    }
+
     private void ServerMonitorPage_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
+        ViewModel.TrafficEntries.CollectionChanged -= TrafficEntries_CollectionChanged;
         _trafficTap.TrafficChanged -= TrafficTap_TrafficChanged;
         Unloaded -= ServerMonitorPage_Unloaded;
     }
