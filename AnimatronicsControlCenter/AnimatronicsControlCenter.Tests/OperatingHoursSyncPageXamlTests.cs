@@ -106,9 +106,32 @@ public class OperatingHoursSyncPageXamlTests
         StringAssert.Contains(text, "BorderBrush=\"{ThemeResource ControlStrokeColorDefaultBrush}\"");
         StringAssert.Contains(text, "Text=\"휴무일\"");
         StringAssert.Contains(text, "x:Name=\"ServerHolidayToggle\"");
-        StringAssert.Contains(text, "IsOn=\"{x:Bind IsClosed, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "IsChecked=\"{x:Bind IsClosed, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "x:Name=\"ServerHolidayToggleTrack\"");
+        StringAssert.Contains(text, "x:Name=\"ServerHolidayToggleOnTrack\"");
+        StringAssert.Contains(text, "x:Name=\"ServerHolidayToggleThumbOff\"");
+        StringAssert.Contains(text, "x:Name=\"ServerHolidayToggleThumbOn\"");
+        StringAssert.Contains(text, "Visibility=\"{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}\"");
+        StringAssert.Contains(text, "Visibility=\"{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource InverseBoolToVisibility}}\"");
+        StringAssert.Contains(text, "Background=\"{ThemeResource ControlFillColorDefaultBrush}\"");
+        StringAssert.Contains(text, "Background=\"{ThemeResource OpsServerAccentBrush}\"");
         StringAssert.Contains(text, "Width=\"42\"");
         StringAssert.Contains(text, "HorizontalAlignment=\"Right\"");
+    }
+
+    [TestMethod]
+    public void OperatingHoursSyncPage_ServerTimePickersKeepRoundedEdgesVisible()
+    {
+        string text = LoadPageText();
+
+        StringAssert.Contains(text, "x:Name=\"ServerOpenTimePicker\"");
+        StringAssert.Contains(text, "x:Name=\"ServerCloseTimePicker\"");
+        StringAssert.Contains(text, "ColumnSpacing=\"8\"");
+        StringAssert.Contains(text, "<ColumnDefinition Width=\"56\"/>");
+        StringAssert.Contains(text, "<ColumnDefinition Width=\"42\"/>");
+        StringAssert.Contains(text, "HorizontalAlignment=\"Stretch\"");
+        Assert.IsFalse(text.Contains("ServerOpenTimeButton", StringComparison.Ordinal), "TimePicker를 커스텀 버튼으로 감싸면 안 됩니다.");
+        Assert.IsFalse(text.Contains("ServerCloseTimeButton", StringComparison.Ordinal), "TimePicker를 커스텀 버튼으로 감싸면 안 됩니다.");
     }
 
     [TestMethod]

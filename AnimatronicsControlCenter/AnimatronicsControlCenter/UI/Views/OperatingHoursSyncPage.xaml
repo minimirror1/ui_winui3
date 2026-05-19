@@ -240,23 +240,25 @@
                                             CornerRadius="6"
                                             Margin="0,3"
                                             Padding="10,6">
-                                        <Grid x:Name="ServerScheduleRowGrid" ColumnSpacing="10" MinHeight="38">
+                                        <Grid x:Name="ServerScheduleRowGrid" ColumnSpacing="8" MinHeight="38">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="66"/>
+                                                <ColumnDefinition Width="56"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="54"/>
+                                                <ColumnDefinition Width="42"/>
                                             </Grid.ColumnDefinitions>
 
                                             <TextBlock Text="{x:Bind DayLabel}"
                                                        FontWeight="SemiBold"
                                                        VerticalAlignment="Center"/>
 
-                                            <TimePicker Grid.Column="1"
+                                            <TimePicker x:Name="ServerOpenTimePicker"
+                                                        Grid.Column="1"
                                                         Time="{x:Bind OpenTime, Mode=TwoWay}"
                                                         ClockIdentifier="12HourClock"
                                                         Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                        MinWidth="0"/>
+                                                        MinWidth="0"
+                                                        HorizontalAlignment="Stretch"/>
 
                                             <Border x:Name="ServerClosedPlaceholder"
                                                     Grid.Column="1"
@@ -282,22 +284,52 @@
                                                 </Grid>
                                             </Border>
 
-                                            <TimePicker Grid.Column="2"
+                                            <TimePicker x:Name="ServerCloseTimePicker"
+                                                        Grid.Column="2"
                                                         Time="{x:Bind CloseTime, Mode=TwoWay}"
                                                         ClockIdentifier="12HourClock"
                                                         Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                        MinWidth="0"/>
+                                                        MinWidth="0"
+                                                        HorizontalAlignment="Stretch"/>
 
-                                            <ToggleSwitch x:Name="ServerHolidayToggle"
+                                            <ToggleButton x:Name="ServerHolidayToggle"
                                                           Grid.Column="3"
-                                                          IsOn="{x:Bind IsClosed, Mode=TwoWay}"
+                                                          IsChecked="{x:Bind IsClosed, Mode=TwoWay}"
                                                           Width="42"
+                                                          Height="24"
                                                           MinWidth="42"
-                                                          MaxWidth="42"
-                                                          OffContent=""
-                                                          OnContent=""
+                                                          Padding="0"
+                                                          Background="Transparent"
+                                                          BorderThickness="0"
                                                           HorizontalAlignment="Right"
-                                                          VerticalAlignment="Center"/>
+                                                          VerticalAlignment="Center">
+                                                <Border x:Name="ServerHolidayToggleTrack"
+                                                        Width="30"
+                                                        Height="18"
+                                                        CornerRadius="999"
+                                                        Background="{ThemeResource ControlFillColorDefaultBrush}">
+                                                    <Grid>
+                                                        <Border x:Name="ServerHolidayToggleOnTrack"
+                                                                CornerRadius="999"
+                                                                Background="{ThemeResource OpsServerAccentBrush}"
+                                                                Visibility="{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
+                                                        <Ellipse x:Name="ServerHolidayToggleThumbOff"
+                                                                 Width="12"
+                                                                 Height="12"
+                                                                 Margin="3"
+                                                                 HorizontalAlignment="Left"
+                                                                 Fill="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                 Visibility="{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource InverseBoolToVisibility}}"/>
+                                                        <Ellipse x:Name="ServerHolidayToggleThumbOn"
+                                                                 Width="12"
+                                                                 Height="12"
+                                                                 Margin="3"
+                                                                 HorizontalAlignment="Right"
+                                                                 Fill="{ThemeResource OpsFieldBrush}"
+                                                                 Visibility="{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </ToggleButton>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
