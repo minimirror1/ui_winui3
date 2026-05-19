@@ -237,6 +237,18 @@
                             ToolTipService.ToolTip="Backend settings">
                         <FontIcon Glyph="&#xE774;" FontSize="16" />
                     </Button>
+
+                    <Button x:Name="OperatingHoursSyncButton"
+                            Click="OperatingHoursSyncButton_Click"
+                            Width="36"
+                            Height="36"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            ToolTipService.ToolTip="Operating hours sync">
+                        <FontIcon Glyph="&#xE121;" FontSize="16" />
+                    </Button>
                 </StackPanel>
             </NavigationView.PaneFooter>
 

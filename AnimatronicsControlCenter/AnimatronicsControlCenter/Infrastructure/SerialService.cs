@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Link;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.OperatingHours;
 using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Core.Transport;
 
@@ -26,6 +27,8 @@ namespace AnimatronicsControlCenter.Infrastructure
             BinaryCommand.GetFile,
             BinaryCommand.VerifyFile,
             BinaryCommand.GetFiles,
+            BinaryCommand.SetOperateTime,
+            BinaryCommand.GetOperateTime,
         };
 
         private readonly ISettingsService _settingsService;
@@ -229,6 +232,36 @@ namespace AnimatronicsControlCenter.Infrastructure
             }).ConfigureAwait(false);
         }
 
+        public async Task<OperatingHoursDeviceWriteResult> SetOperatingHoursAsync(int deviceId, OperatingHoursSchedule schedule)
+        {
+            var packet = BinarySerializer.EncodeSetOperateTime(
+                BinaryProtocolConst.HostId,
+                checked((byte)deviceId),
+                schedule,
+                _settingsService.PingUtcOffsetMinutes);
+
+            var response = await SendBinaryQueryAsync(deviceId, BinaryCommand.SetOperateTime, packet).ConfigureAwait(false);
+            if (!TryGetOkPayload(response, BinaryCommand.SetOperateTime, out var payload))
+            {
+                return new OperatingHoursDeviceWriteResult(deviceId, false, 0, "SET_OPERATE_TIME failed.");
+            }
+
+            uint checksum = BinaryDeserializer.ParseSetOperateTimeResponse(payload);
+            return new OperatingHoursDeviceWriteResult(deviceId, checksum == schedule.Checksum, checksum, checksum == schedule.Checksum ? "OK" : "Checksum mismatch.");
+        }
+
+        public async Task<OperatingHoursDeviceReadResult> GetOperatingHoursAsync(int deviceId)
+        {
+            var packet = BinarySerializer.EncodeGetOperateTime(BinaryProtocolConst.HostId, checked((byte)deviceId));
+            var response = await SendBinaryQueryAsync(deviceId, BinaryCommand.GetOperateTime, packet).ConfigureAwait(false);
+            if (!TryGetOkPayload(response, BinaryCommand.GetOperateTime, out var payload))
+            {
+                return new OperatingHoursDeviceReadResult(deviceId, false, null, "GET_OPERATE_TIME failed.");
+            }
+
+            return new OperatingHoursDeviceReadResult(deviceId, true, BinaryDeserializer.ParseOperatingHoursPayload(payload), "OK");
+        }
+
         private void HandleBinaryReceived(byte[] data, ulong sourceAddress)
         {
             try
@@ -268,6 +301,27 @@ namespace AnimatronicsControlCenter.Infrastructure
             var device = new Device(deviceId);
             FirmwareStatusProjection.Apply(device, pongStatus, response.SourceAddress, isVirtual);
             return device;
+        }
+
+        private static bool TryGetOkPayload(byte[]? response, BinaryCommand expectedCommand, out byte[] payload)
+        {
+            payload = Array.Empty<byte>();
+            if (response is null ||
+                !BinaryDeserializer.TryParseResponseHeader(response, out var header) ||
+                header.Cmd != expectedCommand ||
+                header.Status != ResponseStatus.Ok)
+            {
+                return false;
+            }
+
+            int payloadStart = BinaryProtocolConst.ResponseHeaderSize;
+            if (response.Length < payloadStart + header.PayloadLen)
+            {
+                return false;
+            }
+
+            payload = response.AsSpan(payloadStart, header.PayloadLen).ToArray();
+            return true;
         }
 
         public void Dispose()

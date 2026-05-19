@@ -1,6 +1,7 @@
 using System;
 using System.Buffers.Binary;
 using System.Text;
+using AnimatronicsControlCenter.Core.OperatingHours;
 
 namespace AnimatronicsControlCenter.Core.Protocol;
 
@@ -107,6 +108,34 @@ public static class BinarySerializer
     public static byte[] EncodeVerifyFile(byte srcId, byte tarId, string path, string content)
         => EncodePathContent(srcId, tarId, BinaryCommand.VerifyFile, path, content);
 
+    public static byte[] EncodeSetOperateTime(
+        byte srcId,
+        byte tarId,
+        OperatingHoursSchedule schedule,
+        int timezoneOffsetMinutes)
+    {
+        var payload = new byte[BinaryProtocolConst.OperatingHoursPayloadSize];
+        payload[0] = 1;
+        BinaryPrimitives.WriteInt16LittleEndian(payload.AsSpan(1), checked((short)timezoneOffsetMinutes));
+        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(3), schedule.Checksum);
+        payload[7] = 7;
+
+        int offset = 8;
+        foreach (var day in schedule.Days)
+        {
+            payload[offset] = EncodeDayOfWeek(day.DayOfWeek);
+            payload[offset + 1] = day.IsClosed ? (byte)1 : (byte)0;
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset + 2), day.OpenMinutes);
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset + 4), day.CloseMinutes);
+            offset += 6;
+        }
+
+        return BuildRequest(srcId, tarId, BinaryCommand.SetOperateTime, payload);
+    }
+
+    public static byte[] EncodeGetOperateTime(byte srcId, byte tarId)
+        => BuildRequest(srcId, tarId, BinaryCommand.GetOperateTime, ReadOnlySpan<byte>.Empty);
+
     private static byte[] EncodePathContent(byte srcId, byte tarId, BinaryCommand cmd, string path, string content)
     {
         var pathBytes    = Encoding.UTF8.GetBytes(path);
@@ -134,4 +163,17 @@ public static class BinarySerializer
 
         return countryCode.ToUpperInvariant();
     }
+
+    private static byte EncodeDayOfWeek(string dayOfWeek)
+        => dayOfWeek.ToUpperInvariant() switch
+        {
+            "MON" => 1,
+            "TUE" => 2,
+            "WED" => 3,
+            "THU" => 4,
+            "FRI" => 5,
+            "SAT" => 6,
+            "SUN" => 7,
+            _ => throw new ArgumentException($"Unsupported day of week: {dayOfWeek}", nameof(dayOfWeek)),
+        };
 }

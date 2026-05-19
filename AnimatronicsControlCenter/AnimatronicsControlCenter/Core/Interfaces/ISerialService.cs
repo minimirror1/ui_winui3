@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.OperatingHours;
 using AnimatronicsControlCenter.Core.Protocol;
 
 namespace AnimatronicsControlCenter.Core.Interfaces
@@ -23,5 +24,22 @@ namespace AnimatronicsControlCenter.Core.Interfaces
 
         Task<Device?> PingDeviceAsync(int deviceId);
         Task<IEnumerable<Device>> ScanDevicesAsync(int startId, int endId);
+        Task<OperatingHoursDeviceWriteResult> SetOperatingHoursAsync(int deviceId, OperatingHoursSchedule schedule)
+            => Task.FromResult(new OperatingHoursDeviceWriteResult(deviceId, false, 0, "Operating-hours write is not implemented."));
+
+        Task<OperatingHoursDeviceReadResult> GetOperatingHoursAsync(int deviceId)
+            => Task.FromResult(new OperatingHoursDeviceReadResult(deviceId, false, null, "Operating-hours read is not implemented."));
     }
+
+    public sealed record OperatingHoursDeviceWriteResult(
+        int DeviceId,
+        bool Success,
+        uint Checksum,
+        string Message);
+
+    public sealed record OperatingHoursDeviceReadResult(
+        int DeviceId,
+        bool Success,
+        OperatingHoursDeviceSchedule? Schedule,
+        string Message);
 }

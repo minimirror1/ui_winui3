@@ -15,6 +15,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly Dictionary<int, List<MotorState>> _deviceMotors = new();
         private readonly Dictionary<int, int> _deviceMotorTick = new();
         private readonly Dictionary<int, PongStatus> _devicePingStatuses = new();
+        private readonly Dictionary<int, byte[]> _deviceOperatingHoursPayloads = new();
         private readonly Func<DateTimeOffset> _nowProvider;
 
         public VirtualDeviceManager()
@@ -144,6 +145,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                     BinaryCommand.GetFile       => HandleGetFile(hdr, payload),
                     BinaryCommand.SaveFile      => HandleSaveFile(hdr, payload),
                     BinaryCommand.VerifyFile    => HandleVerifyFile(hdr, payload),
+                    BinaryCommand.SetOperateTime => HandleSetOperateTime(hdr, payload),
+                    BinaryCommand.GetOperateTime => HandleGetOperateTime(hdr),
                     _                           => BuildErrorResponse(hdr.TarId, hdr.SrcId, hdr.Cmd,
                                                        BinaryErrorCode.UnknownCmd,
                                                        $"Unknown command: 0x{(byte)hdr.Cmd:X2}"),
@@ -395,6 +398,31 @@ namespace AnimatronicsControlCenter.Infrastructure
             respPayload[^1] = match ? (byte)1 : (byte)0;
 
             return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.VerifyFile, respPayload);
+        }
+
+        private byte[] HandleSetOperateTime(RequestHeader hdr, ReadOnlySpan<byte> payload)
+        {
+            if (payload.Length != BinaryProtocolConst.OperatingHoursPayloadSize)
+            {
+                return BuildErrorResponse(hdr.TarId, hdr.SrcId, hdr.Cmd, BinaryErrorCode.InvalidParam, "SET_OPERATE_TIME: invalid payload");
+            }
+
+            var parsed = BinaryDeserializer.ParseOperatingHoursPayload(payload);
+            _deviceOperatingHoursPayloads[hdr.TarId] = payload.ToArray();
+
+            var respPayload = new byte[4];
+            BinaryPrimitives.WriteUInt32LittleEndian(respPayload, parsed.Checksum);
+            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.SetOperateTime, respPayload);
+        }
+
+        private byte[] HandleGetOperateTime(RequestHeader hdr)
+        {
+            if (!_deviceOperatingHoursPayloads.TryGetValue(hdr.TarId, out var payload))
+            {
+                return BuildErrorResponse(hdr.TarId, hdr.SrcId, hdr.Cmd, BinaryErrorCode.FileNotFound, "Operating hours not found");
+            }
+
+            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.GetOperateTime, payload);
         }
 
         // ── 응답 빌더 ─────────────────────────────────────────────────

@@ -29,7 +29,7 @@ public class MainWindowLayoutTests
     }
 
     [TestMethod]
-    public void BackendSettingsButton_IsLastPaneFooterButtonAboveSettingsItem()
+    public void OperatingHoursButton_IsLastPaneFooterButtonAboveSettingsItem()
     {
         XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
@@ -46,7 +46,7 @@ public class MainWindowLayoutTests
             .Where(element => element.Name == xaml + "Button")
             .Last();
 
-        Assert.AreEqual("BackendSettingsButton", (string?)lastButton.Attribute(x + "Name"));
+        Assert.AreEqual("OperatingHoursSyncButton", (string?)lastButton.Attribute(x + "Name"));
     }
 
     [TestMethod]
