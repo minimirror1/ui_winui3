@@ -63,6 +63,39 @@ public class OperatingHoursSyncPageXamlTests
     }
 
     [TestMethod]
+    public void OperatingHoursSyncPage_UsesDashboardStyleTwoPaneLayout()
+    {
+        string text = LoadPageText();
+
+        StringAssert.Contains(text, "x:Name=\"OperatingHoursHeader\"");
+        StringAssert.Contains(text, "운영시간 관리");
+        StringAssert.Contains(text, "서버 마스터 스케줄");
+        StringAssert.Contains(text, "장치 저장 스케줄");
+        StringAssert.Contains(text, "x:Name=\"ServerSchedulePane\"");
+        StringAssert.Contains(text, "x:Name=\"DeviceSchedulePane\"");
+        StringAssert.Contains(text, "x:Name=\"DeviceActionBar\"");
+        StringAssert.Contains(text, "OpsServerPanelBorderBrush");
+        StringAssert.Contains(text, "OpsDevicePanelBorderBrush");
+        StringAssert.Contains(text, "OpsScheduleRowBrush");
+    }
+
+    [TestMethod]
+    public void OperatingHoursSyncPage_ConstrainsLongTextAndFooterActions()
+    {
+        string text = LoadPageText();
+
+        StringAssert.Contains(text, "x:Name=\"AutoSyncBadge\"");
+        StringAssert.Contains(text, "MinWidth=\"150\"");
+        StringAssert.Contains(text, "x:Name=\"ServerMetaRow\"");
+        StringAssert.Contains(text, "x:Name=\"ServerStatusPillText\"");
+        StringAssert.Contains(text, "MaxWidth=\"150\"");
+        StringAssert.Contains(text, "x:Name=\"DeviceNavBar\"");
+        StringAssert.Contains(text, "x:Name=\"DeviceActionsGrid\"");
+        StringAssert.Contains(text, "Width=\"132\"");
+        StringAssert.Contains(text, "TextTrimming=\"CharacterEllipsis\"");
+    }
+
+    [TestMethod]
     public void OperatingHoursSyncPage_UsesItemsRepeaterForSchedules()
     {
         XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -91,6 +124,34 @@ public class OperatingHoursSyncPageXamlTests
     }
 
     // ─────────────────────────── Helper ──────────────────────────────────────────
+
+    [TestMethod]
+    public void OperatingHoursSyncPage_ServerHeaderSeparatesStoreInfoAndActions()
+    {
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        XDocument page = XDocument.Load(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "OperatingHoursSyncPage.xaml"));
+
+        XElement header = page
+            .Descendants(xaml + "Grid")
+            .Single(element => (string?)element.Attribute(x + "Name") == "ServerScheduleHeader");
+
+        Assert.AreEqual(2, header.Element(xaml + "Grid.ColumnDefinitions")?.Elements(xaml + "ColumnDefinition").Count());
+
+        XElement storeInfo = header
+            .Descendants(xaml + "TextBlock")
+            .Single(element => ((string?)element.Attribute("Text"))?.Contains("StoreInfoText") == true);
+
+        Assert.AreEqual("0", (string?)storeInfo.Parent?.Attribute("Grid.Column"));
+        Assert.AreEqual("CharacterEllipsis", (string?)storeInfo.Attribute("TextTrimming"));
+
+        XElement actions = header
+            .Descendants(xaml + "StackPanel")
+            .Single(element => (string?)element.Attribute("Orientation") == "Horizontal"
+                && element.Descendants(xaml + "Button").Any(button => ((string?)button.Attribute("Command"))?.Contains("LoadFromServerCommand") == true));
+
+        Assert.AreEqual("1", (string?)actions.Attribute("Grid.Column"));
+    }
 
     private static string LoadPageText()
         => File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "OperatingHoursSyncPage.xaml"));

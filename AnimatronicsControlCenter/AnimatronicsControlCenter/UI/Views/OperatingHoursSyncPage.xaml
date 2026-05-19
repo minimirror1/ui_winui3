@@ -12,56 +12,101 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="OpsServerAccentBrush"  Color="#22c55e"/>
-                    <SolidColorBrush x:Key="OpsDeviceAccentBrush"  Color="#60a5fa"/>
-                    <SolidColorBrush x:Key="OpsAutoSyncBadgeBrush" Color="#1d4ed8"/>
-                    <SolidColorBrush x:Key="OpsPaneBgBrush"        Color="#ffffff"/>
+                    <SolidColorBrush x:Key="OpsPageBackgroundBrush" Color="#f3f4f6"/>
+                    <SolidColorBrush x:Key="OpsHeaderBackgroundBrush" Color="#ffffff"/>
+                    <SolidColorBrush x:Key="OpsPaneBgBrush" Color="#ffffff"/>
+                    <SolidColorBrush x:Key="OpsPaneSecondaryBrush" Color="#f9fafb"/>
+                    <SolidColorBrush x:Key="OpsScheduleRowBrush" Color="#f3f4f6"/>
+                    <SolidColorBrush x:Key="OpsFieldBrush" Color="#ffffff"/>
+                    <SolidColorBrush x:Key="OpsServerAccentBrush" Color="#16a34a"/>
+                    <SolidColorBrush x:Key="OpsDeviceAccentBrush" Color="#2563eb"/>
+                    <SolidColorBrush x:Key="OpsServerPanelBorderBrush" Color="#22c55e"/>
+                    <SolidColorBrush x:Key="OpsDevicePanelBorderBrush" Color="#60a5fa"/>
+                    <SolidColorBrush x:Key="OpsAutoSyncBadgeBrush" Color="#2563eb"/>
+                    <SolidColorBrush x:Key="OpsWarningBrush" Color="#d97706"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="OpsServerAccentBrush"  Color="#4ade80"/>
-                    <SolidColorBrush x:Key="OpsDeviceAccentBrush"  Color="#60a5fa"/>
-                    <SolidColorBrush x:Key="OpsAutoSyncBadgeBrush" Color="#3b82f6"/>
-                    <SolidColorBrush x:Key="OpsPaneBgBrush"        Color="#1e1e1e"/>
+                    <SolidColorBrush x:Key="OpsPageBackgroundBrush" Color="#202020"/>
+                    <SolidColorBrush x:Key="OpsHeaderBackgroundBrush" Color="#1b1b1b"/>
+                    <SolidColorBrush x:Key="OpsPaneBgBrush" Color="#282828"/>
+                    <SolidColorBrush x:Key="OpsPaneSecondaryBrush" Color="#222222"/>
+                    <SolidColorBrush x:Key="OpsScheduleRowBrush" Color="#1f1f1f"/>
+                    <SolidColorBrush x:Key="OpsFieldBrush" Color="#191919"/>
+                    <SolidColorBrush x:Key="OpsServerAccentBrush" Color="#4ade80"/>
+                    <SolidColorBrush x:Key="OpsDeviceAccentBrush" Color="#60a5fa"/>
+                    <SolidColorBrush x:Key="OpsServerPanelBorderBrush" Color="#22c55e"/>
+                    <SolidColorBrush x:Key="OpsDevicePanelBorderBrush" Color="#3b82f6"/>
+                    <SolidColorBrush x:Key="OpsAutoSyncBadgeBrush" Color="#1f4f88"/>
+                    <SolidColorBrush x:Key="OpsWarningBrush" Color="#f59e0b"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
-            <cv:BoolToVisibilityConverter         x:Key="BoolToVisibility"/>
-            <cv:InverseBoolToVisibilityConverter   x:Key="InverseBoolToVisibility"/>
-            <cv:OpsDiffHighlightConverter          x:Key="DiffHighlight"/>
+            <cv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            <cv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+            <cv:OpsDiffHighlightConverter x:Key="DiffHighlight"/>
             <cv:OpsDeviceStatusBadgeToBrushConverter x:Key="StatusBadgeToBrush"/>
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid>
+    <Grid Background="{ThemeResource OpsPageBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ── Page header ──────────────────────────────────────────────────── -->
-        <Border Padding="24,18,24,14"
+        <Border x:Name="OperatingHoursHeader"
+                Background="{ThemeResource OpsHeaderBackgroundBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                 BorderThickness="0,0,0,1"
-                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
-            <Grid>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="운영 시간 동기화"
-                               Style="{StaticResource TitleTextBlockStyle}"/>
-                    <TextBlock Text="{x:Bind ViewModel.StoreId, Mode=OneWay}"
+                Padding="24,14">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Width="38" Height="38" Padding="0" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE72B;" FontSize="14"/>
+                </Button>
+
+                <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="운영시간 관리"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock Text="· Operating Hours Sync"
+                                   VerticalAlignment="Bottom"
+                                   Margin="0,0,0,3"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="서버의 마스터 스케줄과 매장 장치의 저장된 운영시간을 동기화합니다."
                                Style="{StaticResource CaptionTextBlockStyle}"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
 
-                <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                <Border x:Name="AutoSyncBadge"
+                        Grid.Column="2"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        MinWidth="150"
                         Background="{ThemeResource OpsAutoSyncBadgeBrush}"
-                        CornerRadius="999" Padding="12,5"
+                        BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="999"
+                        Padding="12,5"
                         Visibility="{x:Bind ViewModel.ShowAutoSyncBadge, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{x:Bind ViewModel.AutoSyncBadgeText, Mode=OneWay}"
-                               Foreground="White" FontSize="12"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE895;" FontSize="11" Foreground="{ThemeResource OpsDeviceAccentBrush}"/>
+                        <TextBlock Text="{x:Bind ViewModel.AutoSyncBadgeText, Mode=OneWay}"
+                                   Foreground="{ThemeResource OpsDeviceAccentBrush}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"/>
+                    </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
-        <!-- ── Two-pane content ─────────────────────────────────────────────── -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid Padding="24,16,24,24" ColumnSpacing="14">
                 <Grid.ColumnDefinitions>
@@ -69,274 +114,471 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- ════════════════════════════════════════════════════════════
-                     SERVER PANE
-                ════════════════════════════════════════════════════════════ -->
-                <Border CornerRadius="12"
+                <Border x:Name="ServerSchedulePane"
                         Background="{ThemeResource OpsPaneBgBrush}"
-                        BorderThickness="0,3,0,0"
-                        BorderBrush="{ThemeResource OpsServerAccentBrush}">
-                    <StackPanel Padding="16,14,16,16" Spacing="14">
+                        BorderBrush="{ThemeResource OpsServerPanelBorderBrush}"
+                        BorderThickness="1,3,1,1"
+                        CornerRadius="10">
+                    <Grid RowSpacing="14" Padding="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                        <!-- Head: title + action buttons -->
-                        <Grid>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="서버 스케쥴"
-                                           FontSize="15" FontWeight="SemiBold"/>
+                        <Grid x:Name="ServerScheduleHeader" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="7" MinWidth="0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Background="#223a2b" CornerRadius="4" Padding="7,3">
+                                        <TextBlock Text="SERVER · UI"
+                                                   Foreground="{ThemeResource OpsServerAccentBrush}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Text="서버 마스터 스케줄"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+
                                 <TextBlock Text="{x:Bind ViewModel.StoreInfoText, Mode=OneWay}"
                                            Style="{StaticResource CaptionTextBlockStyle}"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                            TextTrimming="CharacterEllipsis"
                                            Visibility="{x:Bind ViewModel.IsServerScheduleLoaded, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                                <Button Content="서버에서 불러오기"
-                                        Command="{x:Bind ViewModel.LoadFromServerCommand}"
-                                        Style="{StaticResource AccentButtonStyle}"/>
-                                <Button Content="서버로 전송"
-                                        Command="{x:Bind ViewModel.PushToServerCommand}"/>
+
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Spacing="8">
+                                <Button Command="{x:Bind ViewModel.LoadFromServerCommand}"
+                                        Height="32"
+                                        Padding="12,0"
+                                        Background="#173922"
+                                        BorderBrush="{ThemeResource OpsServerPanelBorderBrush}"
+                                        Foreground="{ThemeResource OpsServerAccentBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE896;" FontSize="13"/>
+                                        <TextBlock Text="서버에서 불러오기"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{x:Bind ViewModel.PushToServerCommand}"
+                                        Height="32"
+                                        Padding="12,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE898;" FontSize="13"/>
+                                        <TextBlock Text="서버로 전송"/>
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </Grid>
 
-                        <!-- Schedule column headers -->
-                        <Grid ColumnSpacing="6" Padding="0,0,0,2">
+                        <Grid x:Name="ServerMetaRow" Grid.Row="1" ColumnSpacing="10">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="36"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="50"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="요일"
+
+                            <TextBlock Text="스토어 ID"
+                                       VerticalAlignment="Center"
                                        Style="{StaticResource CaptionTextBlockStyle}"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock Grid.Column="1" Text="오픈"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock Grid.Column="2" Text="마감"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock Grid.Column="3" Text="휴무"
-                                       HorizontalAlignment="Right"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{x:Bind ViewModel.StoreId, Mode=TwoWay}"
+                                     IsReadOnly="True"
+                                     MinWidth="130"/>
+                            <StackPanel Grid.Column="2"
+                                        Orientation="Horizontal"
+                                        Spacing="8"
+                                        VerticalAlignment="Center">
+                                <Border Background="#193322" CornerRadius="999" Padding="9,4">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Fill="{ThemeResource OpsServerAccentBrush}" Width="6" Height="6"/>
+                                        <TextBlock Text="원본 출처  운영시간 API"
+                                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                                   FontSize="12"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="{ThemeResource OpsScheduleRowBrush}" CornerRadius="999" Padding="9,4">
+                                    <TextBlock x:Name="ServerStatusPillText"
+                                               Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                                               TextTrimming="CharacterEllipsis"
+                                               MaxWidth="150"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </Border>
+                            </StackPanel>
                         </Grid>
 
-                        <!-- Editable schedule rows -->
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.ServerDays, Mode=OneWay}">
+                        <Grid Grid.Row="2" ColumnSpacing="10" Padding="10,0,10,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="62"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="요일" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="1" Text="오픈" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="2" Text="마감" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="3" Text="휴무" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </Grid>
+
+                        <ItemsRepeater Grid.Row="3" ItemsSource="{x:Bind ViewModel.ServerDays, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="viewModels:OpsHoursDayEditVm">
-                                    <Grid ColumnSpacing="6" MinHeight="48" Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="36"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="50"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Text="{x:Bind DayLabel}"
-                                                   FontWeight="SemiBold" VerticalAlignment="Center"/>
-
-                                        <!-- Open time picker (visible when not closed) -->
-                                        <TimePicker Grid.Column="1"
-                                                    Time="{x:Bind OpenTime, Mode=TwoWay}"
-                                                    ClockIdentifier="24HourClock"
-                                                    Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                    MinWidth="0"/>
-
-                                        <!-- 휴무일 pill (spans open+close columns when closed) -->
-                                        <Border Grid.Column="1" Grid.ColumnSpan="2"
-                                                Visibility="{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                HorizontalAlignment="Left" VerticalAlignment="Center"
-                                                Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
-                                                CornerRadius="999" Padding="12,5">
-                                            <TextBlock Text="휴무일" FontSize="12"/>
-                                        </Border>
-
-                                        <!-- Close time picker (visible when not closed) -->
-                                        <TimePicker Grid.Column="2"
-                                                    Time="{x:Bind CloseTime, Mode=TwoWay}"
-                                                    ClockIdentifier="24HourClock"
-                                                    Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                    MinWidth="0"/>
-
-                                        <!-- Closed toggle -->
-                                        <CheckBox Grid.Column="3"
-                                                  IsChecked="{x:Bind IsClosed, Mode=TwoWay}"
-                                                  HorizontalAlignment="Right"
-                                                  VerticalAlignment="Center"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
-
-                        <!-- Status message -->
-                        <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   TextWrapping="Wrap"
-                                   Visibility="{x:Bind ViewModel.IsServerScheduleLoaded, Mode=OneWay, Converter={StaticResource InverseBoolToVisibility}}"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- ════════════════════════════════════════════════════════════
-                     DEVICE PANE
-                ════════════════════════════════════════════════════════════ -->
-                <Border Grid.Column="1" CornerRadius="12"
-                        Background="{ThemeResource OpsPaneBgBrush}"
-                        BorderThickness="0,3,0,0"
-                        BorderBrush="{ThemeResource OpsDeviceAccentBrush}">
-                    <StackPanel Padding="16,14,16,16" Spacing="12">
-
-                        <!-- Head: title + range inputs -->
-                        <Grid>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="장치 스케쥴"
-                                           FontSize="15" FontWeight="SemiBold"/>
-                                <TextBlock Text="{x:Bind ViewModel.DeviceCountText, Mode=OneWay}"
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                        VerticalAlignment="Center" Spacing="6">
-                                <NumberBox Value="{x:Bind ViewModel.DeviceRangeFrom, Mode=TwoWay}"
-                                           Minimum="1" Maximum="254" Width="72"
-                                           SpinButtonPlacementMode="Compact"/>
-                                <TextBlock Text="~" VerticalAlignment="Center"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <NumberBox Value="{x:Bind ViewModel.DeviceRangeTo, Mode=TwoWay}"
-                                           Minimum="1" Maximum="254" Width="72"
-                                           SpinButtonPlacementMode="Compact"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Navigation row: ‹ #003 [status badge] › -->
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Button Content="‹" Command="{x:Bind ViewModel.NavigatePrevCommand}"
-                                    Width="36" Padding="0" VerticalAlignment="Center"/>
-
-                            <TextBlock Grid.Column="1"
-                                       Text="{x:Bind ViewModel.DeviceNavText, Mode=OneWay}"
-                                       FontFamily="Consolas" FontSize="16" FontWeight="SemiBold"
-                                       VerticalAlignment="Center" Margin="4,0"/>
-
-                            <Border Grid.Column="2"
-                                    Background="{x:Bind ViewModel.DeviceStatusBadge, Mode=OneWay, Converter={StaticResource StatusBadgeToBrush}}"
-                                    CornerRadius="999" Padding="10,4"
-                                    HorizontalAlignment="Left" VerticalAlignment="Center">
-                                <TextBlock Text="{x:Bind ViewModel.DeviceStatusText, Mode=OneWay}"
-                                           Foreground="White" FontSize="11"/>
-                            </Border>
-
-                            <Button Grid.Column="3" Content="›"
-                                    Command="{x:Bind ViewModel.NavigateNextCommand}"
-                                    Width="36" Padding="0" VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <!-- Batch progress bar (visible during batch operations) -->
-                        <StackPanel Spacing="5"
-                                    Visibility="{x:Bind ViewModel.IsBatchInProgress, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <Grid>
-                                <TextBlock Style="{StaticResource CaptionTextBlockStyle}">
-                                    <Run Text="{x:Bind ViewModel.BatchLabel, Mode=OneWay}"/>
-                                    <Run Text=" · "/>
-                                    <Run Text="{x:Bind ViewModel.BatchDone, Mode=OneWay}"/>
-                                    <Run Text="/"/>
-                                    <Run Text="{x:Bind ViewModel.BatchTotal, Mode=OneWay}"/>
-                                </TextBlock>
-                            </Grid>
-                            <ProgressBar Value="{x:Bind ViewModel.BatchProgressValue, Mode=OneWay}"
-                                         Maximum="100" Height="4"/>
-                        </StackPanel>
-
-                        <!-- Device schedule column headers -->
-                        <Grid ColumnSpacing="6" Padding="4,0,0,2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="36"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="요일"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock Grid.Column="1" Text="오픈"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock Grid.Column="2" Text="마감"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        </Grid>
-
-                        <!-- Read-only device schedule rows (amber highlight on diff) -->
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.DeviceDays, Mode=OneWay}">
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="viewModels:OpsHoursDayDisplayVm">
-                                    <Border Margin="0,2" CornerRadius="6"
-                                            Background="{x:Bind IsDiff, Mode=OneWay, Converter={StaticResource DiffHighlight}}">
-                                        <Grid ColumnSpacing="6" Padding="4,8" MinHeight="40">
+                                    <Border Background="{ThemeResource OpsScheduleRowBrush}"
+                                            CornerRadius="6"
+                                            Margin="0,3"
+                                            Padding="10,6">
+                                        <Grid ColumnSpacing="10" MinHeight="38">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="36"/>
+                                                <ColumnDefinition Width="56"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="62"/>
                                             </Grid.ColumnDefinitions>
 
                                             <TextBlock Text="{x:Bind DayLabel}"
-                                                       FontWeight="SemiBold" VerticalAlignment="Center"/>
-
-                                            <!-- Open text: "휴무" or HH:MM -->
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{x:Bind OpenText, Mode=OneWay}"
-                                                       FontFamily="Consolas"
+                                                       FontWeight="SemiBold"
                                                        VerticalAlignment="Center"/>
 
-                                            <!-- Close text -->
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{x:Bind CloseText, Mode=OneWay}"
-                                                       FontFamily="Consolas"
-                                                       VerticalAlignment="Center"/>
+                                            <TimePicker Grid.Column="1"
+                                                        Time="{x:Bind OpenTime, Mode=TwoWay}"
+                                                        ClockIdentifier="12HourClock"
+                                                        Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                        MinWidth="0"/>
+
+                                            <Border Grid.Column="1"
+                                                    Grid.ColumnSpan="2"
+                                                    Visibility="{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                                                    CornerRadius="999"
+                                                    Padding="12,5">
+                                                <TextBlock Text="휴무일" FontSize="12"/>
+                                            </Border>
+
+                                            <TimePicker Grid.Column="2"
+                                                        Time="{x:Bind CloseTime, Mode=TwoWay}"
+                                                        ClockIdentifier="12HourClock"
+                                                        Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                        MinWidth="0"/>
+
+                                            <ToggleSwitch Grid.Column="3"
+                                                          IsOn="{x:Bind IsClosed, Mode=TwoWay}"
+                                                          OffContent=""
+                                                          OnContent=""
+                                                          HorizontalAlignment="Right"
+                                                          VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
 
-                        <!-- Footer: 4 action buttons -->
-                        <Grid ColumnSpacing="6" Margin="0,4,0,0">
+                        <TextBlock Grid.Row="4"
+                                   Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   Visibility="{x:Bind ViewModel.IsServerScheduleLoaded, Mode=OneWay, Converter={StaticResource InverseBoolToVisibility}}"/>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="DeviceSchedulePane"
+                        Grid.Column="1"
+                        Background="{ThemeResource OpsPaneBgBrush}"
+                        BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}"
+                        BorderThickness="1,3,1,1"
+                        CornerRadius="10">
+                    <Grid RowSpacing="12" Padding="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Button Content="현재 비교"
-                                    Command="{x:Bind ViewModel.CompareCurrentDeviceCommand}"
-                                    HorizontalAlignment="Stretch"/>
-                            <Button Grid.Column="1" Content="현재 전송"
-                                    Command="{x:Bind ViewModel.SendToCurrentDeviceCommand}"
-                                    HorizontalAlignment="Stretch"/>
-                            <Button Grid.Column="2" Content="일괄 비교"
-                                    Command="{x:Bind ViewModel.CompareAllDevicesCommand}"
-                                    HorizontalAlignment="Stretch"/>
-                            <Button Grid.Column="3" Content="일괄 전송"
-                                    Command="{x:Bind ViewModel.SendToAllDevicesCommand}"
-                                    HorizontalAlignment="Stretch"/>
+
+                            <StackPanel Spacing="7">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Background="#1d3149" CornerRadius="4" Padding="7,3">
+                                        <TextBlock Text="DEVICE"
+                                                   Foreground="{ThemeResource OpsDeviceAccentBrush}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Text="장치 저장 스케줄"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="선택한 장치에서 읽은 운영시간 - 읽기 전용"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                                <TextBlock Text="장치 ID 범위"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <NumberBox Value="{x:Bind ViewModel.DeviceRangeFrom, Mode=TwoWay}"
+                                           Minimum="1"
+                                           Maximum="254"
+                                           Width="86"
+                                           SpinButtonPlacementMode="Compact"/>
+                                <TextBlock Text="-" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <NumberBox Value="{x:Bind ViewModel.DeviceRangeTo, Mode=TwoWay}"
+                                           Minimum="1"
+                                           Maximum="254"
+                                           Width="86"
+                                           SpinButtonPlacementMode="Compact"/>
+                            </StackPanel>
                         </Grid>
 
-                        <!-- Status message (bottom of device pane) -->
-                        <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                        <Border x:Name="DeviceNavBar"
+                                Grid.Row="1"
+                                Background="{ThemeResource OpsPaneSecondaryBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="8">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button Width="36"
+                                        Padding="0"
+                                        Command="{x:Bind ViewModel.NavigatePrevCommand}">
+                                    <FontIcon Glyph="&#xE72B;" FontSize="12"/>
+                                </Button>
+
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="8">
+                                    <TextBlock Text="{x:Bind ViewModel.DeviceNavText, Mode=OneWay}"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{x:Bind ViewModel.DeviceCountText, Mode=OneWay}"
+                                               VerticalAlignment="Bottom"
+                                               Margin="0,0,0,1"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+
+                                <Border Grid.Column="2"
+                                        Background="{x:Bind ViewModel.DeviceStatusBadge, Mode=OneWay, Converter={StaticResource StatusBadgeToBrush}}"
+                                        CornerRadius="4"
+                                        Padding="8,4"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Bind ViewModel.DeviceStatusText, Mode=OneWay}"
+                                               Foreground="White"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"/>
+                                </Border>
+
+                                <Button Grid.Column="3"
+                                        Width="36"
+                                        Padding="0"
+                                        Command="{x:Bind ViewModel.NavigateNextCommand}">
+                                    <FontIcon Glyph="&#xE72A;" FontSize="12"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Row="2"
+                                    Spacing="5"
+                                    Visibility="{x:Bind ViewModel.IsBatchInProgress, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}">
+                                <Run Text="{x:Bind ViewModel.BatchLabel, Mode=OneWay}"/>
+                                <Run Text=" · "/>
+                                <Run Text="{x:Bind ViewModel.BatchDone, Mode=OneWay}"/>
+                                <Run Text="/"/>
+                                <Run Text="{x:Bind ViewModel.BatchTotal, Mode=OneWay}"/>
+                            </TextBlock>
+                            <ProgressBar Value="{x:Bind ViewModel.BatchProgressValue, Mode=OneWay}"
+                                         Maximum="100"
+                                         Height="4"/>
+                        </StackPanel>
+
+                        <Grid Grid.Row="3" ColumnSpacing="10" Padding="10,0,10,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="62"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="요일" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="1" Text="오픈" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="2" Text="마감" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="3" Text="휴무" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </Grid>
+
+                        <ItemsRepeater Grid.Row="4" ItemsSource="{x:Bind ViewModel.DeviceDays, Mode=OneWay}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:OpsHoursDayDisplayVm">
+                                    <Border Margin="0,3"
+                                            CornerRadius="6"
+                                            Background="{x:Bind IsDiff, Mode=OneWay, Converter={StaticResource DiffHighlight}}">
+                                        <Grid Background="{ThemeResource OpsScheduleRowBrush}"
+                                              ColumnSpacing="10"
+                                              Padding="10,8"
+                                              MinHeight="42">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="62"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{x:Bind DayLabel}"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{x:Bind OpenText, Mode=OneWay}"
+                                                       FontFamily="Consolas"
+                                                       FontSize="14"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{x:Bind CloseText, Mode=OneWay}"
+                                                       FontFamily="Consolas"
+                                                       FontSize="14"
+                                                       VerticalAlignment="Center"/>
+                                            <Border Grid.Column="3"
+                                                    Width="30"
+                                                    Height="18"
+                                                    CornerRadius="999"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    Background="{ThemeResource ControlFillColorDefaultBrush}">
+                                                <Ellipse Width="12"
+                                                         Height="12"
+                                                         Margin="3"
+                                                         HorizontalAlignment="Left"
+                                                         Fill="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+
+                        <Grid x:Name="DeviceActionBar"
+                              Grid.Row="5"
+                              Background="{ThemeResource OpsPaneSecondaryBrush}"
+                              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                              BorderThickness="0,1,0,0"
+                              ColumnSpacing="0"
+                              Padding="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid x:Name="DeviceActionsGrid" ColumnSpacing="8" HorizontalAlignment="Right">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="전송"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <Button Grid.Column="1"
+                                        Width="132"
+                                        Height="32"
+                                        Padding="8,0"
+                                        Command="{x:Bind ViewModel.SendToCurrentDeviceCommand}"
+                                        Background="#1d4f86"
+                                        BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}"
+                                        Foreground="{ThemeResource OpsDeviceAccentBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE898;" FontSize="13"/>
+                                        <TextBlock Text="이 장치에 보내기" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="2"
+                                        Width="132"
+                                        Height="32"
+                                        Padding="8,0"
+                                        Command="{x:Bind ViewModel.SendToAllDevicesCommand}"
+                                        Background="#3b82f6"
+                                        BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE8F1;" FontSize="13"/>
+                                        <TextBlock Text="범위 전체 전송" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <TextBlock Grid.Column="3"
+                                           Text="비교"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <Button Grid.Column="4"
+                                        Width="132"
+                                        Height="32"
+                                        Padding="8,0"
+                                        Command="{x:Bind ViewModel.CompareCurrentDeviceCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
+                                        <TextBlock Text="이 장치와 비교" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="5"
+                                        Width="132"
+                                        Height="32"
+                                        Padding="8,0"
+                                        Command="{x:Bind ViewModel.CompareAllDevicesCommand}"
+                                        BorderBrush="{ThemeResource OpsWarningBrush}"
+                                        Foreground="{ThemeResource OpsWarningBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
+                                        <TextBlock Text="범위 전체 비교" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Grid>
+
+                        <TextBlock Grid.Row="6"
+                                   Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
                                    Style="{StaticResource CaptionTextBlockStyle}"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                    TextWrapping="Wrap"
                                    Visibility="{x:Bind ViewModel.IsServerScheduleLoaded, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
-                    </StackPanel>
+                    </Grid>
                 </Border>
-
             </Grid>
         </ScrollViewer>
     </Grid>
