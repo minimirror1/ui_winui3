@@ -220,13 +220,11 @@
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="120"/>
-                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Day" Style="{StaticResource BodyStrongTextBlockStyle}"/>
                             <TextBlock Grid.Column="1" Text="Status" Style="{StaticResource BodyStrongTextBlockStyle}"/>
                             <TextBlock Grid.Column="2" Text="Open" Style="{StaticResource BodyStrongTextBlockStyle}"/>
                             <TextBlock Grid.Column="3" Text="Close" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                            <TextBlock Grid.Column="4" Text="Range" Style="{StaticResource BodyStrongTextBlockStyle}"/>
                         </Grid>
 
                         <ListView Grid.Row="1"
@@ -247,7 +245,6 @@
                                             <ColumnDefinition Width="110"/>
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{x:Bind DayOfWeek}"
                                                    FontSize="16"
@@ -276,11 +273,6 @@
                                         <TextBlock Grid.Column="3"
                                                    Text="{x:Bind CloseText}"
                                                    FontFamily="Consolas"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="4"
-                                                   Text="{x:Bind TimeRangeText}"
-                                                   FontFamily="Consolas"
-                                                   FontWeight="SemiBold"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
                                 </DataTemplate>
