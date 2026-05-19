@@ -1,5 +1,6 @@
 using AnimatronicsControlCenter.Core.Models;
 using AnimatronicsControlCenter.UI.Helpers;
+using AnimatronicsControlCenter.UI.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
@@ -192,6 +193,83 @@ namespace AnimatronicsControlCenter.UI.Converters
             => AppThemeHelper.CreateBrushForCurrentTheme(
                 Windows.UI.Color.FromArgb(92, 255, 255, 255),
                 Windows.UI.Color.FromArgb(255, 107, 114, 128));
+    }
+
+    // ─── Operating hours converters ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns a semi-transparent amber background for diff rows, transparent otherwise.
+    /// </summary>
+    public class OpsDiffHighlightConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush Amber       = new(Windows.UI.Color.FromArgb(45, 251, 191, 36));
+        private static readonly SolidColorBrush Transparent = new(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => value is bool b && b ? (object)Amber : Transparent;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Colors the status badge based on DeviceCompareStatus:
+    /// Match=green, Diff=amber, Error=red.
+    /// </summary>
+    public class OpsCompareStatusToBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush Match = new(Windows.UI.Color.FromArgb(255, 74,  222, 128));
+        private static readonly SolidColorBrush Diff  = new(Windows.UI.Color.FromArgb(255, 251, 191, 36));
+        private static readonly SolidColorBrush Err   = new(Windows.UI.Color.FromArgb(255, 239, 68,  68));
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => value is DeviceCompareStatus s ? s switch
+            {
+                DeviceCompareStatus.Match => (object)Match,
+                DeviceCompareStatus.Diff  => Diff,
+                _                         => Err,
+            } : (object)Err;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Colors diff-day row text (server or device column): amber when diff, muted otherwise.
+    /// </summary>
+    public class OpsDiffDayTextBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush Amber = new(Windows.UI.Color.FromArgb(255, 251, 191, 36));
+        private static readonly SolidColorBrush Muted = new(Windows.UI.Color.FromArgb(255, 156, 163, 175));
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => value is bool b && b ? (object)Amber : Muted;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Device status badge: ok=green, diff=amber, err=red, idle=muted.
+    /// </summary>
+    public class OpsDeviceStatusBadgeToBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush Ok    = new(Windows.UI.Color.FromArgb(255, 74,  222, 128));
+        private static readonly SolidColorBrush Diff  = new(Windows.UI.Color.FromArgb(255, 251, 191, 36));
+        private static readonly SolidColorBrush Err   = new(Windows.UI.Color.FromArgb(255, 239, 68,  68));
+        private static readonly SolidColorBrush Idle  = new(Windows.UI.Color.FromArgb(120, 156, 163, 175));
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => value is string s ? s switch
+            {
+                "ok"   => (object)Ok,
+                "diff" => Diff,
+                "err"  => Err,
+                _      => Idle,
+            } : (object)Idle;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
     }
 }
 

@@ -9,104 +9,231 @@ namespace AnimatronicsControlCenter.Tests;
 [TestClass]
 public class OperatingHoursSyncViewModelTests
 {
+    // ─────────────────────────────── Constructor ────────────────────────────────
+
     [TestMethod]
-    public void Constructor_InitializesDeviceRangeFromSettings()
+    public void Constructor_InitializesDeviceRangeAndStoreIdFromSettings()
     {
         var settings = TestSettings();
-        settings.ScanStartId = 4;
-        settings.ScanEndId = 6;
+        settings.ScanStartId   = 4;
+        settings.ScanEndId     = 6;
         settings.BackendStoreId = "store-from-settings";
 
-        var viewModel = new OperatingHoursSyncViewModel(
-            settings,
-            new FakeSource(),
-            new FakeSyncService(),
-            new FakeSerialService());
+        var vm = BuildVm(settings: settings);
 
-        Assert.AreEqual(4, viewModel.StartDeviceId);
-        Assert.AreEqual(6, viewModel.EndDeviceId);
-        Assert.AreEqual("store-from-settings", viewModel.StoreIdText);
-        Assert.AreEqual("UTC+09:00", viewModel.CurrentTimezoneOffsetText);
+        Assert.AreEqual(4, vm.DeviceRangeFrom);
+        Assert.AreEqual(6, vm.DeviceRangeTo);
+        Assert.AreEqual("store-from-settings", vm.StoreId);
+        Assert.AreEqual(7, vm.ServerDays.Count);
+        Assert.AreEqual(7, vm.DeviceDays.Count);
     }
 
-    [TestMethod]
-    public async Task LoadScheduleCommand_ShowsScheduleAndTimezoneWarningWithoutChangingSettings()
-    {
-        var settings = TestSettings();
-        settings.PingUtcOffsetMinutes = 480;
-        var schedule = TestSchedule(timezone: "Asia/Seoul");
-        var viewModel = new OperatingHoursSyncViewModel(
-            settings,
-            new FakeSource { Result = new OperatingHoursSourceResult(true, false, "OK", schedule) },
-            new FakeSyncService(),
-            new FakeSerialService());
-
-        await viewModel.LoadScheduleCommand.ExecuteAsync(null);
-
-        Assert.AreSame(schedule, viewModel.Schedule);
-        Assert.AreEqual(480, settings.PingUtcOffsetMinutes);
-        StringAssert.Contains(viewModel.TimezoneWarningText, "Asia/Seoul");
-        Assert.AreEqual(7, viewModel.ScheduleDays.Count);
-        Assert.AreEqual("MON", viewModel.ScheduleDays[0].DayOfWeek);
-        Assert.AreEqual("09:00 - 18:00", viewModel.ScheduleDays[0].TimeRangeText);
-        Assert.AreEqual("Closed", viewModel.ScheduleDays[5].TimeRangeText);
-    }
+    // ──────────────────────────── LoadFromServer ─────────────────────────────────
 
     [TestMethod]
-    public async Task SyncCommand_WritesUserSelectedRange()
+    public async Task LoadFromServerCommand_PopulatesServerDaysFromSchedule()
     {
         var schedule = TestSchedule();
-        var sync = new FakeSyncService();
-        var viewModel = new OperatingHoursSyncViewModel(
-            TestSettings(),
-            new FakeSource { Result = new OperatingHoursSourceResult(true, false, "OK", schedule) },
-            sync,
-            new FakeSerialService())
-        {
-            StartDeviceId = 2,
-            EndDeviceId = 3
-        };
-        await viewModel.LoadScheduleCommand.ExecuteAsync(null);
+        var vm = BuildVm(source: new FakeSource { Result = Ok(schedule) });
 
-        await viewModel.SyncCommand.ExecuteAsync(null);
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
 
-        Assert.AreEqual(2, sync.StartDeviceId);
-        Assert.AreEqual(3, sync.EndDeviceId);
-        Assert.AreEqual(2, viewModel.DeviceResults.Count);
-        Assert.AreEqual(OperatingHoursDeviceSyncStatus.Synced, viewModel.DeviceResults[0].WriteStatus);
+        Assert.IsTrue(vm.IsServerScheduleLoaded);
+        Assert.AreEqual(7, vm.ServerDays.Count);
+        Assert.AreEqual("월", vm.ServerDays[0].DayLabel);
+        Assert.AreEqual("MON", vm.ServerDays[0].DayKey);
+        Assert.AreEqual(TimeSpan.FromMinutes(540), vm.ServerDays[0].OpenTime);
+        Assert.AreEqual(TimeSpan.FromMinutes(1080), vm.ServerDays[0].CloseTime);
+        Assert.IsFalse(vm.ServerDays[0].IsClosed);
+        Assert.IsTrue(vm.ServerDays[5].IsClosed);   // SAT closed
+        Assert.IsTrue(vm.ServerDays[6].IsClosed);   // SUN closed
     }
 
     [TestMethod]
-    public async Task ReadAndCompareCommand_MarksMismatchWhenDeviceChecksumDiffers()
+    public async Task LoadFromServerCommand_SetsStoreIdAndInfoText()
     {
         var schedule = TestSchedule();
-        var serial = new FakeSerialService
-        {
-            ReadResult = new OperatingHoursDeviceReadResult(
-                1,
-                true,
-                new OperatingHoursDeviceSchedule(540, schedule.Checksum + 1, schedule.Days),
-                "OK")
-        };
-        var viewModel = new OperatingHoursSyncViewModel(
-            TestSettings(),
-            new FakeSource { Result = new OperatingHoursSourceResult(true, false, "OK", schedule) },
-            new FakeSyncService(),
-            serial)
-        {
-            StartDeviceId = 1,
-            EndDeviceId = 1
-        };
-        await viewModel.LoadScheduleCommand.ExecuteAsync(null);
+        var vm = BuildVm(source: new FakeSource { Result = Ok(schedule) });
 
-        await viewModel.ReadAndCompareCommand.ExecuteAsync(null);
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
 
-        Assert.AreEqual(OperatingHoursDeviceSyncStatus.Mismatch, viewModel.DeviceResults[0].ReadStatus);
+        Assert.AreEqual("store-1", vm.StoreId);
+        StringAssert.Contains(vm.StoreInfoText, "Seoul Store");
+        StringAssert.Contains(vm.StoreInfoText, "Asia/Seoul");
     }
+
+    [TestMethod]
+    public async Task LoadFromServerCommand_SetsStatusMessageOnFailure()
+    {
+        var vm = BuildVm(source: new FakeSource
+        {
+            Result = new OperatingHoursSourceResult(false, false, "서버 오류", null),
+        });
+
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
+
+        Assert.IsFalse(vm.IsServerScheduleLoaded);
+        StringAssert.Contains(vm.StatusMessage, "서버 오류");
+    }
+
+    // ─────────────────────────── PushToServer ────────────────────────────────────
+
+    [TestMethod]
+    public void PushToServerCommand_SetsStatusToNotImplemented()
+    {
+        var vm = BuildVm();
+        vm.PushToServerCommand.Execute(null);
+        StringAssert.Contains(vm.StatusMessage, "미구현");
+    }
+
+    // ─────────────────────────── SendToAllDevices ────────────────────────────────
+
+    [TestMethod]
+    public async Task SendToAllDevicesCommand_CallsSyncServiceWithCorrectRange()
+    {
+        var schedule = TestSchedule();
+        var sync     = new FakeSyncService();
+        var vm = BuildVm(
+            source: new FakeSource { Result = Ok(schedule) },
+            sync:   sync);
+        vm.DeviceRangeFrom = 3;
+        vm.DeviceRangeTo   = 5;
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
+
+        await vm.SendToAllDevicesCommand.ExecuteAsync(null);
+
+        Assert.AreEqual(3, sync.StartDeviceId);
+        Assert.AreEqual(5, sync.EndDeviceId);
+        StringAssert.Contains(vm.StatusMessage, "일괄 전송 완료");
+    }
+
+    // ─────────────────────────── Compare ─────────────────────────────────────────
+
+    [TestMethod]
+    public async Task CompareCurrentDeviceCommand_BuildsMatchResult_WhenScheduleMatches()
+    {
+        var schedule = TestSchedule();
+        var serial   = new FakeSerialService
+        {
+            ReadResult = ReadOk(1, schedule.Days),
+        };
+        var vm = BuildVm(
+            source: new FakeSource { Result = Ok(schedule) },
+            serial: serial);
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
+        vm.CurrentDeviceId = 1;
+
+        bool eventFired = false;
+        vm.CompareRequested += (_, _) => eventFired = true;
+        await vm.CompareCurrentDeviceCommand.ExecuteAsync(null);
+
+        Assert.AreEqual(1, vm.CompareResults.Count);
+        Assert.AreEqual(DeviceCompareStatus.Match, vm.CompareResults[0].Status);
+        Assert.IsTrue(eventFired);
+    }
+
+    [TestMethod]
+    public async Task CompareCurrentDeviceCommand_BuildsDiffResult_WhenTimesDiffer()
+    {
+        var schedule = TestSchedule();
+        // device has Friday close at 22:00 instead of 23:00
+        var deviceDays = schedule.Days.Select((d, i) =>
+            d.DayOfWeek == "FRI" ? new OperatingHoursDay("FRI", false, 540, 1320) : d).ToArray();
+        var serial = new FakeSerialService { ReadResult = ReadOk(1, deviceDays) };
+        var vm = BuildVm(
+            source: new FakeSource { Result = Ok(schedule) },
+            serial: serial);
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
+        vm.CurrentDeviceId = 1;
+
+        await vm.CompareCurrentDeviceCommand.ExecuteAsync(null);
+
+        Assert.AreEqual(DeviceCompareStatus.Diff, vm.CompareResults[0].Status);
+        Assert.IsTrue(vm.CompareResults[0].DiffDayCount > 0);
+    }
+
+    [TestMethod]
+    public async Task CompareCurrentDeviceCommand_BuildsErrorResult_WhenDeviceNoResponse()
+    {
+        var schedule = TestSchedule();
+        var serial   = new FakeSerialService { ReadResult = null };
+        var vm = BuildVm(
+            source: new FakeSource { Result = Ok(schedule) },
+            serial: serial);
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
+        vm.CurrentDeviceId = 1;
+
+        await vm.CompareCurrentDeviceCommand.ExecuteAsync(null);
+
+        Assert.AreEqual(DeviceCompareStatus.Error, vm.CompareResults[0].Status);
+    }
+
+    [TestMethod]
+    public async Task CompareAllDevicesCommand_BuildsResultForEachDevice()
+    {
+        var schedule = TestSchedule();
+        var vm = BuildVm(
+            source: new FakeSource { Result = Ok(schedule) },
+            serial: new FakeSerialService { ReadResult = ReadOk(1, schedule.Days) });
+        vm.DeviceRangeFrom = 1;
+        vm.DeviceRangeTo   = 3;
+        await vm.LoadFromServerCommand.ExecuteAsync(null);
+
+        bool eventFired = false;
+        vm.CompareRequested += (_, _) => eventFired = true;
+        await vm.CompareAllDevicesCommand.ExecuteAsync(null);
+
+        Assert.AreEqual(3, vm.CompareResults.Count);
+        Assert.IsTrue(eventFired);
+        Assert.AreEqual(3, vm.CompareMatchCount);
+    }
+
+    // ─────────────────────────── Navigation ──────────────────────────────────────
+
+    [TestMethod]
+    public void NavigatePrevCommand_CanNotExecute_AtRangeStart()
+    {
+        var vm = BuildVm();
+        vm.DeviceRangeFrom = 1;
+        vm.DeviceRangeTo   = 5;
+        vm.CurrentDeviceId = 1;
+
+        Assert.IsFalse(vm.NavigatePrevCommand.CanExecute(null));
+    }
+
+    [TestMethod]
+    public void NavigateNextCommand_IncreasesId_WithinRange()
+    {
+        var vm = BuildVm();
+        vm.DeviceRangeFrom = 1;
+        vm.DeviceRangeTo   = 5;
+        vm.CurrentDeviceId = 3;
+
+        vm.NavigateNextCommand.Execute(null);
+
+        Assert.AreEqual(4, vm.CurrentDeviceId);
+    }
+
+    // ─────────────────────────── Helpers ─────────────────────────────────────────
+
+    private static OperatingHoursSyncViewModel BuildVm(
+        SettingsService?              settings = null,
+        FakeSource?                   source   = null,
+        FakeSyncService?              sync     = null,
+        FakeSerialService?            serial   = null)
+        => new(
+            settings ?? TestSettings(),
+            source   ?? new FakeSource(),
+            sync     ?? new FakeSyncService(),
+            serial   ?? new FakeSerialService());
 
     private static SettingsService TestSettings()
     {
-        string path = Path.Combine(Path.GetTempPath(), "ui_winui3_operating_hours_vm_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
+        string path = Path.Combine(
+            Path.GetTempPath(),
+            "ui_winui3_ops_sync_vm_tests",
+            Guid.NewGuid().ToString("N"),
+            "backend-settings.json");
         return new SettingsService(new FakeBackendSettingsPathProvider(path));
     }
 
@@ -114,17 +241,27 @@ public class OperatingHoursSyncViewModelTests
     {
         var days = new[]
         {
-            new OperatingHoursDay("MON", false, 540, 1080),
-            new OperatingHoursDay("TUE", false, 540, 1080),
-            new OperatingHoursDay("WED", false, 540, 1080),
-            new OperatingHoursDay("THU", false, 540, 1080),
-            new OperatingHoursDay("FRI", false, 540, 1080),
-            new OperatingHoursDay("SAT", true, 0, 0),
-            new OperatingHoursDay("SUN", true, 0, 0),
+            new OperatingHoursDay("MON", false, 540,  1080),
+            new OperatingHoursDay("TUE", false, 540,  1080),
+            new OperatingHoursDay("WED", false, 540,  1080),
+            new OperatingHoursDay("THU", false, 540,  1080),
+            new OperatingHoursDay("FRI", false, 540,  1380),  // close 23:00
+            new OperatingHoursDay("SAT", true,  0,    0),
+            new OperatingHoursDay("SUN", true,  0,    0),
         };
-
         return new OperatingHoursSchedule("store-1", "Seoul Store", timezone, "2026-02-26T01:49:43.727Z", days, 1234);
     }
+
+    private static OperatingHoursSourceResult Ok(OperatingHoursSchedule schedule)
+        => new(true, false, "OK", schedule);
+
+    private static OperatingHoursDeviceReadResult ReadOk(int id, IReadOnlyList<OperatingHoursDay> days)
+    {
+        var deviceSchedule = new OperatingHoursDeviceSchedule(540, 0, days);
+        return new OperatingHoursDeviceReadResult(id, true, deviceSchedule, "OK");
+    }
+
+    // ─────────────────────────── Fakes ──────────────────────────────────────────
 
     private sealed class FakeSource : IOperatingHoursSource
     {
@@ -136,12 +273,14 @@ public class OperatingHoursSyncViewModelTests
     private sealed class FakeSyncService : IOperatingHoursDeviceSyncService
     {
         public int StartDeviceId { get; private set; }
-        public int EndDeviceId { get; private set; }
+        public int EndDeviceId   { get; private set; }
 
-        public Task<IReadOnlyList<OperatingHoursDeviceWriteResult>> SyncRangeAsync(int startDeviceId, int endDeviceId, OperatingHoursSchedule schedule, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<OperatingHoursDeviceWriteResult>> SyncRangeAsync(
+            int startDeviceId, int endDeviceId, OperatingHoursSchedule schedule,
+            CancellationToken cancellationToken)
         {
             StartDeviceId = startDeviceId;
-            EndDeviceId = endDeviceId;
+            EndDeviceId   = endDeviceId;
             return Task.FromResult<IReadOnlyList<OperatingHoursDeviceWriteResult>>(
                 Enumerable.Range(startDeviceId, endDeviceId - startDeviceId + 1)
                     .Select(id => new OperatingHoursDeviceWriteResult(id, true, schedule.Checksum, "OK"))
@@ -168,11 +307,7 @@ public class OperatingHoursSyncViewModelTests
 
     private sealed class FakeBackendSettingsPathProvider : IBackendSettingsPathProvider
     {
-        public FakeBackendSettingsPathProvider(string filePath)
-        {
-            BackendSettingsFilePath = filePath;
-        }
-
+        public FakeBackendSettingsPathProvider(string filePath) => BackendSettingsFilePath = filePath;
         public string BackendSettingsFilePath { get; }
     }
 }
