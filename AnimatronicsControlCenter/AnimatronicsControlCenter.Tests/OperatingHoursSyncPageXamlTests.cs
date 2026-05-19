@@ -96,6 +96,22 @@ public class OperatingHoursSyncPageXamlTests
     }
 
     [TestMethod]
+    public void OperatingHoursSyncPage_ServerRowsShowHolidayToggleAndClosedPlaceholder()
+    {
+        string text = LoadPageText();
+
+        StringAssert.Contains(text, "x:Name=\"ServerScheduleRowGrid\"");
+        StringAssert.Contains(text, "x:Name=\"ServerClosedPlaceholder\"");
+        StringAssert.Contains(text, "BorderThickness=\"1\"");
+        StringAssert.Contains(text, "BorderBrush=\"{ThemeResource ControlStrokeColorDefaultBrush}\"");
+        StringAssert.Contains(text, "Text=\"휴무일\"");
+        StringAssert.Contains(text, "x:Name=\"ServerHolidayToggle\"");
+        StringAssert.Contains(text, "IsOn=\"{x:Bind IsClosed, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "Width=\"42\"");
+        StringAssert.Contains(text, "HorizontalAlignment=\"Right\"");
+    }
+
+    [TestMethod]
     public void OperatingHoursSyncPage_UsesItemsRepeaterForSchedules()
     {
         XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";

@@ -240,12 +240,12 @@
                                             CornerRadius="6"
                                             Margin="0,3"
                                             Padding="10,6">
-                                        <Grid ColumnSpacing="10" MinHeight="38">
+                                        <Grid x:Name="ServerScheduleRowGrid" ColumnSpacing="10" MinHeight="38">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="56"/>
+                                                <ColumnDefinition Width="66"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="62"/>
+                                                <ColumnDefinition Width="54"/>
                                             </Grid.ColumnDefinitions>
 
                                             <TextBlock Text="{x:Bind DayLabel}"
@@ -258,15 +258,28 @@
                                                         Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                                         MinWidth="0"/>
 
-                                            <Border Grid.Column="1"
+                                            <Border x:Name="ServerClosedPlaceholder"
+                                                    Grid.Column="1"
                                                     Grid.ColumnSpan="2"
                                                     Visibility="{x:Bind IsClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                                                    HorizontalAlignment="Left"
-                                                    VerticalAlignment="Center"
-                                                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
-                                                    CornerRadius="999"
-                                                    Padding="12,5">
-                                                <TextBlock Text="휴무일" FontSize="12"/>
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch"
+                                                    Background="Transparent"
+                                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                <Grid>
+                                                    <Rectangle Stroke="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                                               StrokeDashArray="2,3"
+                                                               RadiusX="4"
+                                                               RadiusY="4"
+                                                               Fill="Transparent"/>
+                                                    <TextBlock Text="휴무일"
+                                                               FontSize="12"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </Grid>
                                             </Border>
 
                                             <TimePicker Grid.Column="2"
@@ -275,8 +288,12 @@
                                                         Visibility="{x:Bind IsNotClosed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                                         MinWidth="0"/>
 
-                                            <ToggleSwitch Grid.Column="3"
+                                            <ToggleSwitch x:Name="ServerHolidayToggle"
+                                                          Grid.Column="3"
                                                           IsOn="{x:Bind IsClosed, Mode=TwoWay}"
+                                                          Width="42"
+                                                          MinWidth="42"
+                                                          MaxWidth="42"
                                                           OffContent=""
                                                           OnContent=""
                                                           HorizontalAlignment="Right"
