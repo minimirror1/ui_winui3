@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
@@ -39,6 +40,27 @@ public sealed partial class OperatingHoursDeviceResultViewModel : ObservableObje
     private string message = string.Empty;
 }
 
+public sealed record OperatingHoursDayViewModel(
+    string DayOfWeek,
+    string StatusText,
+    string TimeRangeText,
+    string OpenText,
+    string CloseText,
+    string StatusGlyph)
+{
+    public static OperatingHoursDayViewModel FromDay(OperatingHoursDay day)
+    {
+        string openText = FormatMinutes(day.OpenMinutes);
+        string closeText = FormatMinutes(day.CloseMinutes);
+        return day.IsClosed
+            ? new OperatingHoursDayViewModel(day.DayOfWeek, "Closed", "Closed", "--:--", "--:--", "\uE711")
+            : new OperatingHoursDayViewModel(day.DayOfWeek, "Open", $"{openText} - {closeText}", openText, closeText, "\uE73E");
+    }
+
+    private static string FormatMinutes(ushort minutes)
+        => TimeSpan.FromMinutes(minutes).ToString(@"hh\:mm", CultureInfo.InvariantCulture);
+}
+
 public sealed partial class OperatingHoursSyncViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
@@ -66,9 +88,12 @@ public sealed partial class OperatingHoursSyncViewModel : ObservableObject
     private string timezoneWarningText = string.Empty;
 
     public ObservableCollection<OperatingHoursDeviceResultViewModel> DeviceResults { get; } = new();
+    public ObservableCollection<OperatingHoursDayViewModel> ScheduleDays { get; } = new();
 
     public string StoreNameText => Schedule?.StoreName ?? string.Empty;
-    public string StoreIdText => Schedule?.StoreId ?? string.Empty;
+    public string StoreIdText => string.IsNullOrWhiteSpace(Schedule?.StoreId)
+        ? _settingsService.BackendStoreId
+        : Schedule.StoreId;
     public string ServerTimezoneText => Schedule?.Timezone ?? string.Empty;
     public string ModifiedAtText => Schedule?.ModifiedAt ?? string.Empty;
     public string CurrentTimezoneOffsetText => FormatOffset(_settingsService.PingUtcOffsetMinutes);
@@ -90,12 +115,22 @@ public sealed partial class OperatingHoursSyncViewModel : ObservableObject
     partial void OnScheduleChanged(OperatingHoursSchedule? value)
     {
         TimezoneWarningText = BuildTimezoneWarning(value);
+        ScheduleDays.Clear();
+        if (value is null)
+        {
+            return;
+        }
+
+        foreach (var day in value.Days)
+        {
+            ScheduleDays.Add(OperatingHoursDayViewModel.FromDay(day));
+        }
     }
 
     [RelayCommand]
     private async Task LoadScheduleAsync()
     {
-        var result = await _source.LoadAsync(CancellationToken.None).ConfigureAwait(false);
+        var result = await _source.LoadAsync(CancellationToken.None);
         Schedule = result.Schedule;
         StatusMessage = result.Message;
     }
@@ -110,7 +145,7 @@ public sealed partial class OperatingHoursSyncViewModel : ObservableObject
         }
 
         DeviceResults.Clear();
-        var results = await _syncService.SyncRangeAsync(StartDeviceId, EndDeviceId, Schedule, CancellationToken.None).ConfigureAwait(false);
+        var results = await _syncService.SyncRangeAsync(StartDeviceId, EndDeviceId, Schedule, CancellationToken.None);
         foreach (var result in results)
         {
             DeviceResults.Add(new OperatingHoursDeviceResultViewModel(result.DeviceId)
@@ -136,7 +171,7 @@ public sealed partial class OperatingHoursSyncViewModel : ObservableObject
         int end = Math.Max(StartDeviceId, EndDeviceId);
         for (int deviceId = start; deviceId <= end; deviceId++)
         {
-            var result = await _serialService.GetOperatingHoursAsync(deviceId).ConfigureAwait(false);
+            var result = await _serialService.GetOperatingHoursAsync(deviceId);
             var status = OperatingHoursDeviceSyncStatus.Failed;
             if (result.Success && result.Schedule is not null)
             {

@@ -15,6 +15,7 @@ public class OperatingHoursSyncViewModelTests
         var settings = TestSettings();
         settings.ScanStartId = 4;
         settings.ScanEndId = 6;
+        settings.BackendStoreId = "store-from-settings";
 
         var viewModel = new OperatingHoursSyncViewModel(
             settings,
@@ -24,6 +25,7 @@ public class OperatingHoursSyncViewModelTests
 
         Assert.AreEqual(4, viewModel.StartDeviceId);
         Assert.AreEqual(6, viewModel.EndDeviceId);
+        Assert.AreEqual("store-from-settings", viewModel.StoreIdText);
         Assert.AreEqual("UTC+09:00", viewModel.CurrentTimezoneOffsetText);
     }
 
@@ -44,6 +46,10 @@ public class OperatingHoursSyncViewModelTests
         Assert.AreSame(schedule, viewModel.Schedule);
         Assert.AreEqual(480, settings.PingUtcOffsetMinutes);
         StringAssert.Contains(viewModel.TimezoneWarningText, "Asia/Seoul");
+        Assert.AreEqual(7, viewModel.ScheduleDays.Count);
+        Assert.AreEqual("MON", viewModel.ScheduleDays[0].DayOfWeek);
+        Assert.AreEqual("09:00 - 18:00", viewModel.ScheduleDays[0].TimeRangeText);
+        Assert.AreEqual("Closed", viewModel.ScheduleDays[5].TimeRangeText);
     }
 
     [TestMethod]

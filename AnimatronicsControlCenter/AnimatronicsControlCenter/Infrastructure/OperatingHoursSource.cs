@@ -37,6 +37,11 @@ public sealed class OperatingHoursSource : IOperatingHoursSource
 
             if (result.Success && result.Data is not null)
             {
+                if (result.Data.OperateTimes is null || result.Data.OperateTimes.Count == 0)
+                {
+                    return await LoadCacheOrFailureAsync("Backend store detail does not contain operate_times.", cancellationToken);
+                }
+
                 var schedule = OperatingHoursSchedule.FromStoreDetail(result.Data);
                 await _cache.SaveAsync(schedule, cancellationToken).ConfigureAwait(false);
                 return new OperatingHoursSourceResult(true, false, "Loaded operating hours from server.", schedule);

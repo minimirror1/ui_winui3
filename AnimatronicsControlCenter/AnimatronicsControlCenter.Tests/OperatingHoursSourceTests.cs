@@ -60,6 +60,32 @@ public class OperatingHoursSourceTests
         StringAssert.Contains(result.Message, "Not found");
     }
 
+    [TestMethod]
+    public async Task LoadAsync_ServerDetailWithoutOperateTimesReturnsFailure()
+    {
+        var settings = TestSettings();
+        settings.BackendStoreId = "store-1";
+        var source = new OperatingHoursSource(
+            settings,
+            new FakeCatalogClient
+            {
+                Result = Success(new BackendStoreDetailResponse(
+                    StoreId: "store-1",
+                    StoreName: "Seoul Store",
+                    CountryCode: "KR",
+                    Pcs: Array.Empty<BackendPcDetailResponse>(),
+                    Timezone: "Asia/Seoul",
+                    OperateTimes: null))
+            },
+            new MemoryOperatingHoursCache());
+
+        var result = await source.LoadAsync(CancellationToken.None);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Schedule);
+        StringAssert.Contains(result.Message, "operate_times");
+    }
+
     private static SettingsService TestSettings()
     {
         string path = Path.Combine(Path.GetTempPath(), "ui_winui3_operating_hours_source_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");

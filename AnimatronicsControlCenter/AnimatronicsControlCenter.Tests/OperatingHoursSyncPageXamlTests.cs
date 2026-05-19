@@ -33,7 +33,14 @@ public class OperatingHoursSyncPageXamlTests
         StringAssert.Contains(text, "ReadAndCompareCommand");
         StringAssert.Contains(text, "StartDeviceId");
         StringAssert.Contains(text, "EndDeviceId");
-        Assert.IsTrue(page.Descendants(xaml + "ListView").Any());
+        StringAssert.Contains(text, "ScheduleDays");
+        StringAssert.Contains(text, "TimeRangeText");
+        StringAssert.Contains(text, "OpenText");
+        StringAssert.Contains(text, "CloseText");
+        Assert.IsTrue(page.Descendants(xaml + "ListView")
+            .Any(element => ((string?)element.Attribute("ItemsSource"))?.Contains("ScheduleDays") == true));
+        Assert.IsFalse(page.Descendants(xaml + "GridView")
+            .Any(element => ((string?)element.Attribute("ItemsSource"))?.Contains("ScheduleDays") == true));
     }
 
     private static string ProjectPath(params string[] segments)
