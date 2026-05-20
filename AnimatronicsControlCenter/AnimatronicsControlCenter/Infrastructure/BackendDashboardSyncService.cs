@@ -10,7 +10,6 @@ namespace AnimatronicsControlCenter.Infrastructure;
 
 public sealed class BackendDashboardSyncService : IBackendDashboardSyncService
 {
-    private readonly ISerialService _serialService;
     private readonly IBackendMonitoringService _backendMonitoringService;
     private readonly ISettingsService _settingsService;
     private readonly object _lock = new();
@@ -18,11 +17,9 @@ public sealed class BackendDashboardSyncService : IBackendDashboardSyncService
     private CancellationTokenSource? _cts;
 
     public BackendDashboardSyncService(
-        ISerialService serialService,
         IBackendMonitoringService backendMonitoringService,
         ISettingsService settingsService)
     {
-        _serialService = serialService;
         _backendMonitoringService = backendMonitoringService;
         _settingsService = settingsService;
     }
@@ -93,30 +90,11 @@ public sealed class BackendDashboardSyncService : IBackendDashboardSyncService
 
             try
             {
-                Device logDevice = await _serialService.PingDeviceAsync(device.Id).ConfigureAwait(false)
-                    ?? CreateDisconnectedDevice(device.Id);
-                await _backendMonitoringService.SendObjectLogAsync(logDevice, cancellationToken).ConfigureAwait(false);
+                await _backendMonitoringService.SendObjectLogAsync(device, cancellationToken).ConfigureAwait(false);
             }
             catch
             {
             }
         }
-    }
-
-    private static Device CreateDisconnectedDevice(int deviceId)
-    {
-        var device = new Device(deviceId)
-        {
-            PowerStatus = "OFF",
-            MotionState = MotionState.Stopped,
-            StatusMessage = "Disconnected"
-        };
-        device.Motors.Add(new MotorState
-        {
-            Id = deviceId,
-            Type = "DEVICE",
-            Status = "Disconnected"
-        });
-        return device;
     }
 }

@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Utilities;
 using AnimatronicsControlCenter.UI.Views;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -19,6 +21,10 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly IBackendDashboardSyncService _backendDashboardSyncService;
         private readonly ISettingsService _settingsService;
         private readonly DispatcherQueue _dispatcherQueue;
+        private readonly object _devicesLock = new();
+        private List<Device> _statusDevices = new();
+        private CancellationTokenSource? _statusPollingCts;
+        private Task? _statusPollingTask;
 
         [ObservableProperty]
         private bool isScanning;
@@ -98,6 +104,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 Devices.Clear();
                 var list = found.ToList();
                 ApplyDeviceNames(list);
+                lock (_devicesLock)
+                {
+                    _statusDevices = list;
+                }
+
                 foreach (var device in list)
                 {
                     Devices.Add(device);
@@ -105,6 +116,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
                 _backendDashboardSyncService.ReplaceDevices(Devices);
                 _backendDashboardSyncService.Start();
+                EnsureStatusPolling();
             }
 
             if (_dispatcherQueue.HasThreadAccess)
@@ -115,6 +127,121 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, Apply);
             }
+        }
+
+        private void EnsureStatusPolling()
+        {
+            if (!_settingsService.IsPeriodicPingEnabled || _statusDevices.Count == 0)
+            {
+                StopStatusPolling();
+                return;
+            }
+
+            if (_statusPollingTask is { IsCompleted: false })
+            {
+                return;
+            }
+
+            _statusPollingCts = new CancellationTokenSource();
+            _statusPollingTask = RunStatusPollingLoopAsync(_statusPollingCts.Token);
+        }
+
+        private void StopStatusPolling()
+        {
+            _statusPollingCts?.Cancel();
+            _statusPollingCts?.Dispose();
+            _statusPollingCts = null;
+            _statusPollingTask = null;
+        }
+
+        private async Task RunStatusPollingLoopAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(
+                        DeviceStatusRefreshPolicy.GetIntervalMs(_settingsService.PingIntervalSeconds),
+                        token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                if (!_settingsService.IsPeriodicPingEnabled)
+                {
+                    StopStatusPolling();
+                    return;
+                }
+
+                List<Device> snapshot;
+                lock (_devicesLock)
+                {
+                    snapshot = _statusDevices.ToList();
+                }
+
+                foreach (Device device in snapshot)
+                {
+                    if (token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    Device? refreshedDevice = await _serialService.PingDeviceAsync(device.Id).ConfigureAwait(false);
+                    UpdateDeviceStatus(device, refreshedDevice);
+                }
+            }
+        }
+
+        private void UpdateDeviceStatus(Device target, Device? source)
+        {
+            void Apply()
+            {
+                if (source is null)
+                {
+                    ApplyDisconnectedStatus(target);
+                }
+                else
+                {
+                    ApplyDeviceStatus(target, source);
+                }
+            }
+
+            if (_dispatcherQueue.HasThreadAccess)
+            {
+                Apply();
+            }
+            else
+            {
+                _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, Apply);
+            }
+        }
+
+        private static void ApplyDeviceStatus(Device target, Device source)
+        {
+            target.IsConnected = source.IsConnected;
+            target.StatusMessage = source.StatusMessage;
+            target.MotionState = source.MotionState;
+            target.MotionCurrentTime = source.MotionCurrentTime;
+            target.MotionTotalTime = source.MotionTotalTime;
+            target.Address64 = source.Address64;
+            target.PowerStatus = source.PowerStatus;
+        }
+
+        private static void ApplyDisconnectedStatus(Device target)
+        {
+            target.IsConnected = false;
+            target.PowerStatus = "OFF";
+            target.MotionState = MotionState.Stopped;
+            target.StatusMessage = "Disconnected";
+            target.Motors.Clear();
+            target.Motors.Add(new MotorState
+            {
+                Id = target.Id,
+                Type = "DEVICE",
+                Status = "Disconnected"
+            });
         }
     }
 }

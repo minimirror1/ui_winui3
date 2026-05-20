@@ -14,14 +14,12 @@ namespace AnimatronicsControlCenter.Tests;
 public class BackendDashboardSyncServiceTests
 {
     [TestMethod]
-    public async Task Start_PingsDevicesAndSendsObjectLogs()
+    public async Task Start_SendsDevicesAndDoesNotPing()
     {
         var settings = TestSettings();
         var serial = new FakeSerialService();
         var backend = new FakeBackendMonitoringService(expectedCalls: 2);
-        serial.PingResults[2] = new Device(2) { PowerStatus = "ON", MotionState = MotionState.Playing };
-        serial.PingResults[3] = new Device(3) { PowerStatus = "OFF", MotionState = MotionState.Stopped };
-        var service = new BackendDashboardSyncService(serial, backend, settings);
+        var service = new BackendDashboardSyncService(backend, settings);
 
         service.ReplaceDevices(new[] { new Device(2), new Device(3) });
         service.Start();
@@ -29,8 +27,27 @@ public class BackendDashboardSyncServiceTests
         await backend.WaitAsync();
         service.Stop();
 
-        CollectionAssert.AreEqual(new[] { 2, 3 }, serial.PingedDeviceIds);
+        Assert.AreEqual(0, serial.PingedDeviceIds.Count);
         Assert.AreEqual(2, backend.SentDevices.Count);
+    }
+
+    [TestMethod]
+    public async Task Start_SendsSnapshotDevicesWithoutPinging()
+    {
+        var settings = TestSettings();
+        var serial = new FakeSerialService();
+        var backend = new FakeBackendMonitoringService(expectedCalls: 1);
+        var service = new BackendDashboardSyncService(backend, settings);
+        var device = new Device(2) { PowerStatus = "ON", MotionState = MotionState.Playing };
+
+        service.ReplaceDevices(new[] { device });
+        service.Start();
+
+        await backend.WaitAsync();
+        service.Stop();
+
+        Assert.AreEqual(0, serial.PingedDeviceIds.Count);
+        Assert.AreSame(device, backend.SentDevices[0]);
     }
 
     [TestMethod]
@@ -40,7 +57,7 @@ public class BackendDashboardSyncServiceTests
         settings.IsBackendSyncEnabled = false;
         var serial = new FakeSerialService();
         var backend = new FakeBackendMonitoringService(expectedCalls: 1);
-        var service = new BackendDashboardSyncService(serial, backend, settings);
+        var service = new BackendDashboardSyncService(backend, settings);
 
         service.ReplaceDevices(new[] { new Device(2) });
         service.Start();
@@ -52,14 +69,25 @@ public class BackendDashboardSyncServiceTests
     }
 
     [TestMethod]
-    public async Task Start_PingFailureSendsDisconnectedOffDevice()
+    public async Task Start_SendsExistingDisconnectedSnapshot()
     {
         var settings = TestSettings();
-        var serial = new FakeSerialService();
         var backend = new FakeBackendMonitoringService(expectedCalls: 1);
-        var service = new BackendDashboardSyncService(serial, backend, settings);
+        var service = new BackendDashboardSyncService(backend, settings);
+        var device = new Device(2)
+        {
+            PowerStatus = "OFF",
+            MotionState = MotionState.Stopped,
+            StatusMessage = "Disconnected"
+        };
+        device.Motors.Add(new MotorState
+        {
+            Id = 2,
+            Type = "DEVICE",
+            Status = "Disconnected"
+        });
 
-        service.ReplaceDevices(new[] { new Device(2) });
+        service.ReplaceDevices(new[] { device });
         service.Start();
 
         await backend.WaitAsync();
