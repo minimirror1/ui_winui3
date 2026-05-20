@@ -59,7 +59,7 @@
 
 3. **휴무일 표현**
 
-   현재 응답에는 `is_closed`가 없다. `00:00` ~ `00:00`은 24시간 영업이 아니라 **휴무**로 정의한다.
+   `00:00` ~ `00:00`은 24시간 영업이 아니라 **휴무**로 정의한다.
 
 4. **PING 시간 기준**
 
@@ -102,7 +102,6 @@ SET_OPERATE_TIME 요청 payload
 
 요일 row
   day_of_week           uint8   // 1=MON ... 7=SUN
-  is_closed             uint8   // 0=영업, 1=휴무
   open_minutes          uint16  // 00:00부터 지난 분
   close_minutes         uint16
 
@@ -112,6 +111,8 @@ SET_OPERATE_TIME 응답 payload
 GET_OPERATE_TIME 응답 payload
   SET_OPERATE_TIME 요청 payload와 같은 구조
 ```
+
+휴무는 별도 휴무 플래그 없이 `open_minutes == 0 && close_minutes == 0`으로 판정한다. 따라서 `00:00` ~ `00:00`은 24시간 영업이 아니라 휴무다.
 
 로컬 캐시 파일은 장치 전송용 파일이 아니라 WinUI3의 서버 장애 대비용이다. 캐시는 JSON으로 저장하되 장치에는 위 바이너리 payload를 전송한다.
 

@@ -48,13 +48,13 @@ public class OperatingHoursAutoSyncServiceTests
     {
         var days = new[]
         {
-            new OperatingHoursDay("MON", false, 540, 1080),
-            new OperatingHoursDay("TUE", false, 540, 1080),
-            new OperatingHoursDay("WED", false, 540, 1080),
-            new OperatingHoursDay("THU", false, 540, 1080),
-            new OperatingHoursDay("FRI", false, 540, 1080),
-            new OperatingHoursDay("SAT", true, 0, 0),
-            new OperatingHoursDay("SUN", true, 0, 0),
+            new OperatingHoursDay("MON", 540, 1080),
+            new OperatingHoursDay("TUE", 540, 1080),
+            new OperatingHoursDay("WED", 540, 1080),
+            new OperatingHoursDay("THU", 540, 1080),
+            new OperatingHoursDay("FRI", 540, 1080),
+            new OperatingHoursDay("SAT", 0, 0),
+            new OperatingHoursDay("SUN", 0, 0),
         };
 
         return new OperatingHoursSchedule("store-1", "Seoul Store", "Asia/Seoul", null, days, 1234);

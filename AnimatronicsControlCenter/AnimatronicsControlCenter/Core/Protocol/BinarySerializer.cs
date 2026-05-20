@@ -124,10 +124,9 @@ public static class BinarySerializer
         foreach (var day in schedule.Days)
         {
             payload[offset] = EncodeDayOfWeek(day.DayOfWeek);
-            payload[offset + 1] = day.IsClosed ? (byte)1 : (byte)0;
-            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset + 2), day.OpenMinutes);
-            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset + 4), day.CloseMinutes);
-            offset += 6;
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset + 1), day.OpenMinutes);
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset + 3), day.CloseMinutes);
+            offset += 5;
         }
 
         return BuildRequest(srcId, tarId, BinaryCommand.SetOperateTime, payload);

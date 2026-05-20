@@ -21,6 +21,20 @@ public class OperatingHoursCacheTests
     }
 
     [TestMethod]
+    public async Task SaveAsync_DoesNotWriteComputedClosedFlag()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "ui_winui3_operating_hours_cache_tests", Guid.NewGuid().ToString("N"));
+        string cachePath = Path.Combine(directory, "operating-hours-cache.json");
+        var cache = new OperatingHoursCache(new FakeBackendSettingsPathProvider(Path.Combine(directory, "backend-settings.json")));
+
+        await cache.SaveAsync(TestSchedule(), CancellationToken.None);
+
+        string json = await File.ReadAllTextAsync(cachePath);
+        Assert.IsFalse(json.Contains("isClosed", StringComparison.Ordinal));
+        Assert.IsFalse(json.Contains("IsClosed", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task LoadAsync_ReturnsSavedSchedule()
     {
         string directory = Path.Combine(Path.GetTempPath(), "ui_winui3_operating_hours_cache_tests", Guid.NewGuid().ToString("N"));
@@ -54,13 +68,13 @@ public class OperatingHoursCacheTests
     {
         var days = new[]
         {
-            new OperatingHoursDay("MON", false, 540, 1080),
-            new OperatingHoursDay("TUE", false, 540, 1080),
-            new OperatingHoursDay("WED", false, 540, 1080),
-            new OperatingHoursDay("THU", false, 540, 1080),
-            new OperatingHoursDay("FRI", false, 540, 1080),
-            new OperatingHoursDay("SAT", true, 0, 0),
-            new OperatingHoursDay("SUN", true, 0, 0),
+            new OperatingHoursDay("MON", 540, 1080),
+            new OperatingHoursDay("TUE", 540, 1080),
+            new OperatingHoursDay("WED", 540, 1080),
+            new OperatingHoursDay("THU", 540, 1080),
+            new OperatingHoursDay("FRI", 540, 1080),
+            new OperatingHoursDay("SAT", 0, 0),
+            new OperatingHoursDay("SUN", 0, 0),
         };
 
         return new OperatingHoursSchedule(

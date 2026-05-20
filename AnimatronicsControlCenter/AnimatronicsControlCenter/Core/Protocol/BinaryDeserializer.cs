@@ -232,15 +232,33 @@ public static class BinaryDeserializer
 
     public static OperatingHoursDeviceSchedule ParseOperatingHoursPayload(ReadOnlySpan<byte> payload)
     {
-        if (payload.Length < BinaryProtocolConst.OperatingHoursPayloadSize)
+        if (!TryParseOperatingHoursPayload(payload, out var schedule, out var error))
         {
-            throw new ArgumentException("Invalid operating-hours payload.", nameof(payload));
+            throw new ArgumentException(error, nameof(payload));
+        }
+
+        return schedule!;
+    }
+
+    public static bool TryParseOperatingHoursPayload(
+        ReadOnlySpan<byte> payload,
+        out OperatingHoursDeviceSchedule? schedule,
+        out string error)
+    {
+        schedule = null;
+        error = string.Empty;
+
+        if (payload.Length != BinaryProtocolConst.OperatingHoursPayloadSize)
+        {
+            error = "Invalid operating-hours payload.";
+            return false;
         }
 
         byte formatVersion = payload[0];
         if (formatVersion != 1)
         {
-            throw new ArgumentException("Unsupported operating-hours payload version.", nameof(payload));
+            error = "Unsupported operating-hours payload version.";
+            return false;
         }
 
         int timezoneOffsetMinutes = BinaryPrimitives.ReadInt16LittleEndian(payload[1..]);
@@ -248,22 +266,33 @@ public static class BinaryDeserializer
         byte dayCount = payload[7];
         if (dayCount != 7)
         {
-            throw new ArgumentException("Operating-hours payload must contain seven days.", nameof(payload));
+            error = "Operating-hours payload must contain seven days.";
+            return false;
         }
 
         var days = new List<OperatingHoursDay>(7);
         int offset = 8;
         for (int i = 0; i < dayCount; i++)
         {
-            string dayOfWeek = DecodeDayOfWeek(payload[offset]);
-            bool isClosed = payload[offset + 1] != 0;
-            ushort openMinutes = BinaryPrimitives.ReadUInt16LittleEndian(payload[(offset + 2)..]);
-            ushort closeMinutes = BinaryPrimitives.ReadUInt16LittleEndian(payload[(offset + 4)..]);
-            days.Add(new OperatingHoursDay(dayOfWeek, isClosed, openMinutes, closeMinutes));
-            offset += 6;
+            string dayOfWeek;
+            try
+            {
+                dayOfWeek = DecodeDayOfWeek(payload[offset]);
+            }
+            catch (ArgumentException ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+
+            ushort openMinutes = BinaryPrimitives.ReadUInt16LittleEndian(payload[(offset + 1)..]);
+            ushort closeMinutes = BinaryPrimitives.ReadUInt16LittleEndian(payload[(offset + 3)..]);
+            days.Add(new OperatingHoursDay(dayOfWeek, openMinutes, closeMinutes));
+            offset += 5;
         }
 
-        return new OperatingHoursDeviceSchedule(timezoneOffsetMinutes, checksum, days);
+        schedule = new OperatingHoursDeviceSchedule(timezoneOffsetMinutes, checksum, days);
+        return true;
     }
 
     public static uint ParseSetOperateTimeResponse(ReadOnlySpan<byte> payload)
@@ -309,7 +338,7 @@ public static class BinaryDeserializer
             5 => "FRI",
             6 => "SAT",
             7 => "SUN",
-            _ => "UNKNOWN",
+            _ => throw new ArgumentException($"Invalid operating-hours day value: {value}"),
         };
 
     // ── Enum 디코딩 헬퍼 ─────────────────────────────────────────────

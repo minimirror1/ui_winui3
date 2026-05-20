@@ -259,7 +259,12 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return new OperatingHoursDeviceReadResult(deviceId, false, null, "GET_OPERATE_TIME failed.");
             }
 
-            return new OperatingHoursDeviceReadResult(deviceId, true, BinaryDeserializer.ParseOperatingHoursPayload(payload), "OK");
+            if (!BinaryDeserializer.TryParseOperatingHoursPayload(payload, out var schedule, out var error) || schedule is null)
+            {
+                return new OperatingHoursDeviceReadResult(deviceId, false, null, error);
+            }
+
+            return new OperatingHoursDeviceReadResult(deviceId, true, schedule, "OK");
         }
 
         private void HandleBinaryReceived(byte[] data, ulong sourceAddress)

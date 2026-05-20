@@ -138,7 +138,7 @@ public class OperatingHoursSyncViewModelTests
         var schedule = TestSchedule();
         // device has Friday close at 22:00 instead of 23:00
         var deviceDays = schedule.Days.Select((d, i) =>
-            d.DayOfWeek == "FRI" ? new OperatingHoursDay("FRI", false, 540, 1320) : d).ToArray();
+            d.DayOfWeek == "FRI" ? new OperatingHoursDay("FRI", 540, 1320) : d).ToArray();
         var serial = new FakeSerialService { ReadResult = ReadOk(1, deviceDays) };
         var vm = BuildVm(
             source: new FakeSource { Result = Ok(schedule) },
@@ -241,13 +241,13 @@ public class OperatingHoursSyncViewModelTests
     {
         var days = new[]
         {
-            new OperatingHoursDay("MON", false, 540,  1080),
-            new OperatingHoursDay("TUE", false, 540,  1080),
-            new OperatingHoursDay("WED", false, 540,  1080),
-            new OperatingHoursDay("THU", false, 540,  1080),
-            new OperatingHoursDay("FRI", false, 540,  1380),  // close 23:00
-            new OperatingHoursDay("SAT", true,  0,    0),
-            new OperatingHoursDay("SUN", true,  0,    0),
+            new OperatingHoursDay("MON", 540, 1080),
+            new OperatingHoursDay("TUE", 540, 1080),
+            new OperatingHoursDay("WED", 540, 1080),
+            new OperatingHoursDay("THU", 540, 1080),
+            new OperatingHoursDay("FRI", 540, 1380),  // close 23:00
+            new OperatingHoursDay("SAT", 0, 0),
+            new OperatingHoursDay("SUN", 0, 0),
         };
         return new OperatingHoursSchedule("store-1", "Seoul Store", timezone, "2026-02-26T01:49:43.727Z", days, 1234);
     }

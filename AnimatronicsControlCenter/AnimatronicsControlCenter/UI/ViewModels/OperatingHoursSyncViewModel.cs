@@ -92,8 +92,8 @@ public sealed partial class OpsHoursDayEditVm : ObservableObject
         IsClosed  = OriginalIsClosed;
     }
 
-    public ushort ToOpenMinutes()  => (ushort)(int)OpenTime.TotalMinutes;
-    public ushort ToCloseMinutes() => (ushort)(int)CloseTime.TotalMinutes;
+    public ushort ToOpenMinutes()  => IsClosed ? (ushort)0 : (ushort)(int)OpenTime.TotalMinutes;
+    public ushort ToCloseMinutes() => IsClosed ? (ushort)0 : (ushort)(int)CloseTime.TotalMinutes;
 }
 
 // ─── Device pane: read-only day VM ────────────────────────────────────────────
@@ -611,7 +611,7 @@ public sealed partial class OperatingHoursSyncViewModel : ObservableObject
     private OperatingHoursSchedule BuildScheduleFromServerDays()
     {
         var days = ServerDays
-            .Select(d => new OperatingHoursDay(d.DayKey, d.IsClosed, d.ToOpenMinutes(), d.ToCloseMinutes()))
+            .Select(d => new OperatingHoursDay(d.DayKey, d.ToOpenMinutes(), d.ToCloseMinutes()))
             .ToArray();
         uint checksum = OperatingHoursSchedule.ComputeChecksum(null, null, days);
         return new OperatingHoursSchedule(StoreId, null, null, null, days, checksum);

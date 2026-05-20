@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using AnimatronicsControlCenter.Core.Backend;
 
 namespace AnimatronicsControlCenter.Core.OperatingHours;
@@ -50,8 +51,6 @@ public sealed record OperatingHoursSchedule(
                 .Append('|')
                 .Append(NormalizeDay(day.DayOfWeek))
                 .Append(':')
-                .Append(day.IsClosed ? '1' : '0')
-                .Append(':')
                 .Append(day.OpenMinutes.ToString(CultureInfo.InvariantCulture))
                 .Append(':')
                 .Append(day.CloseMinutes.ToString(CultureInfo.InvariantCulture));
@@ -81,20 +80,21 @@ public sealed record OperatingHoursSchedule(
 
 public sealed record OperatingHoursDay(
     string DayOfWeek,
-    bool IsClosed,
     ushort OpenMinutes,
     ushort CloseMinutes)
 {
+    [JsonIgnore]
+    public bool IsClosed => OpenMinutes == 0 && CloseMinutes == 0;
+
     public static OperatingHoursDay FromBackend(string dayOfWeek, string openTime, string closeTime)
     {
         ushort openMinutes = ParseMinutes(openTime);
         ushort closeMinutes = ParseMinutes(closeTime);
-        bool isClosed = openMinutes == 0 && closeMinutes == 0;
-        return new OperatingHoursDay(dayOfWeek, isClosed, openMinutes, closeMinutes);
+        return new OperatingHoursDay(dayOfWeek, openMinutes, closeMinutes);
     }
 
     public static OperatingHoursDay Closed(string dayOfWeek)
-        => new(dayOfWeek, true, 0, 0);
+        => new(dayOfWeek, 0, 0);
 
     private static ushort ParseMinutes(string value)
     {
