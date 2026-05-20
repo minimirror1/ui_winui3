@@ -91,7 +91,11 @@ public class OperatingHoursSyncPageXamlTests
         StringAssert.Contains(text, "MaxWidth=\"150\"");
         StringAssert.Contains(text, "x:Name=\"DeviceNavBar\"");
         StringAssert.Contains(text, "x:Name=\"DeviceActionsGrid\"");
-        StringAssert.Contains(text, "Width=\"132\"");
+        StringAssert.Contains(text, "x:Name=\"DeviceSendActionsGroup\"");
+        StringAssert.Contains(text, "x:Name=\"DeviceCompareActionsGroup\"");
+        StringAssert.Contains(text, "<ColumnDefinition Width=\"*\"/>");
+        StringAssert.Contains(text, "MinWidth=\"118\"");
+        StringAssert.Contains(text, "HorizontalAlignment=\"Stretch\"");
         StringAssert.Contains(text, "TextTrimming=\"CharacterEllipsis\"");
     }
 

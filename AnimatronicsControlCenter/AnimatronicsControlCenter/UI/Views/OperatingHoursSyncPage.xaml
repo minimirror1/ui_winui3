@@ -543,80 +543,95 @@
                               Background="{ThemeResource OpsPaneSecondaryBrush}"
                               BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                               BorderThickness="0,1,0,0"
-                              ColumnSpacing="0"
+                              ColumnSpacing="16"
                               Padding="0,10,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Grid x:Name="DeviceActionsGrid" ColumnSpacing="8" HorizontalAlignment="Right">
+                            <Grid x:Name="DeviceActionsGrid" Grid.ColumnSpan="2" ColumnSpacing="16" HorizontalAlignment="Stretch">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="전송"
-                                           VerticalAlignment="Center"
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <Button Grid.Column="1"
-                                        Width="132"
-                                        Height="32"
-                                        Padding="8,0"
-                                        Command="{x:Bind ViewModel.SendToCurrentDeviceCommand}"
-                                        Background="#1d4f86"
-                                        BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}"
-                                        Foreground="{ThemeResource OpsDeviceAccentBrush}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <FontIcon Glyph="&#xE898;" FontSize="13"/>
-                                        <TextBlock Text="이 장치에 보내기" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Grid.Column="2"
-                                        Width="132"
-                                        Height="32"
-                                        Padding="8,0"
-                                        Command="{x:Bind ViewModel.SendToAllDevicesCommand}"
-                                        Background="#3b82f6"
-                                        BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <FontIcon Glyph="&#xE8F1;" FontSize="13"/>
-                                        <TextBlock Text="범위 전체 전송" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Button>
+                                <Grid x:Name="DeviceSendActionsGroup" ColumnSpacing="8" HorizontalAlignment="Stretch">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="전송"
+                                               MinWidth="28"
+                                               VerticalAlignment="Center"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <Button Grid.Column="1"
+                                            MinWidth="118"
+                                            Height="32"
+                                            Padding="8,0"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{x:Bind ViewModel.SendToCurrentDeviceCommand}"
+                                            Background="#1d4f86"
+                                            BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}"
+                                            Foreground="{ThemeResource OpsDeviceAccentBrush}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE898;" FontSize="13"/>
+                                            <TextBlock Text="이 장치에 보내기" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="2"
+                                            MinWidth="118"
+                                            Height="32"
+                                            Padding="8,0"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{x:Bind ViewModel.SendToAllDevicesCommand}"
+                                            Background="#3b82f6"
+                                            BorderBrush="{ThemeResource OpsDevicePanelBorderBrush}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE8F1;" FontSize="13"/>
+                                            <TextBlock Text="전체 전송" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
 
-                                <TextBlock Grid.Column="3"
-                                           Text="비교"
-                                           Margin="10,0,0,0"
-                                           VerticalAlignment="Center"
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <Button Grid.Column="4"
-                                        Width="132"
-                                        Height="32"
-                                        Padding="8,0"
-                                        Command="{x:Bind ViewModel.CompareCurrentDeviceCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
-                                        <TextBlock Text="이 장치와 비교" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Grid.Column="5"
-                                        Width="132"
-                                        Height="32"
-                                        Padding="8,0"
-                                        Command="{x:Bind ViewModel.CompareAllDevicesCommand}"
-                                        BorderBrush="{ThemeResource OpsWarningBrush}"
-                                        Foreground="{ThemeResource OpsWarningBrush}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
-                                        <TextBlock Text="범위 전체 비교" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Button>
+                                <Grid x:Name="DeviceCompareActionsGroup" Grid.Column="1" ColumnSpacing="8" HorizontalAlignment="Stretch">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="비교"
+                                               MinWidth="28"
+                                               VerticalAlignment="Center"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <Button Grid.Column="1"
+                                            MinWidth="118"
+                                            Height="32"
+                                            Padding="8,0"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{x:Bind ViewModel.CompareCurrentDeviceCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
+                                            <TextBlock Text="이 장치와 비교" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="2"
+                                            MinWidth="118"
+                                            Height="32"
+                                            Padding="8,0"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{x:Bind ViewModel.CompareAllDevicesCommand}"
+                                            BorderBrush="{ThemeResource OpsWarningBrush}"
+                                            Foreground="{ThemeResource OpsWarningBrush}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                            <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
+                                            <TextBlock Text="전체 비교" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
                             </Grid>
                         </Grid>
 
