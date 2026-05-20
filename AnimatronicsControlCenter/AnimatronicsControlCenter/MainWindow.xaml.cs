@@ -31,6 +31,7 @@ namespace AnimatronicsControlCenter
         private readonly ISerialTrafficTap _serialTrafficTap;
         private readonly IBackendTrafficTap _backendTrafficTap;
         private readonly IBackendPowerSseService _backendPowerSseService;
+        private readonly IOperatingHoursAutoSyncService _operatingHoursAutoSyncService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly ISettingsService _settingsService;
         private readonly SerialTrafficIndicatorState _serialTrafficIndicatorState = new();
@@ -40,11 +41,12 @@ namespace AnimatronicsControlCenter
 
         public SettingsViewModel ConnectionViewModel { get; }
 
-        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, SerialMonitorWindowHost serialMonitorWindowHost, ISettingsService settingsService, SettingsViewModel settingsViewModel)
+        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, IOperatingHoursAutoSyncService operatingHoursAutoSyncService, SerialMonitorWindowHost serialMonitorWindowHost, ISettingsService settingsService, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;
             _backendTrafficTap = backendTrafficTap;
             _backendPowerSseService = backendPowerSseService;
+            _operatingHoursAutoSyncService = operatingHoursAutoSyncService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
             _settingsService = settingsService;
             ConnectionViewModel = settingsViewModel;
@@ -78,6 +80,7 @@ namespace AnimatronicsControlCenter
             UpdateServerTrafficIndicator();
             UpdateConnectionIconVisibility();
             ConnectionViewModel.PropertyChanged += ConnectionViewModel_PropertyChanged;
+            _operatingHoursAutoSyncService.Start();
         }
 
         public void ApplyTheme()
@@ -130,7 +133,8 @@ namespace AnimatronicsControlCenter
                 NavView.SelectedItem = (NavigationViewItem)NavView.SettingsItem;
             }
             else if (ContentFrame.SourcePageType == typeof(ServerMonitorPage)
-                || ContentFrame.SourcePageType == typeof(BackendSettingsPage))
+                || ContentFrame.SourcePageType == typeof(BackendSettingsPage)
+                || ContentFrame.SourcePageType == typeof(OperatingHoursSyncPage))
             {
                 NavView.SelectedItem = null;
             }
@@ -218,6 +222,11 @@ namespace AnimatronicsControlCenter
         private void ServerTrafficButton_Click(object sender, RoutedEventArgs e)
         {
             ContentFrame.Navigate(typeof(ServerMonitorPage));
+        }
+
+        private void OperatingHoursSyncButton_Click(object sender, RoutedEventArgs e)
+        {
+            ContentFrame.Navigate(typeof(OperatingHoursSyncPage));
         }
 
         private void SerialTrafficTap_EntryRecorded(object? sender, SerialTrafficEntry entry)
@@ -347,6 +356,7 @@ namespace AnimatronicsControlCenter
             _serverTrafficIndicatorTimer.Tick -= ServerTrafficIndicatorTimer_Tick;
             _serverTrafficIndicatorTimer.Stop();
             _backendPowerSseService.Stop();
+            _operatingHoursAutoSyncService.Stop();
             RootGrid.ActualThemeChanged -= RootGrid_ActualThemeChanged;
             Closed -= MainWindow_Closed;
         }

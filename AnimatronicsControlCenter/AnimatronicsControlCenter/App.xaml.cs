@@ -46,6 +46,7 @@ namespace AnimatronicsControlCenter
             services.AddTransient<DeviceDetailPage>();
             services.AddTransient<SerialMonitorWindow>();
             services.AddTransient<ServerMonitorPage>();
+            services.AddTransient<OperatingHoursSyncPage>();
             
             // Core Services
             // XBeeService must be registered before SerialService since SerialService depends on it
@@ -65,6 +66,10 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<IBackendServerCatalogClient, BackendServerCatalogClient>();
             services.AddSingleton<IBackendDashboardSyncService, BackendDashboardSyncService>();
             services.AddSingleton<IBackendTrafficTap, BackendTrafficTap>();
+            services.AddSingleton<IOperatingHoursCache, OperatingHoursCache>();
+            services.AddSingleton<IOperatingHoursSource, OperatingHoursSource>();
+            services.AddSingleton<IOperatingHoursDeviceSyncService, OperatingHoursDeviceSyncService>();
+            services.AddSingleton<IOperatingHoursAutoSyncService, OperatingHoursAutoSyncService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
 
 
@@ -76,6 +81,7 @@ namespace AnimatronicsControlCenter
             services.AddTransient<ScanDialogViewModel>();
             services.AddTransient<SerialMonitorViewModel>();
             services.AddTransient<ServerMonitorViewModel>();
+            services.AddTransient<OperatingHoursSyncViewModel>();
 
             // Window Hosts
             services.AddSingleton<SerialMonitorWindowHost>();

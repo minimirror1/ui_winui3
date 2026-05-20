@@ -16,6 +16,8 @@ public enum BinaryCommand : byte
     GetFile       = 0x21,
     SaveFile      = 0x22,
     VerifyFile    = 0x23,
+    SetOperateTime = 0x30,
+    GetOperateTime = 0x31,
     Error         = 0xFF,
 }
 
@@ -92,6 +94,7 @@ public static class BinaryProtocolConst
     public const int ResponseHeaderSize = 6;  // src(1)+tar(1)+cmd(1)+status(1)+payload_len(2)
     public const int PongPayloadSize    = 10;
     public const int PingTimePayloadSize = 12;
+    public const int OperatingHoursPayloadSize = 43;
     public const byte PingTimeFormatLocal = 0x01;
     public const int AppPathMaxLen      = 128;
     public const int AppContentMaxLen   = 512;

@@ -26,6 +26,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Backend\BackendDeviceMapper.cs" Link="Core\Backend\BackendDeviceMapper.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Backend\BackendServerSnapshot.cs" Link="Core\Backend\BackendServerSnapshot.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Backend\BackendSettingsComparison.cs" Link="Core\Backend\BackendSettingsComparison.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\OperatingHours\OperatingHoursSchedule.cs" Link="Core\OperatingHours\OperatingHoursSchedule.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStatePatch.cs" Link="Core\Motors\MotorStatePatch.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Motors\MotorStateMerger.cs" Link="Core\Motors\MotorStateMerger.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryProtocol.cs" Link="Core\Protocol\BinaryProtocol.cs" />
@@ -49,6 +50,10 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendServerCatalogClient.cs" Link="Core\Interfaces\IBackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendDashboardSyncService.cs" Link="Core\Interfaces\IBackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendTrafficTap.cs" Link="Core\Interfaces\IBackendTrafficTap.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IOperatingHoursCache.cs" Link="Core\Interfaces\IOperatingHoursCache.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IOperatingHoursSource.cs" Link="Core\Interfaces\IOperatingHoursSource.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IOperatingHoursDeviceSyncService.cs" Link="Core\Interfaces\IOperatingHoursDeviceSyncService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IOperatingHoursAutoSyncService.cs" Link="Core\Interfaces\IOperatingHoursAutoSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialService.cs" Link="Core\Interfaces\ISerialService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialTrafficTap.cs" Link="Core\Interfaces\ISerialTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
@@ -62,6 +67,10 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendServerCatalogClient.cs" Link="Infrastructure\BackendServerCatalogClient.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendDashboardSyncService.cs" Link="Infrastructure\BackendDashboardSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendTrafficTap.cs" Link="Infrastructure\BackendTrafficTap.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\OperatingHoursCache.cs" Link="Infrastructure\OperatingHoursCache.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\OperatingHoursSource.cs" Link="Infrastructure\OperatingHoursSource.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\OperatingHoursDeviceSyncService.cs" Link="Infrastructure\OperatingHoursDeviceSyncService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\OperatingHoursAutoSyncService.cs" Link="Infrastructure\OperatingHoursAutoSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SerialTrafficTap.cs" Link="Infrastructure\SerialTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
@@ -71,6 +80,7 @@
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendRegistrationViewModel.cs" Link="UI\ViewModels\BackendRegistrationViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ScanDialogViewModel.cs" Link="UI\ViewModels\ScanDialogViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\OperatingHoursSyncViewModel.cs" Link="UI\ViewModels\OperatingHoursSyncViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\Helpers\LocalizedStrings.cs" Link="UI\Helpers\LocalizedStrings.cs" />
   </ItemGroup>
 </Project>

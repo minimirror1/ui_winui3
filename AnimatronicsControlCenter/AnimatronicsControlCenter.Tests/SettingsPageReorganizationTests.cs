@@ -234,11 +234,21 @@ public class SettingsPageReorganizationTests
         StringAssert.Contains(source, "StartLastPortAutoConnectIfEnabled();");
         StringAssert.Contains(source, "IsLastPortAutoConnectEnabled");
         StringAssert.Contains(source, "_lastLoadedComPortForAutoConnect");
-        StringAssert.Contains(source, "ConnectCoreAsync(autoScanAfterConnect: true)");
+        StringAssert.Contains(source, "ConnectIfDisconnectedCoreAsync(autoScanAfterConnect: true)");
         StringAssert.Contains(source, "_dashboardViewModel.ScanConfiguredRangeAsync");
         StringAssert.Contains(dashboardSource, "ScanConfiguredRangeAsync");
         StringAssert.Contains(dashboardSource, "_serialService.ScanDevicesAsync(startId, endId)");
         StringAssert.Contains(source, "SerialPortDisplay.CreateOption(portName, deviceInfo: null)");
+    }
+
+    [TestMethod]
+    public void SettingsViewModel_AutoConnectDoesNotUseConnectionToggle()
+    {
+        string source = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "SettingsViewModel.cs"));
+
+        StringAssert.Contains(source, "ConnectIfDisconnectedCoreAsync(autoScanAfterConnect: true)");
+        StringAssert.Contains(source, "if (_serialService.IsConnected)");
+        Assert.IsFalse(source.Contains("ConnectCoreAsync(autoScanAfterConnect: true)", StringComparison.Ordinal));
     }
 
     [TestMethod]

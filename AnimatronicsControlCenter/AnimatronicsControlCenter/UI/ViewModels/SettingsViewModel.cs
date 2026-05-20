@@ -397,7 +397,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
 
             SelectedPort = _lastLoadedComPortForAutoConnect;
-            _ = ConnectCoreAsync(autoScanAfterConnect: true);
+            _ = ConnectIfDisconnectedCoreAsync(autoScanAfterConnect: true);
         }
 
         [RelayCommand]
@@ -410,6 +410,17 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             {
                 _serialService.Disconnect();
                 IsConnectionActive = false;
+                return;
+            }
+
+            await ConnectIfDisconnectedCoreAsync(autoScanAfterConnect);
+        }
+
+        private async Task ConnectIfDisconnectedCoreAsync(bool autoScanAfterConnect)
+        {
+            if (_serialService.IsConnected)
+            {
+                IsConnectionActive = true;
                 return;
             }
 

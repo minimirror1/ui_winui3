@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
 using AnimatronicsControlCenter.Core.Motors;
+using AnimatronicsControlCenter.Core.OperatingHours;
 
 namespace AnimatronicsControlCenter.Core.Protocol;
 
@@ -229,6 +230,81 @@ public static class BinaryDeserializer
         return payload[matchOffset] != 0;
     }
 
+    public static OperatingHoursDeviceSchedule ParseOperatingHoursPayload(ReadOnlySpan<byte> payload)
+    {
+        if (!TryParseOperatingHoursPayload(payload, out var schedule, out var error))
+        {
+            throw new ArgumentException(error, nameof(payload));
+        }
+
+        return schedule!;
+    }
+
+    public static bool TryParseOperatingHoursPayload(
+        ReadOnlySpan<byte> payload,
+        out OperatingHoursDeviceSchedule? schedule,
+        out string error)
+    {
+        schedule = null;
+        error = string.Empty;
+
+        if (payload.Length != BinaryProtocolConst.OperatingHoursPayloadSize)
+        {
+            error = "Invalid operating-hours payload.";
+            return false;
+        }
+
+        byte formatVersion = payload[0];
+        if (formatVersion != 1)
+        {
+            error = "Unsupported operating-hours payload version.";
+            return false;
+        }
+
+        int timezoneOffsetMinutes = BinaryPrimitives.ReadInt16LittleEndian(payload[1..]);
+        uint checksum = BinaryPrimitives.ReadUInt32LittleEndian(payload[3..]);
+        byte dayCount = payload[7];
+        if (dayCount != 7)
+        {
+            error = "Operating-hours payload must contain seven days.";
+            return false;
+        }
+
+        var days = new List<OperatingHoursDay>(7);
+        int offset = 8;
+        for (int i = 0; i < dayCount; i++)
+        {
+            string dayOfWeek;
+            try
+            {
+                dayOfWeek = DecodeDayOfWeek(payload[offset]);
+            }
+            catch (ArgumentException ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+
+            ushort openMinutes = BinaryPrimitives.ReadUInt16LittleEndian(payload[(offset + 1)..]);
+            ushort closeMinutes = BinaryPrimitives.ReadUInt16LittleEndian(payload[(offset + 3)..]);
+            days.Add(new OperatingHoursDay(dayOfWeek, openMinutes, closeMinutes));
+            offset += 5;
+        }
+
+        schedule = new OperatingHoursDeviceSchedule(timezoneOffsetMinutes, checksum, days);
+        return true;
+    }
+
+    public static uint ParseSetOperateTimeResponse(ReadOnlySpan<byte> payload)
+    {
+        if (payload.Length < 4)
+        {
+            return 0;
+        }
+
+        return BinaryPrimitives.ReadUInt32LittleEndian(payload);
+    }
+
     // ── §4.2 MOVE 응답 ──────────────────────────────────────────────
 
     public static (byte DeviceId, byte MotorId) ParseMoveResponse(ReadOnlySpan<byte> payload)
@@ -251,6 +327,19 @@ public static class BinaryDeserializer
         string msg = Encoding.UTF8.GetString(payload.Slice(2, msgLen));
         return (code, msg);
     }
+
+    private static string DecodeDayOfWeek(byte value)
+        => value switch
+        {
+            1 => "MON",
+            2 => "TUE",
+            3 => "WED",
+            4 => "THU",
+            5 => "FRI",
+            6 => "SAT",
+            7 => "SUN",
+            _ => throw new ArgumentException($"Invalid operating-hours day value: {value}"),
+        };
 
     // ── Enum 디코딩 헬퍼 ─────────────────────────────────────────────
 

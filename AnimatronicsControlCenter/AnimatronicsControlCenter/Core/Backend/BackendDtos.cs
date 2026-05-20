@@ -58,14 +58,30 @@ public sealed record BackendErrorData(
     [property: JsonPropertyName("errorCode")] string? ErrorCode);
 
 public sealed record BackendStoreDetailResponse(
-    [property: JsonPropertyName("store_id")] string StoreId,
+    [property: JsonPropertyName("id")] string StoreId,
     [property: JsonPropertyName("store_name")] string? StoreName,
     [property: JsonPropertyName("country_code")] string? CountryCode,
     [property: JsonPropertyName("pcs")] IReadOnlyList<BackendPcDetailResponse> Pcs,
     [property: JsonPropertyName("address")] string? Address = null,
     [property: JsonPropertyName("latitude")] double? Latitude = null,
     [property: JsonPropertyName("longitude")] double? Longitude = null,
-    [property: JsonPropertyName("timezone")] string? Timezone = null);
+    [property: JsonPropertyName("timezone")] string? Timezone = null,
+    [property: JsonPropertyName("operate_times")] IReadOnlyList<BackendStoreOperateTime>? OperateTimes = null,
+    [property: JsonPropertyName("created_at")] string? CreatedAt = null,
+    [property: JsonPropertyName("modified_at")] string? ModifiedAt = null)
+{
+    [JsonPropertyName("store_id")]
+    public string? LegacyStoreId
+    {
+        init
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                StoreId = value;
+            }
+        }
+    }
+}
 
 public sealed record BackendPcDetailResponse(
     [property: JsonPropertyName("pc_id")] string PcId,
