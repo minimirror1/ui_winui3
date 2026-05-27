@@ -7,6 +7,7 @@ namespace AnimatronicsControlCenter.Core.Interfaces;
 public interface IOperatingHoursSource
 {
     Task<OperatingHoursSourceResult> LoadAsync(CancellationToken cancellationToken);
+    Task<OperatingHoursSourceResult> SaveAsync(OperatingHoursSchedule schedule, CancellationToken cancellationToken);
 }
 
 public sealed record OperatingHoursSourceResult(

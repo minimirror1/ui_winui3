@@ -324,9 +324,20 @@ public sealed partial class OperatingHoursSyncViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void PushToServer()
+    private async Task PushToServerAsync()
     {
-        StatusMessage = "서버 전송 기능은 미구현 상태입니다.";
+        StatusMessage = "Saving operating hours to server...";
+        var result = await _source.SaveAsync(BuildScheduleFromServerDays(), CancellationToken.None);
+        if (!result.Success || result.Schedule is null)
+        {
+            StatusMessage = result.Message;
+            return;
+        }
+
+        ApplyScheduleToServerDays(result.Schedule);
+        IsServerScheduleLoaded = true;
+        StatusMessage = result.Message;
+        RefreshDeviceDiffs();
     }
 
     [RelayCommand(CanExecute = nameof(CanNavigatePrev))]
