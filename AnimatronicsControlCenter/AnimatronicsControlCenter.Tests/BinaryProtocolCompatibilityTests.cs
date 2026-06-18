@@ -119,6 +119,14 @@ public class BinaryProtocolCompatibilityTests
     }
 
     [TestMethod]
+    public void EncodeMotionCtrl_RepeatPlayUsesSingleByteActionPayload()
+    {
+        byte[] packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, tarId: 2, BinaryMotionAction.RepeatPlay);
+
+        CollectionAssert.AreEqual(new byte[] { 0x00, 0x02, 0x04, 0x01, 0x00, 0x04 }, packet);
+    }
+
+    [TestMethod]
     public void ParseErrorResponse_SupportsResponseTooLargeAndTxBusy()
     {
         byte[] responseTooLargePayload = BuildErrorPayload(0x06, "Response too large");

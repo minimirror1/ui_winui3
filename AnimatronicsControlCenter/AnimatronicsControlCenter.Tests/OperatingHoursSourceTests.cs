@@ -86,6 +86,104 @@ public class OperatingHoursSourceTests
         StringAssert.Contains(result.Message, "operate_times");
     }
 
+    [TestMethod]
+    public async Task SaveAsync_UpdatesStoreOperateTimesAndCachesReloadedSchedule()
+    {
+        var settings = TestSettings();
+        settings.BackendStoreId = "store-1";
+        var cache = new MemoryOperatingHoursCache();
+        var catalog = new FakeCatalogClient { Result = Success(StoreDetail("store-1")) };
+        var source = new OperatingHoursSource(settings, catalog, cache);
+        var schedule = new OperatingHoursSchedule(
+            "store-1",
+            null,
+            null,
+            null,
+            new[]
+            {
+                new OperatingHoursDay("MON", 600, 1140),
+                new OperatingHoursDay("TUE", 540, 1080),
+                new OperatingHoursDay("WED", 540, 1080),
+                new OperatingHoursDay("THU", 540, 1080),
+                new OperatingHoursDay("FRI", 540, 1080),
+                new OperatingHoursDay("SAT", 0, 0),
+                new OperatingHoursDay("SUN", 0, 0),
+            },
+            0);
+
+        var result = await source.SaveAsync(schedule, CancellationToken.None);
+
+        Assert.IsTrue(result.Success);
+        Assert.IsFalse(result.FromCache);
+        Assert.AreEqual("store-1", catalog.UpdatedStoreId);
+        Assert.IsNotNull(catalog.UpdatedStoreRequest);
+        Assert.AreEqual("Seoul Store", catalog.UpdatedStoreRequest!.StoreName);
+        Assert.AreEqual("KR", catalog.UpdatedStoreRequest.CountryCode);
+        Assert.AreEqual("Asia/Seoul", catalog.UpdatedStoreRequest.Timezone);
+        Assert.AreEqual(7, catalog.UpdatedStoreRequest.OperateTimes!.Count);
+        Assert.AreEqual("MON", catalog.UpdatedStoreRequest.OperateTimes[0].DayOfWeek);
+        Assert.AreEqual("10:00", catalog.UpdatedStoreRequest.OperateTimes[0].OpenTime);
+        Assert.AreEqual("19:00", catalog.UpdatedStoreRequest.OperateTimes[0].CloseTime);
+        Assert.AreEqual("SUN", catalog.UpdatedStoreRequest.OperateTimes[6].DayOfWeek);
+        Assert.AreEqual("00:00", catalog.UpdatedStoreRequest.OperateTimes[6].OpenTime);
+        Assert.AreEqual("00:00", catalog.UpdatedStoreRequest.OperateTimes[6].CloseTime);
+        Assert.AreSame(result.Schedule, cache.SavedSchedule);
+    }
+
+    [TestMethod]
+    public async Task SaveAsync_ReturnsFailure_WhenBackendStoreIdMissing()
+    {
+        var settings = TestSettings();
+        settings.BackendStoreId = "";
+        var catalog = new FakeCatalogClient { Result = Success(StoreDetail("store-1")) };
+        var source = new OperatingHoursSource(settings, catalog, new MemoryOperatingHoursCache());
+
+        var result = await source.SaveAsync(OperatingHoursSchedule.FromStoreDetail(StoreDetail("store-1")), CancellationToken.None);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Schedule);
+        Assert.AreEqual(0, catalog.GetStoreDetailCallCount);
+        StringAssert.Contains(result.Message, "Backend store id");
+    }
+
+    [TestMethod]
+    public async Task SaveAsync_ReturnsFailure_WhenStoreDetailLoadFails()
+    {
+        var settings = TestSettings();
+        settings.BackendStoreId = "store-1";
+        var catalog = new FakeCatalogClient
+        {
+            Result = new BackendFetchResult<BackendStoreDetailResponse>(false, 500, "Server error", null),
+        };
+        var source = new OperatingHoursSource(settings, catalog, new MemoryOperatingHoursCache());
+
+        var result = await source.SaveAsync(OperatingHoursSchedule.FromStoreDetail(StoreDetail("store-1")), CancellationToken.None);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Schedule);
+        Assert.IsNull(catalog.UpdatedStoreRequest);
+        StringAssert.Contains(result.Message, "Server error");
+    }
+
+    [TestMethod]
+    public async Task SaveAsync_ReturnsFailure_WhenUpdateStoreFails()
+    {
+        var settings = TestSettings();
+        settings.BackendStoreId = "store-1";
+        var catalog = new FakeCatalogClient
+        {
+            Result = Success(StoreDetail("store-1")),
+            UpdateResult = new BackendSendResult(false, 400, "Bad request"),
+        };
+        var source = new OperatingHoursSource(settings, catalog, new MemoryOperatingHoursCache());
+
+        var result = await source.SaveAsync(OperatingHoursSchedule.FromStoreDetail(StoreDetail("store-1")), CancellationToken.None);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Schedule);
+        StringAssert.Contains(result.Message, "Bad request");
+    }
+
     private static SettingsService TestSettings()
     {
         string path = Path.Combine(Path.GetTempPath(), "ui_winui3_operating_hours_source_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
@@ -142,9 +240,16 @@ public class OperatingHoursSourceTests
     private sealed class FakeCatalogClient : IBackendServerCatalogClient
     {
         public BackendFetchResult<BackendStoreDetailResponse>? Result { get; set; }
+        public BackendSendResult UpdateResult { get; set; } = new(true, 200, "OK");
+        public int GetStoreDetailCallCount { get; private set; }
+        public string? UpdatedStoreId { get; private set; }
+        public BackendStoreUpdateRequest? UpdatedStoreRequest { get; private set; }
 
         public Task<BackendFetchResult<BackendStoreDetailResponse>> GetStoreDetailAsync(string storeId, CancellationToken cancellationToken)
-            => Task.FromResult(Result ?? new BackendFetchResult<BackendStoreDetailResponse>(false, null, "No result", null));
+        {
+            GetStoreDetailCallCount++;
+            return Task.FromResult(Result ?? new BackendFetchResult<BackendStoreDetailResponse>(false, null, "No result", null));
+        }
 
         public Task<BackendFetchResult<BackendStoreListResponse>> GetStoreListAsync(string countryCode, CancellationToken cancellationToken)
             => throw new NotImplementedException();
@@ -156,7 +261,11 @@ public class OperatingHoursSourceTests
             => throw new NotImplementedException();
 
         public Task<BackendSendResult> UpdateStoreAsync(string storeId, BackendStoreUpdateRequest request, CancellationToken cancellationToken)
-            => throw new NotImplementedException();
+        {
+            UpdatedStoreId = storeId;
+            UpdatedStoreRequest = request;
+            return Task.FromResult(UpdateResult);
+        }
 
         public Task<BackendFetchResult<BackendPcAddResponse>> CreatePcAsync(string storeId, BackendPcCreateRequest request, CancellationToken cancellationToken)
             => throw new NotImplementedException();

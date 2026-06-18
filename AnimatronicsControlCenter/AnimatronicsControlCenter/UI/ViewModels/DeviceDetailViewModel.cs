@@ -278,6 +278,15 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
 
         [RelayCommand]
+        private async Task RepeatPlayMotionAsync()
+        {
+            if (SelectedDevice == null) return;
+            var packet = BinarySerializer.EncodeMotionCtrl(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, BinaryMotionAction.RepeatPlay);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
+        }
+
+        [RelayCommand]
         private async Task StopMotionAsync()
         {
             if (SelectedDevice == null) return;
