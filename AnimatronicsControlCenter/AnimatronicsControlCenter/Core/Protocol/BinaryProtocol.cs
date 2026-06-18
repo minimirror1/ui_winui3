@@ -52,10 +52,11 @@ public enum BinaryMotorStatus : byte
 // §3.5 MotionAction (uint8)
 public enum BinaryMotionAction : byte
 {
-    Play  = 0x00,
-    Stop  = 0x01,
-    Pause = 0x02,
-    Seek  = 0x03,
+    Play       = 0x00,
+    Stop       = 0x01,
+    Pause      = 0x02,
+    Seek       = 0x03,
+    RepeatPlay = 0x04,
 }
 
 public enum BinaryPowerAction : byte

@@ -201,6 +201,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             switch ((BinaryMotionAction)action)
             {
                 case BinaryMotionAction.Play:
+                case BinaryMotionAction.RepeatPlay:
                     status = status with { State = BinaryPingState.Playing };
                     break;
                 case BinaryMotionAction.Stop:

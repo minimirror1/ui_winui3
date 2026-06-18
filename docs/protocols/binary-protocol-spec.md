@@ -169,6 +169,7 @@ JSON                          → Binary
 | `0x01` | ACTION_STOP | `"stop"` |
 | `0x02` | ACTION_PAUSE | `"pause"` |
 | `0x03` | ACTION_SEEK | `"seek"` |
+| `0x04` | ACTION_REPEAT_PLAY | `"repeatPlay"` |
 
 ### 3.5.1 PowerAction (uint8)
 

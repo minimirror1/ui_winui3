@@ -78,15 +78,52 @@ public class OperatingHoursSyncViewModelTests
 
     // ─────────────────────────── PushToServer ────────────────────────────────────
 
+    // ─────────────────────────── SendToAllDevices ────────────────────────────────
+
     [TestMethod]
-    public void PushToServerCommand_SetsStatusToNotImplemented()
+    public async Task PushToServerCommand_CallsSourceSaveWithEditedServerDays()
     {
-        var vm = BuildVm();
-        vm.PushToServerCommand.Execute(null);
-        StringAssert.Contains(vm.StatusMessage, "미구현");
+        var source = new FakeSource { SaveResult = Ok(TestSchedule()) };
+        var vm = BuildVm(source: source);
+        vm.ServerDays[0].OpenTime = TimeSpan.FromHours(10);
+        vm.ServerDays[0].CloseTime = TimeSpan.FromHours(19);
+
+        await vm.PushToServerCommand.ExecuteAsync(null);
+
+        Assert.IsNotNull(source.SavedSchedule);
+        Assert.AreEqual("MON", source.SavedSchedule!.Days[0].DayOfWeek);
+        Assert.AreEqual((ushort)600, source.SavedSchedule.Days[0].OpenMinutes);
+        Assert.AreEqual((ushort)1140, source.SavedSchedule.Days[0].CloseMinutes);
     }
 
-    // ─────────────────────────── SendToAllDevices ────────────────────────────────
+    [TestMethod]
+    public async Task PushToServerCommand_RefreshesServerDaysOnSuccess()
+    {
+        var source = new FakeSource { SaveResult = Ok(TestSchedule()) };
+        var vm = BuildVm(source: source);
+        vm.ServerDays[0].OpenTime = TimeSpan.FromHours(10);
+
+        await vm.PushToServerCommand.ExecuteAsync(null);
+
+        Assert.IsTrue(vm.IsServerScheduleLoaded);
+        Assert.AreEqual("store-1", vm.StoreId);
+        Assert.IsFalse(vm.ServerDays.Any(d => d.HasChanged));
+        StringAssert.Contains(vm.StatusMessage, "OK");
+    }
+
+    [TestMethod]
+    public async Task PushToServerCommand_ShowsFailureMessage()
+    {
+        var source = new FakeSource
+        {
+            SaveResult = new OperatingHoursSourceResult(false, false, "Save failed", null),
+        };
+        var vm = BuildVm(source: source);
+
+        await vm.PushToServerCommand.ExecuteAsync(null);
+
+        StringAssert.Contains(vm.StatusMessage, "Save failed");
+    }
 
     [TestMethod]
     public async Task SendToAllDevicesCommand_CallsSyncServiceWithCorrectRange()
@@ -266,8 +303,17 @@ public class OperatingHoursSyncViewModelTests
     private sealed class FakeSource : IOperatingHoursSource
     {
         public OperatingHoursSourceResult? Result { get; set; }
+        public OperatingHoursSourceResult? SaveResult { get; set; }
+        public OperatingHoursSchedule? SavedSchedule { get; private set; }
+
         public Task<OperatingHoursSourceResult> LoadAsync(CancellationToken cancellationToken)
             => Task.FromResult(Result ?? new OperatingHoursSourceResult(false, false, "No schedule", null));
+
+        public Task<OperatingHoursSourceResult> SaveAsync(OperatingHoursSchedule schedule, CancellationToken cancellationToken)
+        {
+            SavedSchedule = schedule;
+            return Task.FromResult(SaveResult ?? new OperatingHoursSourceResult(false, false, "Save failed", null));
+        }
     }
 
     private sealed class FakeSyncService : IOperatingHoursDeviceSyncService

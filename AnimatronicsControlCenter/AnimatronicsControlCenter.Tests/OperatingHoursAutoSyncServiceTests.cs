@@ -65,6 +65,9 @@ public class OperatingHoursAutoSyncServiceTests
         public OperatingHoursSourceResult? Result { get; set; }
         public Task<OperatingHoursSourceResult> LoadAsync(CancellationToken cancellationToken)
             => Task.FromResult(Result ?? new OperatingHoursSourceResult(false, false, "No schedule", null));
+
+        public Task<OperatingHoursSourceResult> SaveAsync(OperatingHoursSchedule schedule, CancellationToken cancellationToken)
+            => Task.FromResult(new OperatingHoursSourceResult(false, false, "Save not supported.", null));
     }
 
     private sealed class FakeSyncService : IOperatingHoursDeviceSyncService
