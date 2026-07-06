@@ -299,7 +299,7 @@
     <value>개요</value>
   </data>
   <data name="DeviceDetail_Tab_Power" xml:space="preserve">
-    <value>전원</value>
+    <value>제어</value>
   </data>
   <data name="DeviceDetail_Tab_Files" xml:space="preserve">
     <value>파일</value>
