@@ -636,6 +636,7 @@
                                                         <RowDefinition Height="Auto"/>
                                                         <RowDefinition Height="Auto"/>
                                                         <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
                 
                                                     <!-- 잠금 상태 헤더 -->
@@ -773,6 +774,47 @@
                 
                                                     <!-- 경고 박스 -->
                                                     <Border Grid.Row="4" CornerRadius="8" Padding="12"
+                                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                            BorderThickness="1"
+                                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                                        <Grid ColumnSpacing="10">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid Width="28" Height="28" VerticalAlignment="Center">
+                                                                <Ellipse Fill="{ThemeResource SystemFillColorSuccessBrush}"
+                                                                         Visibility="{x:Bind ViewModel.HasDeviceError, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                                <Ellipse Fill="{ThemeResource SystemFillColorCriticalBrush}"
+                                                                         Visibility="{x:Bind ViewModel.HasDeviceError, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                <FontIcon Glyph="&#xE783;" FontFamily="Segoe Fluent Icons"
+                                                                          FontSize="13"
+                                                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                                <TextBlock Text="{x:Bind ViewModel.Strings.Get('DeviceDetail_ErrorStatus', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                                           Foreground="{ThemeResource RelayControlSecondaryTextBrush}"/>
+                                                                <TextBlock Text="{x:Bind ViewModel.DeviceErrorStatusText, Mode=OneWay}"
+                                                                           FontSize="14" FontWeight="SemiBold"
+                                                                           Foreground="{ThemeResource RelayControlPrimaryTextBrush}"/>
+                                                                <TextBlock Text="{x:Bind ViewModel.DeviceErrorDetailText, Mode=OneWay}"
+                                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                                           Foreground="{ThemeResource RelayControlSecondaryTextBrush}"
+                                                                           TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                                                            <Button Grid.Column="2"
+                                                                    Content="{x:Bind ViewModel.Strings.Get('DeviceDetail_ErrorClear', ViewModel.Strings.Code), Mode=OneWay}"
+                                                                    Command="{x:Bind ViewModel.ClearErrorCommand}"
+                                                                    VerticalAlignment="Center"
+                                                                    Padding="12,7"/>
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <Border Grid.Row="5" CornerRadius="8" Padding="12"
                                                             Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
                                                             BorderThickness="1"
                                                             BorderBrush="{ThemeResource SystemFillColorCautionBrush}">

@@ -79,6 +79,9 @@ public static class BinarySerializer
         => BuildRequest(srcId, tarId, BinaryCommand.PowerCtrl, [(byte)action]);
 
     /// §4.4 GET_MOTORS — payload 없음
+    public static byte[] EncodeErrorClear(byte srcId, byte tarId)
+        => BuildRequest(srcId, tarId, BinaryCommand.ErrorClear, ReadOnlySpan<byte>.Empty);
+
     public static byte[] EncodeGetMotors(byte srcId, byte tarId)
         => BuildRequest(srcId, tarId, BinaryCommand.GetMotors, ReadOnlySpan<byte>.Empty);
 

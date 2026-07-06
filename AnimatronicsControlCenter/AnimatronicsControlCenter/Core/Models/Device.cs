@@ -55,13 +55,16 @@ namespace AnimatronicsControlCenter.Core.Models
         [ObservableProperty]
         private string powerStatus = "OFF";
 
+        [ObservableProperty]
+        private bool hasError;
+
         public ObservableCollection<MotorState> Motors { get; } = new();
 
         public DeviceCardStatus CardStatus
         {
             get
             {
-                if (!IsConnected) return DeviceCardStatus.Fault;
+                if (!IsConnected || HasError) return DeviceCardStatus.Fault;
                 return MotionState switch
                 {
                     MotionState.Playing or MotionState.Paused => DeviceCardStatus.Playing,
@@ -94,6 +97,7 @@ namespace AnimatronicsControlCenter.Core.Models
         }
 
         partial void OnIsConnectedChanged(bool value) => OnPropertyChanged(nameof(CardStatus));
+        partial void OnHasErrorChanged(bool value) => OnPropertyChanged(nameof(CardStatus));
         partial void OnMotionStateChanged(MotionState value) => OnPropertyChanged(nameof(CardStatus));
         partial void OnMotionCurrentTimeChanged(TimeSpan value) => OnPropertyChanged(nameof(MotionProgress));
         partial void OnMotionTotalTimeChanged(TimeSpan value) => OnPropertyChanged(nameof(MotionProgress));

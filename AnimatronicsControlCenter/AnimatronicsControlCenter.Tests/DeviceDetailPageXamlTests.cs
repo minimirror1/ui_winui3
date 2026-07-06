@@ -16,6 +16,17 @@ public class DeviceDetailPageXamlTests
     }
 
     [TestMethod]
+    public void DeviceDetailViewModel_ExposesClearErrorCommand()
+    {
+        string source = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "DeviceDetailViewModel.cs"));
+
+        StringAssert.Contains(source, "private async Task ClearErrorAsync()");
+        StringAssert.Contains(source, "BinarySerializer.EncodeErrorClear");
+        StringAssert.Contains(source, "ClearErrorCommand.NotifyCanExecuteChanged()");
+        StringAssert.Contains(source, "RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None)");
+    }
+
+    [TestMethod]
     public void DeviceDetailPage_AddsSecondaryRepeatPlayButton()
     {
         string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "DeviceDetailPage.xaml"));
@@ -111,6 +122,24 @@ public class DeviceDetailPageXamlTests
         StringAssert.Contains(warningLayout, "<ColumnDefinition Width=\"Auto\"/>");
         StringAssert.Contains(warningLayout, "<ColumnDefinition Width=\"*\"/>");
         StringAssert.Contains(xaml[Math.Max(0, warningIndex - 160)..Math.Min(xaml.Length, warningIndex + 240)], "Grid.Column=\"1\"");
+    }
+
+    [TestMethod]
+    public void DeviceDetailPage_AddsErrorStatusPanelBetweenPowerButtonsAndWarning()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "DeviceDetailPage.xaml"));
+
+        int powerOffIndex = xaml.IndexOf("SetPowerOffCommand", StringComparison.Ordinal);
+        int errorPanelIndex = xaml.IndexOf("DeviceDetail_ErrorStatus", StringComparison.Ordinal);
+        int clearErrorIndex = xaml.IndexOf("ClearErrorCommand", StringComparison.Ordinal);
+        int warningIndex = xaml.IndexOf("DeviceDetail_RelayWarning", StringComparison.Ordinal);
+
+        Assert.IsTrue(powerOffIndex >= 0, "Power controls should exist.");
+        Assert.IsTrue(errorPanelIndex >= 0, "Error status panel should exist.");
+        Assert.IsTrue(clearErrorIndex >= 0, "Error clear button should exist.");
+        Assert.IsTrue(warningIndex >= 0, "Relay warning should exist.");
+        Assert.IsTrue(powerOffIndex < errorPanelIndex && errorPanelIndex < clearErrorIndex && clearErrorIndex < warningIndex,
+            "Error status panel should be placed between the power buttons and relay warning.");
     }
 
     private static string ProjectPath(params string[] segments)

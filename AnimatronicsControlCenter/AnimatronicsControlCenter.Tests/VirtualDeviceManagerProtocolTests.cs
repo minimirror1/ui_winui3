@@ -37,6 +37,32 @@ public class VirtualDeviceManagerProtocolTests
 
         Assert.AreEqual(BinaryPingState.Stopped, status.State);
         Assert.AreEqual("OFF", status.PowerStatus);
+        Assert.IsFalse(status.HasError);
+    }
+
+    [TestMethod]
+    public void Virtual_Ping_ReturnsPongWithPowerAndErrorStatusBytes()
+    {
+        var manager = new VirtualDeviceManager();
+
+        byte[]? response = manager.ProcessBinaryCommand(BuildPingRequest(0, 2));
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(BinaryDeserializer.TryParseResponseHeader(response, out var header));
+        Assert.AreEqual(BinaryCommand.Pong, header.Cmd);
+        Assert.AreEqual(12, header.PayloadLen);
+    }
+
+    [TestMethod]
+    public void Virtual_ErrorClear_ReturnsAcceptedResponse()
+    {
+        var manager = new VirtualDeviceManager();
+
+        byte[]? response = manager.ProcessBinaryCommand(BinarySerializer.EncodeErrorClear(0, 2));
+        PongStatus status = ParsePong(manager.ProcessBinaryCommand(BuildPingRequest(0, 2)));
+
+        AssertErrorClearAccepted(response);
+        Assert.IsFalse(status.HasError);
     }
 
     [TestMethod]
@@ -175,6 +201,15 @@ public class VirtualDeviceManagerProtocolTests
         Assert.AreEqual(2, payload.Length);
         Assert.AreEqual((byte)expectedAction, payload[0]);
         Assert.AreEqual((byte)0x01, payload[1]);
+    }
+
+    private static void AssertErrorClearAccepted(byte[]? response)
+    {
+        Assert.IsNotNull(response);
+        Assert.IsTrue(BinaryDeserializer.TryParseResponseHeader(response, out var header));
+        Assert.AreEqual(BinaryCommand.ErrorClear, header.Cmd);
+        Assert.AreEqual(ResponseStatus.Ok, header.Status);
+        Assert.AreEqual(0, header.PayloadLen);
     }
 
     private static byte[] BuildSaveResponse(string path)

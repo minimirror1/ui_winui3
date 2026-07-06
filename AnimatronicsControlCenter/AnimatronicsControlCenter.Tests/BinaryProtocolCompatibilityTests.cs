@@ -75,6 +75,20 @@ public class BinaryProtocolCompatibilityTests
         Assert.AreEqual((uint)20000, status.TotalMs);
     }
 
+    [DataTestMethod]
+    [DataRow(0x00, false)]
+    [DataRow(0x01, true)]
+    [DataRow(0x7F, true)]
+    public void ParsePongResponse_ReadsErrorStatusAfterPowerStatus(int errorStatus, bool expectedHasError)
+    {
+        byte[] payload = { 0x01, 0x03, 0x10, 0x27, 0x00, 0x00, 0x20, 0x4E, 0x00, 0x00, 0x01, (byte)errorStatus };
+
+        PongStatus status = BinaryDeserializer.ParsePongResponse(payload);
+
+        Assert.AreEqual("ON", status.PowerStatus);
+        Assert.AreEqual(expectedHasError, status.HasError);
+    }
+
     [TestMethod]
     public void EncodePing_WithTimePayload_UsesFirmwareTimeShape()
     {
@@ -105,6 +119,14 @@ public class BinaryProtocolCompatibilityTests
 
         Assert.AreEqual(BinaryProtocolConst.RequestHeaderSize, packet.Length);
         Assert.AreEqual((ushort)0, BinaryPrimitives.ReadUInt16LittleEndian(packet.AsSpan(3)));
+    }
+
+    [TestMethod]
+    public void EncodeErrorClear_UsesNoPayloadCommand()
+    {
+        byte[] packet = BinarySerializer.EncodeErrorClear(BinaryProtocolConst.HostId, tarId: 2);
+
+        CollectionAssert.AreEqual(new byte[] { 0x00, 0x02, 0x06, 0x00, 0x00 }, packet);
     }
 
     [DataTestMethod]

@@ -373,6 +373,24 @@
   <data name="DeviceDetail_RelayWarning" xml:space="preserve">
     <value>릴레이는 장치 전원을 직접 차단·공급합니다. 모션 재생 중에는 OFF 전환을 피하고, ON 전환 시 연결 부하의 안전을 먼저 확인하세요.</value>
   </data>
+  <data name="DeviceDetail_ErrorStatus" xml:space="preserve">
+    <value>에러 상태</value>
+  </data>
+  <data name="DeviceDetail_ErrorNormal" xml:space="preserve">
+    <value>정상</value>
+  </data>
+  <data name="DeviceDetail_ErrorDetected" xml:space="preserve">
+    <value>에러 발생</value>
+  </data>
+  <data name="DeviceDetail_ErrorNormalDetail" xml:space="preserve">
+    <value>현재 보고된 에러가 없습니다.</value>
+  </data>
+  <data name="DeviceDetail_ErrorDetectedDetail" xml:space="preserve">
+    <value>장치가 에러 상태를 보고했습니다.</value>
+  </data>
+  <data name="DeviceDetail_ErrorClear" xml:space="preserve">
+    <value>에러 클리어</value>
+  </data>
   <data name="DeviceDetail_AutoLockSec" xml:space="preserve">
     <value>{0}초 후 자동 잠금</value>
   </data>

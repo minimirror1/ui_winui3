@@ -83,6 +83,16 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
         public bool IsRelayOn => SelectedDevice?.PowerStatus == "ON";
 
+        public bool HasDeviceError => SelectedDevice?.HasError == true;
+
+        public string DeviceErrorStatusText => HasDeviceError
+            ? Strings.Get("DeviceDetail_ErrorDetected", Strings.Code)
+            : Strings.Get("DeviceDetail_ErrorNormal", Strings.Code);
+
+        public string DeviceErrorDetailText => HasDeviceError
+            ? Strings.Get("DeviceDetail_ErrorDetectedDetail", Strings.Code)
+            : Strings.Get("DeviceDetail_ErrorNormalDetail", Strings.Code);
+
         public string SelectedDeviceAddress => SelectedDevice?.Address64 is ulong addr && addr != 0
             ? $"0x{addr:X16}" : "—";
 
@@ -110,17 +120,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         {
             SetPowerOnCommand.NotifyCanExecuteChanged();
             SetPowerOffCommand.NotifyCanExecuteChanged();
+            ClearErrorCommand.NotifyCanExecuteChanged();
         }
 
         private void TrackedDevice_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(Device.PowerStatus))
+            if (e.PropertyName == nameof(Device.PowerStatus) || e.PropertyName == nameof(Device.HasError))
             {
                 _dispatcherQueue.TryEnqueue(() =>
                 {
                     OnPropertyChanged(nameof(IsRelayOn));
+                    OnPropertyChanged(nameof(HasDeviceError));
+                    OnPropertyChanged(nameof(DeviceErrorStatusText));
+                    OnPropertyChanged(nameof(DeviceErrorDetailText));
                     SetPowerOnCommand.NotifyCanExecuteChanged();
                     SetPowerOffCommand.NotifyCanExecuteChanged();
+                    ClearErrorCommand.NotifyCanExecuteChanged();
                 });
             }
         }
@@ -646,6 +661,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             target.MotionTotalTime = source.MotionTotalTime;
             target.Address64 = source.Address64;
             target.PowerStatus = source.PowerStatus;
+            target.HasError = source.HasError;
         }
 
         private void ResetSnapshotState(Device device)
@@ -705,9 +721,13 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             OnPropertyChanged(nameof(MotionDataCountDisplay));
             OnPropertyChanged(nameof(MotionCreatedAtDisplay));
             OnPropertyChanged(nameof(IsRelayOn));
+            OnPropertyChanged(nameof(HasDeviceError));
+            OnPropertyChanged(nameof(DeviceErrorStatusText));
+            OnPropertyChanged(nameof(DeviceErrorDetailText));
             OnPropertyChanged(nameof(SelectedDeviceAddress));
             SetPowerOnCommand.NotifyCanExecuteChanged();
             SetPowerOffCommand.NotifyCanExecuteChanged();
+            ClearErrorCommand.NotifyCanExecuteChanged();
         }
 
         public void OnRelayUnlocked()
@@ -764,6 +784,17 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             StartRelayAutoLockTimer();
         }
         private bool CanSetPowerOff() => IsRelayUnlocked && IsRelayOn;
+
+        [RelayCommand(CanExecute = nameof(CanClearError))]
+        private async Task ClearErrorAsync()
+        {
+            if (SelectedDevice == null) return;
+            var packet = BinarySerializer.EncodeErrorClear(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id);
+            await _serialService.SendBinaryCommandAsync(SelectedDevice.Id, packet);
+            await RefreshDeviceStatusForDeviceAsync(SelectedDevice, CancellationToken.None);
+        }
+
+        private bool CanClearError() => HasDeviceError;
 
         private static bool TryGetOkPayload(byte[]? responseBytes, out ResponseHeader header, out byte[] payload, out string errorMessage)
         {
