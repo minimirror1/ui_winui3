@@ -27,6 +27,16 @@ public class DeviceDetailPageXamlTests
     }
 
     [TestMethod]
+    public void DashboardViewModel_PollingCopiesErrorStatusWithPowerStatus()
+    {
+        string source = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "ViewModels", "DashboardViewModel.cs"));
+
+        StringAssert.Contains(source, "target.PowerStatus = source.PowerStatus;");
+        StringAssert.Contains(source, "target.HasError = source.HasError;");
+        StringAssert.Contains(source, "target.HasError = false;");
+    }
+
+    [TestMethod]
     public void DeviceDetailPage_AddsSecondaryRepeatPlayButton()
     {
         string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "DeviceDetailPage.xaml"));
