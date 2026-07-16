@@ -80,7 +80,6 @@ namespace AnimatronicsControlCenter
             UpdateServerTrafficIndicator();
             UpdateConnectionIconVisibility();
             ConnectionViewModel.PropertyChanged += ConnectionViewModel_PropertyChanged;
-            _operatingHoursAutoSyncService.Start();
         }
 
         public void ApplyTheme()

@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
@@ -22,17 +23,44 @@ namespace AnimatronicsControlCenter
             Services = ConfigureServices();
         }
 
-        protected override void OnLaunched(LaunchActivatedEventArgs args)
+        protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
             var settingsService = Services.GetRequiredService<ISettingsService>();
             settingsService.Load();
             
             var localizationService = Services.GetRequiredService<ILocalizationService>();
             localizationService.SetLanguage(settingsService.Language);
-            Services.GetRequiredService<IBackendPowerSseService>().Start();
             
             m_window = Services.GetRequiredService<MainWindow>();
             m_window.Activate();
+
+            if (string.IsNullOrWhiteSpace(settingsService.BackendApiKey))
+            {
+                var dialog = new BackendApiKeyPromptDialog();
+                if (m_window.Content is FrameworkElement root)
+                {
+                    dialog.XamlRoot = root.XamlRoot;
+                }
+
+                ContentDialogResult result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    settingsService.BackendApiKey = dialog.ApiKey;
+                    settingsService.Save();
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(settingsService.BackendApiKey))
+            {
+                StartBackendServices();
+            }
+        }
+
+        private void StartBackendServices()
+        {
+            Services.GetRequiredService<IBackendPowerSseService>().Start();
+            Services.GetRequiredService<IBackendDashboardSyncService>().Start();
+            Services.GetRequiredService<IOperatingHoursAutoSyncService>().Start();
         }
 
         private IServiceProvider ConfigureServices()

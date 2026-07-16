@@ -17,6 +17,21 @@ namespace AnimatronicsControlCenter.Tests;
 public class BackendPowerSseServiceTests
 {
     [TestMethod]
+    public async Task Start_MissingApiKey_DoesNotOpenSseConnection()
+    {
+        using var handler = new SseHandler(string.Empty);
+        var settings = TestSettings("https://example.invalid");
+        settings.BackendApiKey = string.Empty;
+        using var service = new BackendPowerSseService(settings, new BackendTrafficTap(), handler);
+
+        service.Start();
+        await Task.Delay(50);
+        service.Stop();
+
+        Assert.IsNull(handler.Request);
+    }
+
+    [TestMethod]
     public async Task Start_OpensPowerSseForMappedObjectAndLogsPayload()
     {
         using var handler = new SseHandler("data: {\"power_status\":\"ON\"}\n\n");
@@ -110,7 +125,8 @@ public class BackendPowerSseServiceTests
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_power_sse_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
         return new SettingsService(new FakeBackendSettingsPathProvider(path))
         {
-            BackendBaseUrl = baseUrl
+            BackendBaseUrl = baseUrl,
+            BackendApiKey = "api-key-1"
         };
     }
 

@@ -69,6 +69,22 @@ public class BackendDashboardSyncServiceTests
     }
 
     [TestMethod]
+    public async Task Start_MissingApiKey_DoesNotSend()
+    {
+        var settings = TestSettings();
+        settings.BackendApiKey = string.Empty;
+        var backend = new FakeBackendMonitoringService(expectedCalls: 1);
+        var service = new BackendDashboardSyncService(backend, settings);
+
+        service.ReplaceDevices(new[] { new Device(2) });
+        service.Start();
+        await Task.Delay(100);
+        service.Stop();
+
+        Assert.AreEqual(0, backend.SentDevices.Count);
+    }
+
+    [TestMethod]
     public async Task Start_SendsExistingDisconnectedSnapshot()
     {
         var settings = TestSettings();
@@ -104,7 +120,8 @@ public class BackendDashboardSyncServiceTests
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ui_winui3_backend_dashboard_sync_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
         return new SettingsService(new FakeBackendSettingsPathProvider(path))
         {
-            BackendSyncIntervalSeconds = 1
+            BackendSyncIntervalSeconds = 1,
+            BackendApiKey = "api-key-1"
         };
     }
 

@@ -36,6 +36,11 @@ public sealed class OperatingHoursAutoSyncService : IOperatingHoursAutoSyncServi
 
     public void Start()
     {
+        if (string.IsNullOrWhiteSpace(_settingsService.BackendApiKey))
+        {
+            return;
+        }
+
         if (_loopTask is { IsCompleted: false })
         {
             return;
