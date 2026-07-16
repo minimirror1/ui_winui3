@@ -47,6 +47,7 @@ public class ScanDialogViewModelTests
         public bool IsBackendSyncEnabled { get; set; } = true;
         public string BackendBaseUrl { get; set; } = string.Empty;
         public string BackendBearerToken { get; set; } = string.Empty;
+        public string BackendApiKey { get; set; } = string.Empty;
         public string BackendStoreId { get; set; } = string.Empty;
         public string BackendStoreName { get; set; } = string.Empty;
         public string BackendStoreCountryCode { get; set; } = string.Empty;

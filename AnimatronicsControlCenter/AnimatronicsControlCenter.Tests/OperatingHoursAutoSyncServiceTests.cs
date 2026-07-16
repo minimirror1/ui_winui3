@@ -38,10 +38,28 @@ public class OperatingHoursAutoSyncServiceTests
         Assert.AreEqual(TimeSpan.FromMinutes(47.5), delay);
     }
 
+    [TestMethod]
+    public async Task Start_MissingApiKey_DoesNotLoadSchedule()
+    {
+        var settings = TestSettings();
+        settings.BackendApiKey = string.Empty;
+        var source = new FakeSource();
+        var service = new OperatingHoursAutoSyncService(settings, source, new FakeSyncService());
+
+        service.Start();
+        await Task.Delay(50);
+        service.Stop();
+
+        Assert.AreEqual(0, source.LoadCallCount);
+    }
+
     private static SettingsService TestSettings()
     {
         string path = Path.Combine(Path.GetTempPath(), "ui_winui3_operating_hours_auto_tests", Guid.NewGuid().ToString("N"), "backend-settings.json");
-        return new SettingsService(new FakeBackendSettingsPathProvider(path));
+        return new SettingsService(new FakeBackendSettingsPathProvider(path))
+        {
+            BackendApiKey = "api-key-1"
+        };
     }
 
     private static OperatingHoursSchedule TestSchedule()
@@ -62,9 +80,13 @@ public class OperatingHoursAutoSyncServiceTests
 
     private sealed class FakeSource : IOperatingHoursSource
     {
+        public int LoadCallCount { get; private set; }
         public OperatingHoursSourceResult? Result { get; set; }
         public Task<OperatingHoursSourceResult> LoadAsync(CancellationToken cancellationToken)
-            => Task.FromResult(Result ?? new OperatingHoursSourceResult(false, false, "No schedule", null));
+        {
+            LoadCallCount++;
+            return Task.FromResult(Result ?? new OperatingHoursSourceResult(false, false, "No schedule", null));
+        }
 
         public Task<OperatingHoursSourceResult> SaveAsync(OperatingHoursSchedule schedule, CancellationToken cancellationToken)
             => Task.FromResult(new OperatingHoursSourceResult(false, false, "Save not supported.", null));

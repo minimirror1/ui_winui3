@@ -80,6 +80,49 @@ public class BackendSettingsSourceTests
     }
 
     [TestMethod]
+    public void BackendSettings_Save_DoesNotWriteApiKeyToJson()
+    {
+        string path = CreateTempSettingsPath();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(path))
+        {
+            BackendApiKey = "api-key-must-stay-out-of-json"
+        };
+
+        settings.Save();
+
+        string json = File.ReadAllText(path);
+        Assert.IsFalse(json.Contains("api-key-must-stay-out-of-json", StringComparison.Ordinal));
+        Assert.IsFalse(json.Contains("backendApiKey", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void BackendSettings_SaveAndLoad_UsesCredentialStoreForApiKey()
+    {
+        string path = CreateTempSettingsPath();
+        var keyStore = new FakeBackendApiKeyStore();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(path), keyStore)
+        {
+            BackendApiKey = "api-key-1"
+        };
+
+        first.Save();
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(path), keyStore);
+        second.Load();
+
+        Assert.AreEqual("api-key-1", second.BackendApiKey);
+    }
+
+    [TestMethod]
+    public void BackendApiKeyStore_MissingCredentialUsesExceptionFreeLookup()
+    {
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "Infrastructure", "BackendApiKeyStore.cs"));
+
+        StringAssert.Contains(code, "RetrieveAll()");
+        Assert.IsFalse(code.Contains(".Retrieve(ResourceName, UserName)", StringComparison.Ordinal));
+        Assert.IsFalse(code.Contains("FindAllByResource", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public void AppSettings_SaveAndLoad_UsesSeparateFileBesideBackendSettings()
     {
         string backendPath = CreateTempSettingsPath();
@@ -242,10 +285,37 @@ public class BackendSettingsSourceTests
         public string BackendSettingsFilePath { get; }
     }
 
+    private sealed class FakeBackendApiKeyStore : IBackendApiKeyStore
+    {
+        private string _apiKey = string.Empty;
+
+        public string Load() => _apiKey;
+
+        public void Save(string apiKey) => _apiKey = apiKey;
+    }
+
     private static string CreateTempSettingsPath()
     {
         string directory = Path.Combine(Path.GetTempPath(), "ui_winui3_backend_settings_tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         return Path.Combine(directory, "backend-settings.json");
+    }
+
+    private static string ProjectPath(params string[] segments)
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            string candidate = Path.Combine(new[] { directory.FullName }.Concat(segments).ToArray());
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        Assert.Fail($"Could not find project file: {Path.Combine(segments)}");
+        return string.Empty;
     }
 }

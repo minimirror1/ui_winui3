@@ -60,7 +60,7 @@ public sealed class BackendPowerSseService : IBackendPowerSseService, IDisposabl
 
     public void Start()
     {
-        if (!_settingsService.IsBackendSyncEnabled)
+        if (!_settingsService.IsBackendSyncEnabled || string.IsNullOrWhiteSpace(_settingsService.BackendApiKey))
         {
             return;
         }
