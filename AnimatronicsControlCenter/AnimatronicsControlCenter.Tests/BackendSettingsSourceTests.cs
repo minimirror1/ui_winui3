@@ -113,6 +113,16 @@ public class BackendSettingsSourceTests
     }
 
     [TestMethod]
+    public void BackendApiKeyStore_MissingCredentialUsesExceptionFreeLookup()
+    {
+        string code = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "Infrastructure", "BackendApiKeyStore.cs"));
+
+        StringAssert.Contains(code, "RetrieveAll()");
+        Assert.IsFalse(code.Contains(".Retrieve(ResourceName, UserName)", StringComparison.Ordinal));
+        Assert.IsFalse(code.Contains("FindAllByResource", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public void AppSettings_SaveAndLoad_UsesSeparateFileBesideBackendSettings()
     {
         string backendPath = CreateTempSettingsPath();
@@ -289,5 +299,23 @@ public class BackendSettingsSourceTests
         string directory = Path.Combine(Path.GetTempPath(), "ui_winui3_backend_settings_tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         return Path.Combine(directory, "backend-settings.json");
+    }
+
+    private static string ProjectPath(params string[] segments)
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            string candidate = Path.Combine(new[] { directory.FullName }.Concat(segments).ToArray());
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        Assert.Fail($"Could not find project file: {Path.Combine(segments)}");
+        return string.Empty;
     }
 }

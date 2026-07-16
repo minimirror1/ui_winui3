@@ -46,11 +46,16 @@ public class BackendApiKeyStartupPromptTests
         StringAssert.Contains(code, "settingsService.BackendApiKey = dialog.ApiKey");
         StringAssert.Contains(code, "settingsService.Save()");
         StringAssert.Contains(code, "StartBackendServices()");
+        StringAssert.Contains(code, "WaitForXamlRootAsync(root)");
+        StringAssert.Contains(code, "root.Loaded += loadedHandler");
+        StringAssert.Contains(code, "dialog.XamlRoot = await xamlRootTask");
 
+        int waitSetupIndex = code.IndexOf("WaitForXamlRootAsync(root)", StringComparison.Ordinal);
         int activateIndex = code.IndexOf("m_window.Activate()", StringComparison.Ordinal);
         int showIndex = code.IndexOf("dialog.ShowAsync()", StringComparison.Ordinal);
         int startIndex = code.IndexOf("StartBackendServices()", StringComparison.Ordinal);
-        Assert.IsTrue(activateIndex >= 0 && activateIndex < showIndex && showIndex < startIndex);
+        Assert.IsTrue(waitSetupIndex >= 0 && waitSetupIndex < activateIndex);
+        Assert.IsTrue(activateIndex < showIndex && showIndex < startIndex);
     }
 
     private static string ProjectPath(params string[] segments)

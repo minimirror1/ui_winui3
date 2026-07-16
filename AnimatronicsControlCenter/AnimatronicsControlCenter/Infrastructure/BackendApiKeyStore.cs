@@ -15,14 +15,20 @@ public sealed class BackendApiKeyStore : IBackendApiKeyStore
     {
         try
         {
-            PasswordCredential credential = new PasswordVault().Retrieve(ResourceName, UserName);
-            credential.RetrievePassword();
-            return credential.Password ?? string.Empty;
+            foreach (PasswordCredential credential in new PasswordVault().RetrieveAll())
+            {
+                if (credential.Resource == ResourceName && credential.UserName == UserName)
+                {
+                    credential.RetrievePassword();
+                    return credential.Password ?? string.Empty;
+                }
+            }
         }
         catch
         {
-            return string.Empty;
         }
+
+        return string.Empty;
     }
 
     public void Save(string apiKey)
@@ -47,9 +53,12 @@ public sealed class BackendApiKeyStore : IBackendApiKeyStore
     {
         try
         {
-            foreach (PasswordCredential credential in vault.FindAllByResource(ResourceName))
+            foreach (PasswordCredential credential in vault.RetrieveAll())
             {
-                vault.Remove(credential);
+                if (credential.Resource == ResourceName && credential.UserName == UserName)
+                {
+                    vault.Remove(credential);
+                }
             }
         }
         catch

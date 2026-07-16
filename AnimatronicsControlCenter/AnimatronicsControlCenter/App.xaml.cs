@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
@@ -32,15 +33,19 @@ namespace AnimatronicsControlCenter
             localizationService.SetLanguage(settingsService.Language);
             
             m_window = Services.GetRequiredService<MainWindow>();
+            Task<XamlRoot>? xamlRootTask = null;
+            if (string.IsNullOrWhiteSpace(settingsService.BackendApiKey) &&
+                m_window.Content is FrameworkElement root)
+            {
+                xamlRootTask = WaitForXamlRootAsync(root);
+            }
+
             m_window.Activate();
 
-            if (string.IsNullOrWhiteSpace(settingsService.BackendApiKey))
+            if (xamlRootTask is not null)
             {
                 var dialog = new BackendApiKeyPromptDialog();
-                if (m_window.Content is FrameworkElement root)
-                {
-                    dialog.XamlRoot = root.XamlRoot;
-                }
+                dialog.XamlRoot = await xamlRootTask;
 
                 ContentDialogResult result = await dialog.ShowAsync();
                 if (result == ContentDialogResult.Primary)
@@ -54,6 +59,30 @@ namespace AnimatronicsControlCenter
             {
                 StartBackendServices();
             }
+        }
+
+        private static Task<XamlRoot> WaitForXamlRootAsync(FrameworkElement root)
+        {
+            if (root.XamlRoot is XamlRoot xamlRoot)
+            {
+                return Task.FromResult(xamlRoot);
+            }
+
+            var completion = new TaskCompletionSource<XamlRoot>(TaskCreationOptions.RunContinuationsAsynchronously);
+            RoutedEventHandler loadedHandler = null!;
+            loadedHandler = (_, _) =>
+            {
+                root.Loaded -= loadedHandler;
+                if (root.XamlRoot is XamlRoot loadedXamlRoot)
+                {
+                    completion.TrySetResult(loadedXamlRoot);
+                    return;
+                }
+
+                completion.TrySetException(new InvalidOperationException("The main window XamlRoot is unavailable."));
+            };
+            root.Loaded += loadedHandler;
+            return completion.Task;
         }
 
         private void StartBackendServices()
