@@ -227,12 +227,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             target.MotionTotalTime = source.MotionTotalTime;
             target.Address64 = source.Address64;
             target.PowerStatus = source.PowerStatus;
+            target.HasError = source.HasError;
         }
 
         private static void ApplyDisconnectedStatus(Device target)
         {
             target.IsConnected = false;
             target.PowerStatus = "OFF";
+            target.HasError = false;
             target.MotionState = MotionState.Stopped;
             target.StatusMessage = "Disconnected";
             target.Motors.Clear();

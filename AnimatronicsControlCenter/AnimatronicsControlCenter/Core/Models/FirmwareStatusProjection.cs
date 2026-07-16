@@ -13,6 +13,7 @@ public static class FirmwareStatusProjection
         device.MotionCurrentTime = TimeSpan.FromMilliseconds(status.CurrentMs);
         device.MotionTotalTime = TimeSpan.FromMilliseconds(status.TotalMs);
         device.PowerStatus = status.PowerStatus == "ON" ? "ON" : "OFF";
+        device.HasError = status.HasError;
         device.StatusMessage = BuildStatusMessage(status.State, isVirtual);
     }
 
