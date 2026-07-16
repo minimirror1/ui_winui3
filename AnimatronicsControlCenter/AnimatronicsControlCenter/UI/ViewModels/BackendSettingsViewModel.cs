@@ -21,6 +21,7 @@ public partial class BackendSettingsViewModel : ObservableObject
 
     [ObservableProperty] private string backendBaseUrl = string.Empty;
     [ObservableProperty] private string backendBearerToken = string.Empty;
+    [ObservableProperty] private string backendApiKey = string.Empty;
     [ObservableProperty] private string backendStoreId = string.Empty;
     [ObservableProperty] private string backendStoreName = string.Empty;
     [ObservableProperty] private string backendStoreCountryCode = string.Empty;
@@ -112,6 +113,7 @@ public partial class BackendSettingsViewModel : ObservableObject
         _settingsService.IsBackendSyncEnabled = IsBackendSyncEnabled;
         _settingsService.BackendBaseUrl = BackendBaseUrl;
         _settingsService.BackendBearerToken = BackendBearerToken;
+        _settingsService.BackendApiKey = BackendApiKey;
         _settingsService.BackendStoreId = BackendStoreId;
         _settingsService.BackendStoreName = BackendStoreName;
         _settingsService.BackendStoreCountryCode = BackendStoreCountryCode;
@@ -143,6 +145,7 @@ public partial class BackendSettingsViewModel : ObservableObject
         _settingsService.Load();
         BackendBaseUrl = _settingsService.BackendBaseUrl;
         BackendBearerToken = _settingsService.BackendBearerToken;
+        BackendApiKey = _settingsService.BackendApiKey;
         BackendStoreId = _settingsService.BackendStoreId;
         BackendStoreName = _settingsService.BackendStoreName;
         BackendStoreCountryCode = _settingsService.BackendStoreCountryCode;

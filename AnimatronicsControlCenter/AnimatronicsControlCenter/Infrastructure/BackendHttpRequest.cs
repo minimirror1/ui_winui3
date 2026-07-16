@@ -42,6 +42,12 @@ internal static class BackendHttpRequest
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
+        string apiKey = settings.BackendApiKey.Trim();
+        if (!string.IsNullOrWhiteSpace(apiKey))
+        {
+            request.Headers.TryAddWithoutValidation("X-API-Key", apiKey);
+        }
+
         return request;
     }
 

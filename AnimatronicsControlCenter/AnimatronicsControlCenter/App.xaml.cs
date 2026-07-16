@@ -1,7 +1,9 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
@@ -22,17 +24,72 @@ namespace AnimatronicsControlCenter
             Services = ConfigureServices();
         }
 
-        protected override void OnLaunched(LaunchActivatedEventArgs args)
+        protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
             var settingsService = Services.GetRequiredService<ISettingsService>();
             settingsService.Load();
             
             var localizationService = Services.GetRequiredService<ILocalizationService>();
             localizationService.SetLanguage(settingsService.Language);
-            Services.GetRequiredService<IBackendPowerSseService>().Start();
             
             m_window = Services.GetRequiredService<MainWindow>();
+            Task<XamlRoot>? xamlRootTask = null;
+            if (string.IsNullOrWhiteSpace(settingsService.BackendApiKey) &&
+                m_window.Content is FrameworkElement root)
+            {
+                xamlRootTask = WaitForXamlRootAsync(root);
+            }
+
             m_window.Activate();
+
+            if (xamlRootTask is not null)
+            {
+                var dialog = new BackendApiKeyPromptDialog();
+                dialog.XamlRoot = await xamlRootTask;
+
+                ContentDialogResult result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    settingsService.BackendApiKey = dialog.ApiKey;
+                    settingsService.Save();
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(settingsService.BackendApiKey))
+            {
+                StartBackendServices();
+            }
+        }
+
+        private static Task<XamlRoot> WaitForXamlRootAsync(FrameworkElement root)
+        {
+            if (root.XamlRoot is XamlRoot xamlRoot)
+            {
+                return Task.FromResult(xamlRoot);
+            }
+
+            var completion = new TaskCompletionSource<XamlRoot>(TaskCreationOptions.RunContinuationsAsynchronously);
+            RoutedEventHandler loadedHandler = null!;
+            loadedHandler = (_, _) =>
+            {
+                root.Loaded -= loadedHandler;
+                if (root.XamlRoot is XamlRoot loadedXamlRoot)
+                {
+                    completion.TrySetResult(loadedXamlRoot);
+                    return;
+                }
+
+                completion.TrySetException(new InvalidOperationException("The main window XamlRoot is unavailable."));
+            };
+            root.Loaded += loadedHandler;
+            return completion.Task;
+        }
+
+        private void StartBackendServices()
+        {
+            Services.GetRequiredService<IBackendPowerSseService>().Start();
+            Services.GetRequiredService<IBackendDashboardSyncService>().Start();
+            Services.GetRequiredService<IOperatingHoursAutoSyncService>().Start();
         }
 
         private IServiceProvider ConfigureServices()
@@ -55,6 +112,7 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
             services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<IBackendApiKeyStore, BackendApiKeyStore>();
             services.AddSingleton<HttpClient>(_ => new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(15)

@@ -21,6 +21,7 @@ public class BackendServerCatalogClientTests
         using var httpClient = new HttpClient(handler);
         var settings = TestSettings("https://example.invalid/api");
         settings.BackendBearerToken = "token-1";
+        settings.BackendApiKey = "api-key-1";
         settings.IsBackendSyncEnabled = false;
         var client = new BackendServerCatalogClient(httpClient, settings);
 
@@ -32,6 +33,7 @@ public class BackendServerCatalogClientTests
         Assert.AreEqual("https://example.invalid/api/v1/service/stores/store-1/detail", handler.Request.RequestUri!.ToString());
         Assert.AreEqual("Bearer", handler.Request.Headers.Authorization!.Scheme);
         Assert.AreEqual("token-1", handler.Request.Headers.Authorization.Parameter);
+        Assert.AreEqual("api-key-1", string.Join(string.Empty, handler.Request.Headers.GetValues("X-API-Key")));
     }
 
     [TestMethod]

@@ -34,7 +34,7 @@ public sealed class BackendDashboardSyncService : IBackendDashboardSyncService
 
     public void Start()
     {
-        if (!_settingsService.IsBackendSyncEnabled)
+        if (!_settingsService.IsBackendSyncEnabled || string.IsNullOrWhiteSpace(_settingsService.BackendApiKey))
         {
             return;
         }

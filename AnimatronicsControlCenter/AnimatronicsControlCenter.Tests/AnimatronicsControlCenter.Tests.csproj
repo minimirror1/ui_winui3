@@ -44,6 +44,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\BackendTrafficState.cs" Link="Core\Utilities\BackendTrafficState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialPortDisplay.cs" Link="Core\Utilities\SerialPortDisplay.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendApiKeyStore.cs" Link="Core\Interfaces\IBackendApiKeyStore.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendMonitoringService.cs" Link="Core\Interfaces\IBackendMonitoringService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendPowerSseService.cs" Link="Core\Interfaces\IBackendPowerSseService.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ILocalizationService.cs" Link="Core\Interfaces\ILocalizationService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendApiKeyStore.cs" Link="Infrastructure\BackendApiKeyStore.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendObjectIdResolver.cs" Link="Infrastructure\BackendObjectIdResolver.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendHttpRequest.cs" Link="Infrastructure\BackendHttpRequest.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendMonitoringService.cs" Link="Infrastructure\BackendMonitoringService.cs" />
@@ -76,6 +78,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendObjectMappingEditorViewModel.cs" Link="UI\ViewModels\BackendObjectMappingEditorViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendApiKeyPromptViewModel.cs" Link="UI\ViewModels\BackendApiKeyPromptViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendSettingsViewModel.cs" Link="UI\ViewModels\BackendSettingsViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendRegistrationViewModel.cs" Link="UI\ViewModels\BackendRegistrationViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />

@@ -140,6 +140,33 @@
                                      Text="{x:Bind ViewModel.BackendBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <PasswordBox Header="Bearer Token"
                                          Password="{x:Bind ViewModel.BackendBearerToken, Mode=TwoWay}" />
+                            <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                <StackPanel Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE72E;"
+                                                  FontSize="14"
+                                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                        <TextBlock Text="API 인증"
+                                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock Text="API 키는 Windows PasswordVault에 안전하게 저장되며 설정 파일에는 기록되지 않습니다."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <PasswordBox x:Name="ApiKeyPasswordBox"
+                                                 Header="X-API-Key"
+                                                 PlaceholderText="서버 API 키를 입력하세요"
+                                                 PasswordRevealMode="Peek"
+                                                 Password="{x:Bind ViewModel.BackendApiKey, Mode=TwoWay}" />
+                                    <TextBlock Text="처음 한 번 입력한 뒤 상단 저장 버튼을 누르세요. 이후 앱이 자동으로 사용합니다."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Expander>
 
