@@ -45,7 +45,8 @@ public static class BinaryDeserializer
     {
         status = default;
         if (payload.Length != BinaryProtocolConst.PongPayloadSize &&
-            payload.Length != BinaryProtocolConst.PongPayloadSize + 1)
+            payload.Length != BinaryProtocolConst.PongPayloadSize + 1 &&
+            payload.Length != BinaryProtocolConst.PongPayloadSize + 2)
         {
             return false;
         }
@@ -55,7 +56,8 @@ public static class BinaryDeserializer
             InitState: payload[1],
             CurrentMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[2..]),
             TotalMs: BinaryPrimitives.ReadUInt32LittleEndian(payload[6..]),
-            PowerStatus: DecodePowerStatus(payload));
+            PowerStatus: DecodePowerStatus(payload),
+            HasError: DecodeErrorStatus(payload));
         return true;
     }
 
@@ -67,6 +69,12 @@ public static class BinaryDeserializer
         }
 
         return payload[BinaryProtocolConst.PongPayloadSize] == 0x01 ? "ON" : "OFF";
+    }
+
+    private static bool DecodeErrorStatus(ReadOnlySpan<byte> payload)
+    {
+        int offset = BinaryProtocolConst.PongPayloadSize + 1;
+        return payload.Length > offset && payload[offset] != 0x00;
     }
 
     public static PongStatus ParsePongResponse(ReadOnlySpan<byte> payload)

@@ -139,6 +139,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                     BinaryCommand.Move          => HandleMove(hdr, payload),
                     BinaryCommand.MotionCtrl    => HandleMotionCtrl(hdr, payload),
                     BinaryCommand.PowerCtrl     => HandlePowerCtrl(hdr, payload),
+                    BinaryCommand.ErrorClear    => HandleErrorClear(hdr),
                     BinaryCommand.GetMotors     => HandleGetMotors(hdr),
                     BinaryCommand.GetMotorState => HandleGetMotorState(hdr),
                     BinaryCommand.GetFiles      => HandleGetFiles(hdr),
@@ -164,12 +165,13 @@ namespace AnimatronicsControlCenter.Infrastructure
         {
             // PONG: 헤더만, payload 없음
             var status = GetPingStatus(hdr.TarId);
-            var payload = new byte[BinaryProtocolConst.PongPayloadSize + 1];
+            var payload = new byte[BinaryProtocolConst.PongPayloadSize + 2];
             payload[0] = (byte)status.State;
             payload[1] = status.InitState;
             BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(2), status.CurrentMs);
             BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(6), status.TotalMs);
             payload[BinaryProtocolConst.PongPayloadSize] = status.PowerStatus == "ON" ? (byte)0x01 : (byte)0x00;
+            payload[BinaryProtocolConst.PongPayloadSize + 1] = status.HasError ? (byte)0x01 : (byte)0x00;
             return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.Pong, payload);
         }
 
@@ -252,6 +254,13 @@ namespace AnimatronicsControlCenter.Infrastructure
             _devicePingStatuses[hdr.TarId] = status;
             var respPayload = new byte[] { action, 0x01 };
             return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.PowerCtrl, respPayload);
+        }
+
+        private byte[] HandleErrorClear(RequestHeader hdr)
+        {
+            var status = GetPingStatus(hdr.TarId) with { HasError = false };
+            _devicePingStatuses[hdr.TarId] = status;
+            return BuildOkResponse(hdr.TarId, hdr.SrcId, BinaryCommand.ErrorClear, Array.Empty<byte>());
         }
 
         private byte[] HandleGetMotors(RequestHeader hdr)

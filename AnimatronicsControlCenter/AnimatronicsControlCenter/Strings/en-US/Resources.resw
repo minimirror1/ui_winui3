@@ -373,6 +373,24 @@
   <data name="DeviceDetail_RelayWarning" xml:space="preserve">
     <value>The relay directly cuts or supplies device power. Avoid switching OFF during motion playback, and verify load safety before switching ON.</value>
   </data>
+  <data name="DeviceDetail_ErrorStatus" xml:space="preserve">
+    <value>Error status</value>
+  </data>
+  <data name="DeviceDetail_ErrorNormal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="DeviceDetail_ErrorDetected" xml:space="preserve">
+    <value>Error detected</value>
+  </data>
+  <data name="DeviceDetail_ErrorNormalDetail" xml:space="preserve">
+    <value>No error is currently reported.</value>
+  </data>
+  <data name="DeviceDetail_ErrorDetectedDetail" xml:space="preserve">
+    <value>The device reported an error state.</value>
+  </data>
+  <data name="DeviceDetail_ErrorClear" xml:space="preserve">
+    <value>Clear error</value>
+  </data>
   <data name="DeviceDetail_AutoLockSec" xml:space="preserve">
     <value>Auto-lock in {0}s</value>
   </data>
