@@ -22,6 +22,7 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         bool IsBackendSyncEnabled { get; set; }
         string BackendBaseUrl { get; set; }
         string BackendBearerToken { get; set; }
+        string BackendApiKey { get; set; }
         string BackendStoreId { get; set; }
         string BackendStoreName { get; set; }
         string BackendStoreCountryCode { get; set; }

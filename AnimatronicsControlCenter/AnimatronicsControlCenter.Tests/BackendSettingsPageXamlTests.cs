@@ -139,6 +139,19 @@ public class BackendSettingsPageXamlTests
         StringAssert.Contains(code, "Directory.CreateDirectory(directory)");
     }
 
+    [TestMethod]
+    public void BackendSettingsPage_ShowsSecureApiKeyFieldWithVaultGuidance()
+    {
+        string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "BackendSettingsPage.xaml"));
+
+        StringAssert.Contains(xaml, "ApiKeyPasswordBox");
+        StringAssert.Contains(xaml, "BackendApiKey");
+        StringAssert.Contains(xaml, "PasswordRevealMode=\"Peek\"");
+        StringAssert.Contains(xaml, "Windows PasswordVault");
+        StringAssert.Contains(xaml, "X-API-Key");
+        StringAssert.Contains(xaml, "처음 한 번 입력한 뒤 상단 저장 버튼을 누르세요. 이후 앱이 자동으로 사용합니다.");
+    }
+
     private static string ProjectPath(params string[] segments)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

@@ -31,6 +31,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const int MinScanId = 1;
         private const int MaxScanId = 254;
         private readonly IBackendSettingsPathProvider _backendSettingsPathProvider;
+        private readonly IBackendApiKeyStore _backendApiKeyStore;
         private string _theme = ThemeDefault;
         private static readonly JsonSerializerOptions BackendJsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -38,13 +39,21 @@ namespace AnimatronicsControlCenter.Infrastructure
         };
 
         public SettingsService()
-            : this(new BackendSettingsPathProvider())
+            : this(new BackendSettingsPathProvider(), new BackendApiKeyStore())
         {
         }
 
         public SettingsService(IBackendSettingsPathProvider backendSettingsPathProvider)
+            : this(backendSettingsPathProvider, new BackendApiKeyStore())
+        {
+        }
+
+        public SettingsService(
+            IBackendSettingsPathProvider backendSettingsPathProvider,
+            IBackendApiKeyStore backendApiKeyStore)
         {
             _backendSettingsPathProvider = backendSettingsPathProvider;
+            _backendApiKeyStore = backendApiKeyStore;
         }
 
         public string LastComPort { get; set; } = "COM1";
@@ -68,6 +77,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         public bool IsBackendSyncEnabled { get; set; } = true;
         public string BackendBaseUrl { get; set; } = "https://robot-monitor-api.innergm.com";
         public string BackendBearerToken { get; set; } = string.Empty;
+        public string BackendApiKey { get; set; } = string.Empty;
         public string BackendStoreId { get; set; } = string.Empty;
         public string BackendStoreName { get; set; } = string.Empty;
         public string BackendStoreCountryCode { get; set; } = string.Empty;
@@ -104,6 +114,7 @@ namespace AnimatronicsControlCenter.Infrastructure
 #endif
 
             SaveBackendSettings();
+            _backendApiKeyStore.Save(BackendApiKey);
         }
 
         public void Load()
@@ -141,6 +152,7 @@ namespace AnimatronicsControlCenter.Infrastructure
 #endif
 
             LoadBackendSettings();
+            BackendApiKey = _backendApiKeyStore.Load();
         }
 
         private void SaveAppSettings()

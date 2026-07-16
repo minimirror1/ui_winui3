@@ -55,6 +55,7 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
             services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<IBackendApiKeyStore, BackendApiKeyStore>();
             services.AddSingleton<HttpClient>(_ => new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(15)

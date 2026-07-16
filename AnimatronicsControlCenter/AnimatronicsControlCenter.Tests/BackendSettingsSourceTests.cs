@@ -80,6 +80,39 @@ public class BackendSettingsSourceTests
     }
 
     [TestMethod]
+    public void BackendSettings_Save_DoesNotWriteApiKeyToJson()
+    {
+        string path = CreateTempSettingsPath();
+        var settings = new SettingsService(new FakeBackendSettingsPathProvider(path))
+        {
+            BackendApiKey = "api-key-must-stay-out-of-json"
+        };
+
+        settings.Save();
+
+        string json = File.ReadAllText(path);
+        Assert.IsFalse(json.Contains("api-key-must-stay-out-of-json", StringComparison.Ordinal));
+        Assert.IsFalse(json.Contains("backendApiKey", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void BackendSettings_SaveAndLoad_UsesCredentialStoreForApiKey()
+    {
+        string path = CreateTempSettingsPath();
+        var keyStore = new FakeBackendApiKeyStore();
+        var first = new SettingsService(new FakeBackendSettingsPathProvider(path), keyStore)
+        {
+            BackendApiKey = "api-key-1"
+        };
+
+        first.Save();
+        var second = new SettingsService(new FakeBackendSettingsPathProvider(path), keyStore);
+        second.Load();
+
+        Assert.AreEqual("api-key-1", second.BackendApiKey);
+    }
+
+    [TestMethod]
     public void AppSettings_SaveAndLoad_UsesSeparateFileBesideBackendSettings()
     {
         string backendPath = CreateTempSettingsPath();
@@ -240,6 +273,15 @@ public class BackendSettingsSourceTests
         }
 
         public string BackendSettingsFilePath { get; }
+    }
+
+    private sealed class FakeBackendApiKeyStore : IBackendApiKeyStore
+    {
+        private string _apiKey = string.Empty;
+
+        public string Load() => _apiKey;
+
+        public void Save(string apiKey) => _apiKey = apiKey;
     }
 
     private static string CreateTempSettingsPath()
