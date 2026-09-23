@@ -34,6 +34,14 @@ public static class ReleaseNotesCatalog
 
     public static IReadOnlyList<ReleaseNote> All { get; } =
     [
+        new("1.1.17.1", "2026-09-23", "쓰고 있는 버전과 변경 내역을 앱에서 바로 봅니다.",
+        [
+            new(GlyphView, "타이틀바에 버전 표시",
+                "지금 실행 중인 버전이 앱 이름 옆에 늘 보입니다."),
+            new(GlyphFile, "릴리즈 노트 보기",
+                "버전을 누르면 이 창이 열립니다. 지금까지 나온 버전의 변경 내용을 모두 볼 수 있습니다."),
+        ]),
+
         new("1.1.17.0", "2026-09-23", "파일을 잘림 없이 주고받습니다.",
         [
             new(GlyphWarning, "잘린 파일로 덮어쓰지 않습니다",
