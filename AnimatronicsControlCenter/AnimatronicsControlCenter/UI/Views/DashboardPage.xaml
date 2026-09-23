@@ -52,7 +52,19 @@
         <CommandBar DefaultLabelPosition="Right" Background="Transparent" IsOpen="False">
             <AppBarButton x:Uid="Dashboard_Scan" Icon="Refresh" Command="{x:Bind ViewModel.ScanCommand}"/>
             <CommandBar.Content>
-                <TextBlock x:Uid="Dashboard_Devices" Style="{StaticResource TitleTextBlockStyle}" Margin="12,14,0,0"/>
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,14,0,0">
+                    <TextBlock x:Uid="Dashboard_Devices" Style="{StaticResource TitleTextBlockStyle}"/>
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="10,3"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{x:Bind ViewModel.TimeSyncBadgeText, Mode=OneWay}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
             </CommandBar.Content>
         </CommandBar>
 

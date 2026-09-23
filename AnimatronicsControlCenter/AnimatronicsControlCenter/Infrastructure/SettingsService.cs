@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using AnimatronicsControlCenter.Core.Backend;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Core.Utilities;
 #if WINDOWS
 using Windows.Storage;
@@ -25,6 +26,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyPingIntervalSeconds = "PingIntervalSeconds";
         private const string KeyPingCountryCode = "PingCountryCode";
         private const string KeyPingUtcOffsetMinutes = "PingUtcOffsetMinutes";
+        private const string KeyPingTimeZoneId = "PingTimeZoneId";
         private const string ThemeDefault = "Default";
         private const string ThemeLight = "Light";
         private const string ThemeDark = "Dark";
@@ -71,6 +73,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         public double PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
+        public string PingTimeZoneId { get; set; } = PingTimeZoneCatalog.DefaultTimeZoneId;
         public int ScanStartId { get; set; } = 1;
         public int ScanEndId { get; set; } = 10;
         public string AppSettingsFilePath => GetAppSettingsFilePath();
@@ -107,6 +110,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 localSettings.Values[KeyPingIntervalSeconds] = PingIntervalSeconds;
                 localSettings.Values[KeyPingCountryCode] = PingCountryCode;
                 localSettings.Values[KeyPingUtcOffsetMinutes] = PingUtcOffsetMinutes;
+                localSettings.Values[KeyPingTimeZoneId] = PingTimeZoneId;
             }
             catch
             {
@@ -144,6 +148,9 @@ namespace AnimatronicsControlCenter.Infrastructure
                     }
                     if (localSettings.Values.TryGetValue(KeyPingCountryCode, out var pingCountryCode)) PingCountryCode = (string)pingCountryCode;
                     if (localSettings.Values.TryGetValue(KeyPingUtcOffsetMinutes, out var pingOffset)) PingUtcOffsetMinutes = (int)pingOffset;
+                    PingTimeZoneId = localSettings.Values.TryGetValue(KeyPingTimeZoneId, out var pingTimeZoneId)
+                        ? (string)pingTimeZoneId
+                        : MigrateLegacyPingTimeZoneId();
                 }
                 catch
                 {
@@ -179,7 +186,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                     PingCountryCode,
                     PingUtcOffsetMinutes,
                     NormalizeScanStartId(ScanStartId, ScanEndId),
-                    NormalizeScanEndId(ScanStartId, ScanEndId));
+                    NormalizeScanEndId(ScanStartId, ScanEndId),
+                    PingTimeZoneId);
 
                 string json = JsonSerializer.Serialize(settings, BackendJsonOptions);
                 File.WriteAllText(filePath, json);
@@ -217,6 +225,9 @@ namespace AnimatronicsControlCenter.Infrastructure
                 PingIntervalSeconds = settings.PingIntervalSeconds < 0.1 ? PingIntervalSeconds : settings.PingIntervalSeconds;
                 PingCountryCode = settings.PingCountryCode ?? PingCountryCode;
                 PingUtcOffsetMinutes = settings.PingUtcOffsetMinutes;
+                PingTimeZoneId = string.IsNullOrWhiteSpace(settings.PingTimeZoneId)
+                    ? MigrateLegacyPingTimeZoneId()
+                    : settings.PingTimeZoneId;
                 ScanStartId = NormalizeScanStartId(settings.ScanStartId, settings.ScanEndId);
                 ScanEndId = NormalizeScanEndId(settings.ScanStartId, settings.ScanEndId);
                 return true;
@@ -226,6 +237,10 @@ namespace AnimatronicsControlCenter.Infrastructure
                 return false;
             }
         }
+
+        /// 타임존 ID가 저장돼 있지 않은 구 설정을 국가코드 + 고정 오프셋으로 타임존 ID에 매핑한다.
+        private string MigrateLegacyPingTimeZoneId()
+            => PingTimeZoneCatalog.FindByLegacyOffsetOrDefault(PingCountryCode, PingUtcOffsetMinutes).TimeZoneId;
 
         private string GetAppSettingsFilePath()
         {
@@ -355,6 +370,7 @@ namespace AnimatronicsControlCenter.Infrastructure
             string PingCountryCode,
             int PingUtcOffsetMinutes,
             int ScanStartId,
-            int ScanEndId);
+            int ScanEndId,
+            string? PingTimeZoneId = null);
     }
 }

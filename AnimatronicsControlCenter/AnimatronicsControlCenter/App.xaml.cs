@@ -29,6 +29,10 @@ namespace AnimatronicsControlCenter
             var settingsService = Services.GetRequiredService<ISettingsService>();
             settingsService.Load();
             
+            // 인터넷 시간 동기화: 즉시 1회 + 1시간 주기 재동기화 (실패 시 PC 시계 폴백)
+            Services.GetRequiredService<INetworkTimeService>().Start(TimeSpan.FromHours(1));
+
+
             var localizationService = Services.GetRequiredService<ILocalizationService>();
             localizationService.SetLanguage(settingsService.Language);
             
@@ -112,6 +116,7 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
             services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<INetworkTimeService, NetworkTimeService>();
             services.AddSingleton<IBackendApiKeyStore, BackendApiKeyStore>();
             services.AddSingleton<HttpClient>(_ => new HttpClient
             {

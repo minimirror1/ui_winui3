@@ -295,6 +295,42 @@
   <data name="PingPreview_Header.Header" xml:space="preserve">
     <value>Payload Preview</value>
   </data>
+  <data name="TimeSync_Header.Header" xml:space="preserve">
+    <value>Time Synchronization</value>
+  </data>
+  <data name="TimeSync_Desc.Text" xml:space="preserve">
+    <value>Source and status of the time sent to devices</value>
+  </data>
+  <data name="TimeSync_SourceInternet" xml:space="preserve">
+    <value>Internet time server</value>
+  </data>
+  <data name="TimeSync_SourcePcClock" xml:space="preserve">
+    <value>PC clock (not synchronized)</value>
+  </data>
+  <data name="TimeSync_NeverSynced" xml:space="preserve">
+    <value>Not synchronized yet</value>
+  </data>
+  <data name="TimeSync_LastError" xml:space="preserve">
+    <value>Last error</value>
+  </data>
+  <data name="TimeSync_LastSync" xml:space="preserve">
+    <value>Last sync</value>
+  </data>
+  <data name="TimeSync_Correction" xml:space="preserve">
+    <value>Correction</value>
+  </data>
+  <data name="TimeSync_DstActive" xml:space="preserve">
+    <value>DST active</value>
+  </data>
+  <data name="TimeSync_SyncNow.Content" xml:space="preserve">
+    <value>Sync now</value>
+  </data>
+  <data name="TimeSync_Badge_Synced" xml:space="preserve">
+    <value>Internet time synced</value>
+  </data>
+  <data name="TimeSync_Badge_PcClock" xml:space="preserve">
+    <value>Using PC clock</value>
+  </data>
   <data name="DeviceDetail_Tab_Overview" xml:space="preserve">
     <value>Overview</value>
   </data>

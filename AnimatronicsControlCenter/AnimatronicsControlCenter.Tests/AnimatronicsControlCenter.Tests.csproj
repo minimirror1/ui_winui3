@@ -36,6 +36,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryPacketDecoder.cs" Link="Core\Protocol\BinaryPacketDecoder.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\BinaryProtocolErrorText.cs" Link="Core\Protocol\BinaryProtocolErrorText.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\PingTimeSettings.cs" Link="Core\Protocol\PingTimeSettings.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\TimeSyncDisplayFormatter.cs" Link="Core\Protocol\TimeSyncDisplayFormatter.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\FirmwareFileContentFormatting.cs" Link="Core\Protocol\FirmwareFileContentFormatting.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\FirmwareFileRequestValidation.cs" Link="Core\Protocol\FirmwareFileRequestValidation.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\SaveFileResponseProjection.cs" Link="Core\Protocol\SaveFileResponseProjection.cs" />
@@ -43,6 +44,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialTrafficIndicatorState.cs" Link="Core\Utilities\SerialTrafficIndicatorState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\BackendTrafficState.cs" Link="Core\Utilities\BackendTrafficState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialPortDisplay.cs" Link="Core\Utilities\SerialPortDisplay.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SntpPacket.cs" Link="Core\Utilities\SntpPacket.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendApiKeyStore.cs" Link="Core\Interfaces\IBackendApiKeyStore.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
@@ -58,6 +60,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialService.cs" Link="Core\Interfaces\ISerialService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISerialTrafficTap.cs" Link="Core\Interfaces\ISerialTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ISettingsService.cs" Link="Core\Interfaces\ISettingsService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\INetworkTimeService.cs" Link="Core\Interfaces\INetworkTimeService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ILocalizationService.cs" Link="Core\Interfaces\ILocalizationService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IComRawTrafficTap.cs" Link="Core\Interfaces\IComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\BackendSettingsPathProvider.cs" Link="Infrastructure\BackendSettingsPathProvider.cs" />
@@ -74,6 +77,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\OperatingHoursDeviceSyncService.cs" Link="Infrastructure\OperatingHoursDeviceSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\OperatingHoursAutoSyncService.cs" Link="Infrastructure\OperatingHoursAutoSyncService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\NetworkTimeService.cs" Link="Infrastructure\NetworkTimeService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SerialTrafficTap.cs" Link="Infrastructure\SerialTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />

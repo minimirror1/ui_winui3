@@ -28,6 +28,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
         private readonly XBeeService _xbeeService;
         private readonly DashboardViewModel _dashboardViewModel;
+        private readonly INetworkTimeService _networkTimeService;
+        private readonly DispatcherQueue _dispatcherQueue;
+        private DispatcherQueueTimer? _timeSyncTicker;
 
         public event EventHandler? ThemeRestartRequested;
 
@@ -142,10 +145,96 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private int scanEndId = 10;
 
         public string PingPreviewText
-            => PingTimePayloadFactory.FormatPreview(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow);
+            => PingTimePayloadFactory.FormatPreview(PingCountryCode, PingTimeZoneId, _networkTimeService.UtcNow);
 
         public string PingPayloadPreviewText
             => $"payload: {FormatPingPayloadPreview()}";
+
+        private string PingTimeZoneId
+            => SelectedPingTimeZoneOption?.TimeZoneId ?? _settingsService.PingTimeZoneId;
+
+        // ── 시간 동기화 상태 카드 ─────────────────────────────────────
+
+        public string TimeSyncSourceText
+        {
+            get
+            {
+                var status = _networkTimeService.Status;
+                return status.IsSynchronized
+                    ? $"{_localizationService.GetString("TimeSync_SourceInternet")} ({status.SyncedServer})"
+                    : _localizationService.GetString("TimeSync_SourcePcClock");
+            }
+        }
+
+        public string TimeSyncDetailText
+        {
+            get
+            {
+                var status = _networkTimeService.Status;
+                if (!status.IsSynchronized)
+                {
+                    return string.IsNullOrEmpty(status.LastError)
+                        ? _localizationService.GetString("TimeSync_NeverSynced")
+                        : $"{_localizationService.GetString("TimeSync_LastError")}: {status.LastError}";
+                }
+
+                var zone = PingTimeZoneCatalog.ResolveTimeZone(PingTimeZoneId);
+                var lastSyncLocal = status.LastSyncUtc is { } lastSync
+                    ? TimeZoneInfo.ConvertTime(lastSync, zone).ToString("yyyy-MM-dd HH:mm:ss")
+                    : "-";
+                string correction = $"{(status.CorrectionOffset >= TimeSpan.Zero ? "+" : "-")}{status.CorrectionOffset.Duration().TotalSeconds:F2}s";
+                return $"{_localizationService.GetString("TimeSync_LastSync")}: {lastSyncLocal} · {_localizationService.GetString("TimeSync_Correction")}: {correction}";
+            }
+        }
+
+        public string TimeSyncCurrentTimeText
+            => TimeSyncDisplayFormatter.FormatCurrentTime(
+                PingTimeZoneId,
+                _networkTimeService.UtcNow,
+                _localizationService.GetString("TimeSync_DstActive"));
+
+        [RelayCommand]
+        private async Task SyncTimeNowAsync()
+        {
+            await _networkTimeService.SynchronizeAsync();
+            RefreshTimeSyncTexts();
+        }
+
+        /// 페이지 표시 중 1초 간격으로 현재 시각 표시를 갱신한다. 페이지 언로드 시 StopTimeSyncTicker 호출.
+        public void StartTimeSyncTicker()
+        {
+            if (_timeSyncTicker is not null) return;
+            _timeSyncTicker = _dispatcherQueue.CreateTimer();
+            _timeSyncTicker.Interval = TimeSpan.FromSeconds(1);
+            _timeSyncTicker.Tick += (_, _) => OnPropertyChanged(nameof(TimeSyncCurrentTimeText));
+            _timeSyncTicker.Start();
+        }
+
+        public void StopTimeSyncTicker()
+        {
+            _timeSyncTicker?.Stop();
+            _timeSyncTicker = null;
+            _networkTimeService.StatusChanged -= HandleTimeSyncStatusChanged;
+        }
+
+        private void RefreshTimeSyncTexts()
+        {
+            OnPropertyChanged(nameof(TimeSyncSourceText));
+            OnPropertyChanged(nameof(TimeSyncDetailText));
+            OnPropertyChanged(nameof(TimeSyncCurrentTimeText));
+        }
+
+        private void HandleTimeSyncStatusChanged(object? sender, TimeSyncStatus status)
+        {
+            if (_dispatcherQueue.HasThreadAccess)
+            {
+                RefreshTimeSyncTexts();
+            }
+            else
+            {
+                _dispatcherQueue.TryEnqueue(RefreshTimeSyncTexts);
+            }
+        }
 
         private bool _isInitialized;
         private bool _isUpdatingPingSelection;
@@ -158,7 +247,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             ILocalizationService localizationService,
             SerialMonitorWindowHost serialMonitorWindowHost,
             XBeeService xbeeService,
-            DashboardViewModel dashboardViewModel)
+            DashboardViewModel dashboardViewModel,
+            INetworkTimeService networkTimeService)
         {
             _settingsService = settingsService;
             _serialService = serialService;
@@ -166,6 +256,9 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _serialMonitorWindowHost = serialMonitorWindowHost;
             _xbeeService = xbeeService;
             _dashboardViewModel = dashboardViewModel;
+            _networkTimeService = networkTimeService;
+            _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+            _networkTimeService.StatusChanged += HandleTimeSyncStatusChanged;
             Strings = new LocalizedStrings(_localizationService);
             ThemeOptions = new List<ThemeOption>
             {
@@ -190,7 +283,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             PingUtcOffsetMinutes = _settingsService.PingUtcOffsetMinutes;
             ScanStartId = _settingsService.ScanStartId;
             ScanEndId = _settingsService.ScanEndId;
-            SelectedPingTimeZoneOption = PingTimeZoneCatalog.FindOrDefault(PingCountryCode, PingUtcOffsetMinutes);
+            SelectedPingTimeZoneOption = PingTimeZoneCatalog.FindByTimeZoneIdOrDefault(_settingsService.PingTimeZoneId);
 
             RefreshPorts();
             
@@ -350,9 +443,11 @@ namespace AnimatronicsControlCenter.UI.ViewModels
 
             _settingsService.PingCountryCode = PingCountryCode;
             _settingsService.PingUtcOffsetMinutes = PingUtcOffsetMinutes;
+            _settingsService.PingTimeZoneId = value.TimeZoneId;
             _settingsService.Save();
             OnPropertyChanged(nameof(PingPreviewText));
             OnPropertyChanged(nameof(PingPayloadPreviewText));
+            RefreshTimeSyncTexts();
         }
 
         partial void OnScanStartIdChanged(int value)
@@ -481,7 +576,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             var packet = BinarySerializer.EncodePing(
                 BinaryProtocolConst.HostId,
                 tarId: 1,
-                PingTimePayloadFactory.Create(PingCountryCode, PingUtcOffsetMinutes, DateTimeOffset.UtcNow));
+                PingTimePayloadFactory.Create(PingCountryCode, PingTimeZoneId, _networkTimeService.UtcNow));
             var payload = packet.AsSpan(BinaryProtocolConst.RequestHeaderSize);
             return string.Join(" ", payload.ToArray().Select(b => b.ToString("X2")));
         }
