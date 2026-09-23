@@ -118,16 +118,58 @@ public class FirmwareFileTruncationTests
     }
 
     [TestMethod]
-    public void ParseGetFileResponse_MatchesRealDeviceFrameCappedAtFirmwareLimit()
+    public void ParseGetFileResponse_MatchesFrameCappedAtFirmwareLimit()
     {
-        // 실제 장치가 Setting/MT_ST.TXT 를 511바이트로 잘라 보낸 응답과 같은 형태.
         byte[] content = Encoding.UTF8.GetBytes(new string('A', BinaryProtocolConst.MaxContentUtf8Bytes));
         byte[] payload = BuildGetFilePayload("Setting/MT_ST.TXT", content);
 
         BinaryDeserializer.ParseGetFileResponse(payload, out int contentByteLength);
 
+        Assert.AreEqual(BinaryProtocolConst.MaxContentUtf8Bytes, contentByteLength);
+        Assert.IsTrue(FirmwareFileTruncationCheck.Inspect(
+            deviceFileSize: BinaryProtocolConst.MaxContentUtf8Bytes + 1, contentByteLength).IsTruncated,
+            "한계까지 가득 찬 응답은 파일이 그보다 크면 여전히 절단이다.");
+    }
+
+    [TestMethod]
+    public void ParseGetFileResponse_MatchesObservedTruncatedDeviceFrame()
+    {
+        // 2026-09-23 실측: 장치가 Setting/MT_ST.TXT 를 511바이트(구 APP_CONTENT_MAX_LEN 512 - NUL)로
+        // 잘라 보냈고 status 는 OK 였다. 버퍼를 키운 뒤에도 같은 형태의 프레임을 읽어낼 수 있어야 한다.
+        byte[] content = Encoding.UTF8.GetBytes(new string('A', 511));
+        byte[] payload = BuildGetFilePayload("Setting/MT_ST.TXT", content);
+
+        var (path, _) = BinaryDeserializer.ParseGetFileResponse(payload, out int contentByteLength);
+
+        Assert.AreEqual("Setting/MT_ST.TXT", path);
         Assert.AreEqual(511, contentByteLength);
         Assert.IsTrue(FirmwareFileTruncationCheck.Inspect(deviceFileSize: 1120, contentByteLength).IsTruncated);
+    }
+
+    [TestMethod]
+    public void FirmwareContentLimit_LeavesRoomWithinDeviceFrameCeiling()
+    {
+        // 최악 경로 길이로 꽉 채운 GET_FILE 응답이 펌웨어의 4096 프레임 한계를 넘으면 안 된다.
+        // AppContentMaxLen 을 더 올릴 때 이 테스트가 먼저 막는다.
+        int worstCaseResponse = BinaryProtocolConst.ResponseHeaderSize
+                              + 2 + BinaryProtocolConst.MaxPathUtf8Bytes
+                              + 2 + BinaryProtocolConst.MaxContentUtf8Bytes;
+        int worstCaseRequest = BinaryProtocolConst.RequestHeaderSize
+                             + 2 + BinaryProtocolConst.MaxPathUtf8Bytes
+                             + 2 + BinaryProtocolConst.MaxContentUtf8Bytes;
+
+        Assert.IsTrue(worstCaseResponse <= BinaryProtocolConst.DeviceFrameMaxBytes,
+            $"GET_FILE 응답 최악값 {worstCaseResponse}B 가 프레임 한계 {BinaryProtocolConst.DeviceFrameMaxBytes}B 를 넘습니다.");
+        Assert.IsTrue(worstCaseRequest <= BinaryProtocolConst.DeviceFrameMaxBytes,
+            $"SAVE_FILE 요청 최악값 {worstCaseRequest}B 가 프레임 한계 {BinaryProtocolConst.DeviceFrameMaxBytes}B 를 넘습니다.");
+    }
+
+    [TestMethod]
+    public void FirmwareContentLimit_MatchesFirmwareBufferContract()
+    {
+        // 펌웨어의 APP_CONTENT_MAX_LEN 과 같은 값이어야 한다. 한쪽만 바뀌면 저장이 조용히 거부되거나 잘린다.
+        Assert.AreEqual(2048, BinaryProtocolConst.AppContentMaxLen);
+        Assert.AreEqual(2047, BinaryProtocolConst.MaxContentUtf8Bytes);
     }
 
     // ── ViewModel / XAML 배선 ────────────────────────────────────

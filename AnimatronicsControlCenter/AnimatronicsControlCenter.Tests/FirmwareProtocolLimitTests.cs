@@ -64,7 +64,9 @@ public class FirmwareProtocolLimitTests
         var result = FirmwareFileRequestValidation.Validate("Setting/MT_RP.TXT", content);
 
         Assert.IsFalse(result.IsValid);
-        Assert.AreEqual("file content exceeds firmware limit (511 UTF-8 bytes).", result.ErrorMessage);
+        Assert.AreEqual(
+            $"file content exceeds firmware limit ({BinaryProtocolConst.MaxContentUtf8Bytes} UTF-8 bytes).",
+            result.ErrorMessage);
     }
 
     [TestMethod]

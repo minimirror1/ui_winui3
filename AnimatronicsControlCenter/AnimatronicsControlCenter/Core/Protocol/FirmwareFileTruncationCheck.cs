@@ -3,9 +3,11 @@ namespace AnimatronicsControlCenter.Core.Protocol;
 /// <summary>
 /// 장치가 CMD_GET_FILE 응답을 조용히 잘라 보냈는지 판정한다.
 ///
-/// 펌웨어는 파일 내용을 APP_CONTENT_MAX_LEN(512) 고정 버퍼로 읽고 NUL 1바이트를 뺀
-/// 511바이트까지만 실어 보내면서도 BIN_STATUS_OK 를 반환한다. 잘렸다는 신호가 응답
-/// 어디에도 없으므로, 파일 목록(CMD_GET_FILES)이 알려준 크기와 비교하는 방법뿐이다.
+/// 펌웨어는 파일 내용을 APP_CONTENT_MAX_LEN 고정 버퍼로 읽고 NUL 1바이트를 뺀 만큼만
+/// 실어 보내면서도 BIN_STATUS_OK 를 반환한다. 잘렸다는 신호가 응답 어디에도 없으므로,
+/// 파일 목록(CMD_GET_FILES)이 알려준 크기와 비교하는 방법뿐이다.
+///
+/// 버퍼를 키워도(512 → 2048) 그 한계를 넘는 파일에는 같은 일이 벌어지므로 이 검사는 계속 필요하다.
 /// </summary>
 public static class FirmwareFileTruncationCheck
 {

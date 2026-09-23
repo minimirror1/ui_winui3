@@ -99,9 +99,14 @@ public static class BinaryProtocolConst
     public const int OperatingHoursPayloadSize = 43;
     public const byte PingTimeFormatLocal = 0x01;
     public const int AppPathMaxLen      = 128;
-    public const int AppContentMaxLen   = 512;
+    public const int AppContentMaxLen   = 2048;
     public const int MaxPathUtf8Bytes   = AppPathMaxLen - 1;
     public const int MaxContentUtf8Bytes = AppContentMaxLen - 1;
+
+    /// 장치가 한 프레임으로 주고받을 수 있는 최대 바이트.
+    /// 펌웨어의 BIN_TX_BUFFER_SIZE 와 FRAG_MAX_MESSAGE_SIZE 가 둘 다 4096 이라 그 값이 상한이다.
+    /// AppContentMaxLen 을 올릴 때는 최악 경로(MaxPathUtf8Bytes) 기준으로 이 한계를 넘지 않아야 한다.
+    public const int DeviceFrameMaxBytes = 4096;
     public const byte HostId            = 0;
     public const byte BroadcastId       = 0xFF;
 }
