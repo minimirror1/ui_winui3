@@ -26,6 +26,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ISerialService _serialService;
         private readonly ILocalizationService _localizationService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
+        private readonly ReleaseNotesWindowHost _releaseNotesWindowHost;
         private readonly XBeeService _xbeeService;
         private readonly DashboardViewModel _dashboardViewModel;
         private readonly INetworkTimeService _networkTimeService;
@@ -246,6 +247,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             ISerialService serialService,
             ILocalizationService localizationService,
             SerialMonitorWindowHost serialMonitorWindowHost,
+            ReleaseNotesWindowHost releaseNotesWindowHost,
             XBeeService xbeeService,
             DashboardViewModel dashboardViewModel,
             INetworkTimeService networkTimeService)
@@ -254,6 +256,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             _serialService = serialService;
             _localizationService = localizationService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
+            _releaseNotesWindowHost = releaseNotesWindowHost;
             _xbeeService = xbeeService;
             _dashboardViewModel = dashboardViewModel;
             _networkTimeService = networkTimeService;
@@ -336,6 +339,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
 
             _serialMonitorWindowHost.ApplyTheme();
+            _releaseNotesWindowHost.ApplyTheme();
             ThemeRestartRequested?.Invoke(this, EventArgs.Empty);
         }
 
