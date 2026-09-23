@@ -193,6 +193,25 @@ public class FirmwareFileTruncationTests
     }
 
     [TestMethod]
+    public void DeviceDetailViewModel_RunsTruncationCheckWhereverContentIsAssigned()
+    {
+        // 데이터가 실제로 사라지는 방향: 내용을 채우면서 절단 검사를 빠뜨리면 저장이 열린 채 남는다.
+        string[] lines = ViewModelSource().Split((char)10);
+
+        int assignments = 0;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (!lines[i].Contains("FileContent = content;")) continue;
+            assignments++;
+            Assert.IsTrue(i + 1 < lines.Length && lines[i + 1].Contains("ApplyTruncationCheck("),
+                $"{i + 1}번째 줄에서 파일 내용을 채운 직후 ApplyTruncationCheck() 가 없습니다. " +
+                "검사를 거치지 않은 내용으로 저장이 허용됩니다.");
+        }
+
+        Assert.AreEqual(1, assignments, "파일 내용을 채우는 경로는 한 곳이어야 한다.");
+    }
+
+    [TestMethod]
     public void DeviceDetailPage_ShowsSaveBlockedWarningBar()
     {
         string xaml = File.ReadAllText(ProjectPath("AnimatronicsControlCenter", "UI", "Views", "DeviceDetailPage.xaml"));
