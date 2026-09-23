@@ -41,6 +41,23 @@ namespace AnimatronicsControlCenter
 
         public SettingsViewModel ConnectionViewModel { get; }
 
+        /// 타이틀바에 보여 줄 앱 버전. Package.appxmanifest 가 유일한 출처다.
+        public string AppVersionDisplay { get; } = ReadAppVersion();
+
+        private static string ReadAppVersion()
+        {
+            try
+            {
+                var version = Windows.ApplicationModel.Package.Current.Id.Version;
+                return AppVersionText.Format(version.Major, version.Minor, version.Build, version.Revision);
+            }
+            catch (InvalidOperationException)
+            {
+                // 패키지로 실행하지 않으면 Package.Current 가 던진다.
+                return AppVersionText.Unavailable;
+            }
+        }
+
         public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, IOperatingHoursAutoSyncService operatingHoursAutoSyncService, SerialMonitorWindowHost serialMonitorWindowHost, ISettingsService settingsService, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;

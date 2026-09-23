@@ -36,6 +36,18 @@
                            VerticalAlignment="Center" 
                            Margin="12,0,0,0"
                            Style="{StaticResource CaptionTextBlockStyle}"/>
+                <Border x:Name="AppVersionBadge"
+                        VerticalAlignment="Center"
+                        Margin="10,0,0,0"
+                        Padding="8,2"
+                        CornerRadius="4"
+                        Background="{ThemeResource SystemControlBackgroundAccentBrush}"
+                        BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}"
+                        BorderThickness="1">
+                    <TextBlock Text="{x:Bind AppVersionDisplay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
+                </Border>
             </StackPanel>
         </Grid>
 
