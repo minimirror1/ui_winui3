@@ -203,7 +203,15 @@ public static class BinaryDeserializer
     // ── §4.7 GET_FILE 응답 ───────────────────────────────────────────
 
     public static (string Path, string Content) ParseGetFileResponse(ReadOnlySpan<byte> payload)
+        => ParseGetFileResponse(payload, out _);
+
+    /// <param name="contentByteLength">
+    /// 와이어에 실려 온 content 바이트 수. 절단 판정에는 이 값을 쓴다 —
+    /// Content 를 다시 UTF-8 로 인코딩한 길이는 멀티바이트 문자가 잘렸을 때 달라진다.
+    /// </param>
+    public static (string Path, string Content) ParseGetFileResponse(ReadOnlySpan<byte> payload, out int contentByteLength)
     {
+        contentByteLength = 0;
         if (payload.Length < 2) return ("", "");
         ushort pathLen = BinaryPrimitives.ReadUInt16LittleEndian(payload);
         if (payload.Length < 2 + pathLen + 2) return ("", "");
@@ -212,6 +220,7 @@ public static class BinaryDeserializer
         ushort contentLen    = BinaryPrimitives.ReadUInt16LittleEndian(payload[contentOffset..]);
         if (payload.Length < contentOffset + 2 + contentLen) return (path, "");
         string content = Encoding.UTF8.GetString(payload.Slice(contentOffset + 2, contentLen));
+        contentByteLength = contentLen;
         return (path, content);
     }
 
