@@ -50,6 +50,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private bool isFileLoading;
 
         [ObservableProperty]
+        private bool isFileSaveBlocked;
+
+        [ObservableProperty]
+        private string fileSaveBlockWarning = string.Empty;
+
+        [ObservableProperty]
         private string verificationResult = string.Empty;
 
         [ObservableProperty]
@@ -168,6 +174,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                 Files = new ObservableCollection<FileSystemItem>();
                 SelectedFile = null;
                 FileContent = string.Empty;
+                ClearFileSaveBlock();
                 FilesStatusMessage = string.Empty;
                 MotorsStatusMessage = string.Empty;
                 LastLoadError = string.Empty;
@@ -178,9 +185,14 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         partial void OnSelectedFileChanged(FileSystemItem? value)
         {
             if (value != null && !value.IsDirectory)
-                _ = LoadFileContentAsync(value.Path);
+            {
+                _ = LoadFileContentAsync(value);
+            }
             else
+            {
                 FileContent = string.Empty;
+                ClearFileSaveBlock();
+            }
         }
 
         [RelayCommand]
@@ -340,25 +352,32 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task LoadFileContentAsync(string path)
+        private async Task LoadFileContentAsync(FileSystemItem file)
         {
-            if (SelectedDevice == null) return;
+            if (SelectedDevice == null || file == null) return;
 
             IsFileLoading = true;
             try
             {
-                var packet = BinarySerializer.EncodeGetFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, path);
+                var packet = BinarySerializer.EncodeGetFile(BinaryProtocolConst.HostId, (byte)SelectedDevice.Id, file.Path);
                 var responseBytes = await _serialService.SendBinaryQueryAsync(SelectedDevice.Id, BinaryCommand.GetFile, packet);
+
+                // 응답을 기다리는 동안 선택이 바뀌었으면 다른 파일의 내용·차단 상태를 덮어쓰지 않는다.
+                if (!ReferenceEquals(SelectedFile, file)) return;
+
                 if (!TryGetOkPayload(responseBytes, out _, out var payload, out var errorMessage))
                 {
+                    // 내용이 온전한지 확인할 수 없으면 저장을 막는다 — 이전 파일의 상태가 남아서는 안 된다.
+                    BlockFileSave("파일 내용을 읽지 못해 온전한지 확인할 수 없습니다. 저장이 차단됩니다.");
                     FilesStatusMessage = $"Failed to load file content: {errorMessage}";
                     RegisterLoadError("Files", errorMessage);
                     return;
                 }
 
-                var (_, content) = BinaryDeserializer.ParseGetFileResponse(payload);
+                var (_, content) = BinaryDeserializer.ParseGetFileResponse(payload, out int contentByteLength);
                 FileContent = content;
-                FilesStatusMessage = $"Loaded file: {path}";
+                ApplyTruncationCheck(file, contentByteLength);
+                FilesStatusMessage = $"Loaded file: {file.Path}";
             }
             finally
             {
@@ -366,7 +385,31 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             }
         }
 
-        [RelayCommand]
+        /// 장치가 알려준 파일 크기와 실제로 받은 바이트 수를 비교해 저장 차단 여부를 정한다.
+        private void ApplyTruncationCheck(FileSystemItem file, int receivedBytes)
+        {
+            var result = FirmwareFileTruncationCheck.Inspect(file.Size, receivedBytes);
+            if (result.IsTruncated)
+                BlockFileSave(result.WarningMessage);
+            else
+                ClearFileSaveBlock();
+        }
+
+        private void BlockFileSave(string warning)
+        {
+            FileSaveBlockWarning = warning;
+            IsFileSaveBlocked = true;
+            SaveFileCommand.NotifyCanExecuteChanged();
+        }
+
+        private void ClearFileSaveBlock()
+        {
+            FileSaveBlockWarning = string.Empty;
+            IsFileSaveBlocked = false;
+            SaveFileCommand.NotifyCanExecuteChanged();
+        }
+
+        [RelayCommand(CanExecute = nameof(CanSaveFile))]
         private async Task SaveFileAsync()
         {
             if (SelectedDevice == null || SelectedFile == null) return;
@@ -389,6 +432,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (!result.Success)
                 RegisterLoadError("Files", result.ErrorDetail);
         }
+
+        private bool CanSaveFile() => !IsFileSaveBlocked;
 
         [RelayCommand]
         private async Task VerifyFileAsync()
@@ -505,6 +550,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
                     Files = new ObservableCollection<FileSystemItem>(rootItems);
                     SelectedFile = null;
                     FileContent = string.Empty;
+                    ClearFileSaveBlock();
                     ApplyMotionFileSummary(device, entries);
                     FilesStatusMessage = entries.Count == 0
                         ? "No files found."
@@ -669,6 +715,7 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             Files = new ObservableCollection<FileSystemItem>();
             SelectedFile = null;
             FileContent = string.Empty;
+            ClearFileSaveBlock();
             device.Motors.Clear();
             device.MotionTotalTime = TimeSpan.Zero;
             device.MotionDataCount = 0;
