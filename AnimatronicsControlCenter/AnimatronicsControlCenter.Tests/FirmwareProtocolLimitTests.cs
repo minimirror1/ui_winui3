@@ -65,7 +65,7 @@ public class FirmwareProtocolLimitTests
 
         Assert.IsFalse(result.IsValid);
         Assert.AreEqual(
-            $"file content exceeds firmware limit ({BinaryProtocolConst.MaxContentUtf8Bytes} UTF-8 bytes).",
+            $"file content exceeds the supported limit ({BinaryProtocolConst.MaxContentUtf8Bytes} UTF-8 bytes).",
             result.ErrorMessage);
     }
 

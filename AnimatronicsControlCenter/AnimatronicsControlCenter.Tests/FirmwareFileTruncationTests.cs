@@ -50,14 +50,32 @@ public class FirmwareFileTruncationTests
     }
 
     [TestMethod]
-    public void Inspect_WarningStatesBothSizesAndThatSavingIsImpossible()
+    public void Inspect_WarningStatesObservedSizesOnly()
     {
         var result = FirmwareFileTruncationCheck.Inspect(deviceFileSize: 1024, receivedBytes: 511);
 
         StringAssert.Contains(result.WarningMessage, "1024");
         StringAssert.Contains(result.WarningMessage, "511");
-        // 펌웨어 한계(511바이트)를 넘는 파일은 이 앱에서 저장 자체가 불가능하다는 점이 드러나야 한다.
-        StringAssert.Contains(result.WarningMessage, BinaryProtocolConst.MaxContentUtf8Bytes.ToString());
+
+        // 앱 쪽 한계 상수를 인용하면 안 된다. 펌웨어보다 앱이 먼저 업데이트된 상태에서는
+        // 그 값이 눈앞의 장치가 자른 지점과 달라서, 막아놓고 "한계에 못 미치는데요" 라고
+        // 말하는 자기모순 메시지가 된다.
+        Assert.IsFalse(result.WarningMessage.Contains(BinaryProtocolConst.MaxContentUtf8Bytes.ToString()),
+            "경고 메시지는 관측값만 말해야 하고 앱 쪽 한계 상수를 인용하면 안 된다.");
+    }
+
+    [TestMethod]
+    public void Inspect_WarningStaysTruthfulWhenAppLimitExceedsDeviceBehaviour()
+    {
+        // 앱만 2048 로 올라가고 장치는 아직 512 펌웨어인 전환 구간.
+        // 파일(1120B)은 앱 한계(2047B)보다 작지만 장치는 511B 에서 잘랐다.
+        var result = FirmwareFileTruncationCheck.Inspect(deviceFileSize: 1120, receivedBytes: 511);
+
+        Assert.IsTrue(result.IsTruncated);
+        Assert.IsTrue(1120 < BinaryProtocolConst.MaxContentUtf8Bytes,
+            "이 테스트의 전제: 파일이 앱 한계보다 작아야 모순 상황이 성립한다.");
+        StringAssert.Contains(result.WarningMessage, "1120");
+        StringAssert.Contains(result.WarningMessage, "511");
     }
 
     // ── 와이어 content 길이 파싱 ─────────────────────────────────

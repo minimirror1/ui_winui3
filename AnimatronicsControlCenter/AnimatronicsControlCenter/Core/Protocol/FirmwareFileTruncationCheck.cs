@@ -31,13 +31,16 @@ public static class FirmwareFileTruncationCheck
             return new TruncationResult(false, deviceFileSize, receivedBytes, string.Empty);
         }
 
+        // 메시지에 앱 쪽 한계 상수를 인용하면 안 된다. 그 값은 이 앱이 기대하는 펌웨어 버전의
+        // 한계일 뿐, 눈앞의 장치가 실제로 어디서 잘랐는지가 아니다. 앱만 먼저 업데이트된
+        // 상태에서는 "한계 2047바이트" 라고 쓰면서 1120바이트 파일을 막는 자기모순이 된다.
+        // 실제로 관측한 두 숫자만 말한다.
         return new TruncationResult(
             IsTruncated: true,
             DeviceFileSize: deviceFileSize,
             ReceivedBytes: receivedBytes,
             WarningMessage:
                 $"장치가 파일을 잘라서 보냈습니다. {deviceFileSize}바이트 중 {receivedBytes}바이트만 수신했습니다. " +
-                $"펌웨어 읽기/쓰기 한계가 {BinaryProtocolConst.MaxContentUtf8Bytes}바이트라 이 파일은 이 앱에서 " +
-                "온전히 저장할 수 없습니다. 저장하면 수신하지 못한 뒷부분이 장치에서 사라집니다.");
+                "저장하면 수신하지 못한 뒷부분이 장치에서 사라지므로 저장을 막았습니다.");
     }
 }
