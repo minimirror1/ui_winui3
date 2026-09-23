@@ -19,9 +19,11 @@ public static class FirmwareFileRequestValidation
         int contentBytes = Encoding.UTF8.GetByteCount(content ?? string.Empty);
         if (contentBytes >= BinaryProtocolConst.AppContentMaxLen)
         {
+            // "firmware limit" 이라고 단정하지 않는다 — 구 펌웨어(512B)가 붙어 있으면 실제 한계는
+            // 이보다 낮다. 이건 이 앱이 보내기로 한 상한이다.
             return new ValidationResult(
                 IsValid: false,
-                ErrorMessage: $"file content exceeds firmware limit ({BinaryProtocolConst.MaxContentUtf8Bytes} UTF-8 bytes).");
+                ErrorMessage: $"file content exceeds the supported limit ({BinaryProtocolConst.MaxContentUtf8Bytes} UTF-8 bytes).");
         }
 
         return new ValidationResult(IsValid: true, ErrorMessage: string.Empty);

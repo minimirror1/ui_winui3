@@ -889,8 +889,16 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{x:Bind ViewModel.SelectedFile.Name, FallbackValue='No File Selected', Mode=OneWay}"
-                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{x:Bind ViewModel.SelectedFile.Name, FallbackValue='No File Selected', Mode=OneWay}"
+                                       Style="{StaticResource SubtitleTextBlockStyle}"/>
+
+                            <InfoBar Severity="Warning"
+                                     IsOpen="{x:Bind ViewModel.IsFileSaveBlocked, Mode=OneWay}"
+                                     IsClosable="False"
+                                     Title="저장 차단됨"
+                                     Message="{x:Bind ViewModel.FileSaveBlockWarning, Mode=OneWay}"/>
+                        </StackPanel>
 
                         <TextBox Grid.Row="1"
                                  Text="{x:Bind ViewModel.FileContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

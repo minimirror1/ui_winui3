@@ -224,6 +224,29 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                     </tk:SettingsCard>
+
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('TimeSync_Header.Header', ViewModel.Strings.Code), Mode=OneWay}"
+                                     IsClickEnabled="False">
+                        <tk:SettingsCard.Description>
+                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('TimeSync_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"/>
+                        </tk:SettingsCard.Description>
+                        <StackPanel Spacing="4" MinWidth="320">
+                            <TextBlock Text="{x:Bind ViewModel.TimeSyncSourceText, Mode=OneWay}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind ViewModel.TimeSyncDetailText, Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind ViewModel.TimeSyncCurrentTimeText, Mode=OneWay}"
+                                       FontFamily="Consolas"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       TextWrapping="Wrap"/>
+                            <Button Content="{x:Bind ViewModel.Strings.Get('TimeSync_SyncNow.Content', ViewModel.Strings.Code), Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.SyncTimeNowCommand}"
+                                    Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </tk:SettingsCard>
                 </tk:SettingsExpander.Items>
             </tk:SettingsExpander>
 

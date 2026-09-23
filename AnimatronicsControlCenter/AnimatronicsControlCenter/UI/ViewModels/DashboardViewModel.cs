@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Models;
+using AnimatronicsControlCenter.Core.Protocol;
 using AnimatronicsControlCenter.Core.Utilities;
 using AnimatronicsControlCenter.UI.Views;
 using Microsoft.UI.Dispatching;
@@ -20,23 +21,72 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         private readonly ISerialService _serialService;
         private readonly IBackendDashboardSyncService _backendDashboardSyncService;
         private readonly ISettingsService _settingsService;
+        private readonly INetworkTimeService _networkTimeService;
+        private readonly ILocalizationService _localizationService;
         private readonly DispatcherQueue _dispatcherQueue;
         private readonly object _devicesLock = new();
         private List<Device> _statusDevices = new();
         private CancellationTokenSource? _statusPollingCts;
         private Task? _statusPollingTask;
+        private DispatcherQueueTimer? _timeBadgeTicker;
 
         [ObservableProperty]
         private bool isScanning;
 
         public ObservableCollection<Device> Devices { get; } = new();
 
-        public DashboardViewModel(ISerialService serialService, IBackendDashboardSyncService backendDashboardSyncService, ISettingsService settingsService)
+        public DashboardViewModel(
+            ISerialService serialService,
+            IBackendDashboardSyncService backendDashboardSyncService,
+            ISettingsService settingsService,
+            INetworkTimeService networkTimeService,
+            ILocalizationService localizationService)
         {
             _serialService = serialService;
             _backendDashboardSyncService = backendDashboardSyncService;
             _settingsService = settingsService;
+            _networkTimeService = networkTimeService;
+            _localizationService = localizationService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+
+            _networkTimeService.StatusChanged += HandleTimeSyncStatusChanged;
+            StartTimeBadgeTicker();
+        }
+
+        /// 대시보드 상단 배지: 시간 출처(인터넷/PC 시계) + 국가·현재 적용 시간·서머타임 여부.
+        public string TimeSyncBadgeText
+        {
+            get
+            {
+                string label = _networkTimeService.Status.IsSynchronized
+                    ? $"🟢 {_localizationService.GetString("TimeSync_Badge_Synced")}"
+                    : $"🟡 {_localizationService.GetString("TimeSync_Badge_PcClock")}";
+                string time = TimeSyncDisplayFormatter.FormatBadgeTime(
+                    _settingsService.PingTimeZoneId,
+                    _networkTimeService.UtcNow,
+                    _localizationService.GetString("TimeSync_DstActive"));
+                return $"{label} · {time}";
+            }
+        }
+
+        private void StartTimeBadgeTicker()
+        {
+            _timeBadgeTicker = _dispatcherQueue.CreateTimer();
+            _timeBadgeTicker.Interval = TimeSpan.FromSeconds(1);
+            _timeBadgeTicker.Tick += (_, _) => OnPropertyChanged(nameof(TimeSyncBadgeText));
+            _timeBadgeTicker.Start();
+        }
+
+        private void HandleTimeSyncStatusChanged(object? sender, TimeSyncStatus status)
+        {
+            if (_dispatcherQueue.HasThreadAccess)
+            {
+                OnPropertyChanged(nameof(TimeSyncBadgeText));
+            }
+            else
+            {
+                _dispatcherQueue.TryEnqueue(() => OnPropertyChanged(nameof(TimeSyncBadgeText)));
+            }
         }
 
         [RelayCommand]

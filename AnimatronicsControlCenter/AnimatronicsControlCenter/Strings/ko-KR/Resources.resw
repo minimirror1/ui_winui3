@@ -295,6 +295,42 @@
   <data name="PingPreview_Header.Header" xml:space="preserve">
     <value>페이로드 미리보기</value>
   </data>
+  <data name="TimeSync_Header.Header" xml:space="preserve">
+    <value>시간 동기화 상태</value>
+  </data>
+  <data name="TimeSync_Desc.Text" xml:space="preserve">
+    <value>장치로 보내는 시간의 출처와 상태</value>
+  </data>
+  <data name="TimeSync_SourceInternet" xml:space="preserve">
+    <value>인터넷 시간 서버</value>
+  </data>
+  <data name="TimeSync_SourcePcClock" xml:space="preserve">
+    <value>PC 시계 (동기화 안 됨)</value>
+  </data>
+  <data name="TimeSync_NeverSynced" xml:space="preserve">
+    <value>아직 동기화되지 않음</value>
+  </data>
+  <data name="TimeSync_LastError" xml:space="preserve">
+    <value>마지막 오류</value>
+  </data>
+  <data name="TimeSync_LastSync" xml:space="preserve">
+    <value>마지막 동기화</value>
+  </data>
+  <data name="TimeSync_Correction" xml:space="preserve">
+    <value>보정값</value>
+  </data>
+  <data name="TimeSync_DstActive" xml:space="preserve">
+    <value>서머타임 적용 중</value>
+  </data>
+  <data name="TimeSync_SyncNow.Content" xml:space="preserve">
+    <value>지금 동기화</value>
+  </data>
+  <data name="TimeSync_Badge_Synced" xml:space="preserve">
+    <value>인터넷 시간 동기화됨</value>
+  </data>
+  <data name="TimeSync_Badge_PcClock" xml:space="preserve">
+    <value>PC 시계 사용 중</value>
+  </data>
   <data name="DeviceDetail_Tab_Overview" xml:space="preserve">
     <value>개요</value>
   </data>

@@ -41,6 +41,7 @@ public class ScanDialogViewModelTests
         public double PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
+        public string PingTimeZoneId { get; set; } = "Asia/Seoul";
         public int ScanStartId { get; set; } = 1;
         public int ScanEndId { get; set; } = 10;
         public string AppSettingsFilePath { get; } = string.Empty;

@@ -23,6 +23,7 @@ namespace AnimatronicsControlCenter.UI.Views
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetRequiredService<SettingsViewModel>();
             ViewModel.ThemeRestartRequested += ViewModel_ThemeRestartRequested;
+            ViewModel.StartTimeSyncTicker();
             Unloaded += SettingsPage_Unloaded;
             ResponseTimeoutNumberBox.NumberFormatter = CreateOneDecimalFormatter();
             PingIntervalNumberBox.NumberFormatter = CreateOneDecimalFormatter();
@@ -93,6 +94,7 @@ namespace AnimatronicsControlCenter.UI.Views
         private void SettingsPage_Unloaded(object sender, RoutedEventArgs e)
         {
             ViewModel.ThemeRestartRequested -= ViewModel_ThemeRestartRequested;
+            ViewModel.StopTimeSyncTicker();
             Unloaded -= SettingsPage_Unloaded;
         }
 

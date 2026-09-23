@@ -13,7 +13,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
-    <PackageCertificateThumbprint>478BE8EE25DC8C5CAEE0ADE61F39A1F4A6975B48</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>B0D36C34862565DF05AF6CE4C71430F702E36ADB</PackageCertificateThumbprint>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
     <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision>

@@ -35,6 +35,7 @@ namespace AnimatronicsControlCenter.Infrastructure
         private readonly ISerialTrafficTap _trafficTap;
         private readonly VirtualDeviceManager _virtualDeviceManager;
         private readonly XBeeService _xbeeService;
+        private readonly INetworkTimeService _networkTimeService;
         private readonly DeviceCommandGate _deviceCommandGate = new();
         private bool _isVirtualConnected;
 
@@ -42,12 +43,17 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         private readonly record struct ReceivedBinaryResponse(byte[] Data, ulong SourceAddress);
 
-        public SerialService(ISettingsService settingsService, ISerialTrafficTap trafficTap, XBeeService xbeeService)
+        public SerialService(
+            ISettingsService settingsService,
+            ISerialTrafficTap trafficTap,
+            XBeeService xbeeService,
+            INetworkTimeService networkTimeService)
         {
             _settingsService = settingsService;
             _trafficTap = trafficTap;
             _virtualDeviceManager = new VirtualDeviceManager();
             _xbeeService = xbeeService;
+            _networkTimeService = networkTimeService;
 
             _xbeeService.OnMessageReceived += HandleBinaryReceived;
         }
@@ -238,7 +244,7 @@ namespace AnimatronicsControlCenter.Infrastructure
                 BinaryProtocolConst.HostId,
                 checked((byte)deviceId),
                 schedule,
-                _settingsService.PingUtcOffsetMinutes);
+                GetCurrentUtcOffsetMinutes());
 
             var response = await SendBinaryQueryAsync(deviceId, BinaryCommand.SetOperateTime, packet).ConfigureAwait(false);
             if (!TryGetOkPayload(response, BinaryCommand.SetOperateTime, out var payload))
@@ -348,13 +354,21 @@ namespace AnimatronicsControlCenter.Infrastructure
 
         private byte[] BuildTimedPingRequestPacket(byte tarId)
         {
+            // 인터넷 동기화된 UTC + 타임존 ID 기반 오프셋(DST 자동 반영)으로 시간 페이로드를 만든다.
             return BinarySerializer.EncodePing(
                 BinaryProtocolConst.HostId,
                 tarId,
                 PingTimePayloadFactory.Create(
                     _settingsService.PingCountryCode,
-                    _settingsService.PingUtcOffsetMinutes,
-                    DateTimeOffset.UtcNow));
+                    _settingsService.PingTimeZoneId,
+                    _networkTimeService.UtcNow));
+        }
+
+        /// 설정된 타임존의 현재(DST 반영) UTC 오프셋 분.
+        private int GetCurrentUtcOffsetMinutes()
+        {
+            var zone = PingTimeZoneCatalog.ResolveTimeZone(_settingsService.PingTimeZoneId);
+            return (int)Math.Round(zone.GetUtcOffset(_networkTimeService.UtcNow).TotalMinutes);
         }
 
         private static BinaryCommand GetCmdFromPacket(byte[] packet)
