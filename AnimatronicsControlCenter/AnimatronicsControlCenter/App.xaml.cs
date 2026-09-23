@@ -106,6 +106,7 @@ namespace AnimatronicsControlCenter
             services.AddTransient<SettingsPage>();
             services.AddTransient<DeviceDetailPage>();
             services.AddTransient<SerialMonitorWindow>();
+            services.AddTransient<ReleaseNotesWindow>();
             services.AddTransient<ServerMonitorPage>();
             services.AddTransient<OperatingHoursSyncPage>();
             
@@ -145,9 +146,11 @@ namespace AnimatronicsControlCenter
             services.AddTransient<SerialMonitorViewModel>();
             services.AddTransient<ServerMonitorViewModel>();
             services.AddTransient<OperatingHoursSyncViewModel>();
+            services.AddTransient<ReleaseNotesViewModel>();
 
             // Window Hosts
             services.AddSingleton<SerialMonitorWindowHost>();
+            services.AddSingleton<ReleaseNotesWindowHost>();
             
             return services.BuildServiceProvider();
         }
