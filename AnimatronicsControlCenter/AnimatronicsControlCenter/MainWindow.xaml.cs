@@ -33,6 +33,7 @@ namespace AnimatronicsControlCenter
         private readonly IBackendPowerSseService _backendPowerSseService;
         private readonly IOperatingHoursAutoSyncService _operatingHoursAutoSyncService;
         private readonly SerialMonitorWindowHost _serialMonitorWindowHost;
+        private readonly ReleaseNotesWindowHost _releaseNotesWindowHost;
         private readonly ISettingsService _settingsService;
         private readonly SerialTrafficIndicatorState _serialTrafficIndicatorState = new();
         private readonly DispatcherTimer _serialTrafficIndicatorTimer;
@@ -42,29 +43,16 @@ namespace AnimatronicsControlCenter
         public SettingsViewModel ConnectionViewModel { get; }
 
         /// 타이틀바에 보여 줄 앱 버전. Package.appxmanifest 가 유일한 출처다.
-        public string AppVersionDisplay { get; } = ReadAppVersion();
+        public string AppVersionDisplay { get; } = AppVersionProvider.Display;
 
-        private static string ReadAppVersion()
-        {
-            try
-            {
-                var version = Windows.ApplicationModel.Package.Current.Id.Version;
-                return AppVersionText.Format(version.Major, version.Minor, version.Build, version.Revision);
-            }
-            catch (InvalidOperationException)
-            {
-                // 패키지로 실행하지 않으면 Package.Current 가 던진다.
-                return AppVersionText.Unavailable;
-            }
-        }
-
-        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, IOperatingHoursAutoSyncService operatingHoursAutoSyncService, SerialMonitorWindowHost serialMonitorWindowHost, ISettingsService settingsService, SettingsViewModel settingsViewModel)
+        public MainWindow(ISerialTrafficTap serialTrafficTap, IBackendTrafficTap backendTrafficTap, IBackendPowerSseService backendPowerSseService, IOperatingHoursAutoSyncService operatingHoursAutoSyncService, SerialMonitorWindowHost serialMonitorWindowHost, ReleaseNotesWindowHost releaseNotesWindowHost, ISettingsService settingsService, SettingsViewModel settingsViewModel)
         {
             _serialTrafficTap = serialTrafficTap;
             _backendTrafficTap = backendTrafficTap;
             _backendPowerSseService = backendPowerSseService;
             _operatingHoursAutoSyncService = operatingHoursAutoSyncService;
             _serialMonitorWindowHost = serialMonitorWindowHost;
+            _releaseNotesWindowHost = releaseNotesWindowHost;
             _settingsService = settingsService;
             ConnectionViewModel = settingsViewModel;
 
@@ -159,6 +147,11 @@ namespace AnimatronicsControlCenter
                 NavView.SelectedItem = NavView.MenuItems.OfType<NavigationViewItem>()
                     .FirstOrDefault(i => i.Tag?.ToString() == "DashboardPage");
             }
+        }
+
+        private void AppVersionBadge_Click(object sender, RoutedEventArgs e)
+        {
+            _releaseNotesWindowHost.Show();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)

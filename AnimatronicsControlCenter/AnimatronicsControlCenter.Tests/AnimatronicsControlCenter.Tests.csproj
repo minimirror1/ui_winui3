@@ -47,6 +47,8 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialPortDisplay.cs" Link="Core\Utilities\SerialPortDisplay.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SntpPacket.cs" Link="Core\Utilities\SntpPacket.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\AppVersionText.cs" Link="Core\Utilities\AppVersionText.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Models\ReleaseNote.cs" Link="Core\Models\ReleaseNote.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\ReleaseNotesCatalog.cs" Link="Core\Utilities\ReleaseNotesCatalog.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendSettingsPathProvider.cs" Link="Core\Interfaces\IBackendSettingsPathProvider.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendApiKeyStore.cs" Link="Core\Interfaces\IBackendApiKeyStore.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\IBackendObjectIdResolver.cs" Link="Core\Interfaces\IBackendObjectIdResolver.cs" />
