@@ -138,7 +138,8 @@ namespace AnimatronicsControlCenter
             }
             else if (ContentFrame.SourcePageType == typeof(ServerMonitorPage)
                 || ContentFrame.SourcePageType == typeof(BackendSettingsPage)
-                || ContentFrame.SourcePageType == typeof(OperatingHoursSyncPage))
+                || ContentFrame.SourcePageType == typeof(OperatingHoursSyncPage)
+                || ContentFrame.SourcePageType == typeof(LogViewerPage))
             {
                 NavView.SelectedItem = null;
             }

@@ -27,6 +27,8 @@ namespace AnimatronicsControlCenter.Infrastructure
         private const string KeyPingCountryCode = "PingCountryCode";
         private const string KeyPingUtcOffsetMinutes = "PingUtcOffsetMinutes";
         private const string KeyPingTimeZoneId = "PingTimeZoneId";
+        private const string KeyIsTrafficLogEnabled = "IsTrafficLogEnabled";
+        private const string KeyIsTrafficLogRawIncluded = "IsTrafficLogRawIncluded";
         private const string ThemeDefault = "Default";
         private const string ThemeLight = "Light";
         private const string ThemeDark = "Dark";
@@ -70,6 +72,12 @@ namespace AnimatronicsControlCenter.Infrastructure
         public string Language { get; set; } = "ko-KR";
         public double ResponseTimeoutSeconds { get; set; } = 2.0;
         public bool IsPeriodicPingEnabled { get; set; } = true;
+
+        /// 통신 기록을 남길지. 문제는 예고 없이 나므로 기본은 켜짐이다.
+        public bool IsTrafficLogEnabled { get; set; } = true;
+
+        /// 패킷 원문(hex)까지 남길지. 용량이 배로 늘어 기본은 꺼짐이다.
+        public bool IsTrafficLogRawIncluded { get; set; }
         public double PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
@@ -111,6 +119,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                 localSettings.Values[KeyPingCountryCode] = PingCountryCode;
                 localSettings.Values[KeyPingUtcOffsetMinutes] = PingUtcOffsetMinutes;
                 localSettings.Values[KeyPingTimeZoneId] = PingTimeZoneId;
+                localSettings.Values[KeyIsTrafficLogEnabled] = IsTrafficLogEnabled;
+                localSettings.Values[KeyIsTrafficLogRawIncluded] = IsTrafficLogRawIncluded;
             }
             catch
             {
@@ -142,6 +152,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                         ResponseTimeoutSeconds = SettingValueConverter.ReadDouble(timeout, ResponseTimeoutSeconds);
                     }
                     if (localSettings.Values.TryGetValue(KeyIsPeriodicPingEnabled, out var pingEnabled)) IsPeriodicPingEnabled = (bool)pingEnabled;
+                    if (localSettings.Values.TryGetValue(KeyIsTrafficLogEnabled, out var logEnabled)) IsTrafficLogEnabled = (bool)logEnabled;
+                    if (localSettings.Values.TryGetValue(KeyIsTrafficLogRawIncluded, out var logRaw)) IsTrafficLogRawIncluded = (bool)logRaw;
                     if (localSettings.Values.TryGetValue(KeyPingIntervalSeconds, out var pingInterval))
                     {
                         PingIntervalSeconds = SettingValueConverter.ReadDouble(pingInterval, PingIntervalSeconds);
@@ -187,7 +199,9 @@ namespace AnimatronicsControlCenter.Infrastructure
                     PingUtcOffsetMinutes,
                     NormalizeScanStartId(ScanStartId, ScanEndId),
                     NormalizeScanEndId(ScanStartId, ScanEndId),
-                    PingTimeZoneId);
+                    PingTimeZoneId,
+                    IsTrafficLogEnabled,
+                    IsTrafficLogRawIncluded);
 
                 string json = JsonSerializer.Serialize(settings, BackendJsonOptions);
                 File.WriteAllText(filePath, json);
@@ -228,6 +242,8 @@ namespace AnimatronicsControlCenter.Infrastructure
                 PingTimeZoneId = string.IsNullOrWhiteSpace(settings.PingTimeZoneId)
                     ? MigrateLegacyPingTimeZoneId()
                     : settings.PingTimeZoneId;
+                IsTrafficLogEnabled = settings.IsTrafficLogEnabled ?? IsTrafficLogEnabled;
+                IsTrafficLogRawIncluded = settings.IsTrafficLogRawIncluded ?? IsTrafficLogRawIncluded;
                 ScanStartId = NormalizeScanStartId(settings.ScanStartId, settings.ScanEndId);
                 ScanEndId = NormalizeScanEndId(settings.ScanStartId, settings.ScanEndId);
                 return true;
@@ -371,6 +387,8 @@ namespace AnimatronicsControlCenter.Infrastructure
             int PingUtcOffsetMinutes,
             int ScanStartId,
             int ScanEndId,
-            string? PingTimeZoneId = null);
+            string? PingTimeZoneId = null,
+            bool? IsTrafficLogEnabled = null,
+            bool? IsTrafficLogRawIncluded = null);
     }
 }

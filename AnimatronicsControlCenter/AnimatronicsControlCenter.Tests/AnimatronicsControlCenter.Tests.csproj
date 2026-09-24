@@ -42,6 +42,9 @@
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\FirmwareFileTruncationCheck.cs" Link="Core\Protocol\FirmwareFileTruncationCheck.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Protocol\SaveFileResponseProjection.cs" Link="Core\Protocol\SaveFileResponseProjection.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\DeviceStatusRefreshPolicy.cs" Link="Core\Utilities\DeviceStatusRefreshPolicy.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\LogFilePolicy.cs" Link="Core\Utilities\LogFilePolicy.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\LogCsvLine.cs" Link="Core\Utilities\LogCsvLine.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\LogRowBuilder.cs" Link="Core\Utilities\LogRowBuilder.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialTrafficIndicatorState.cs" Link="Core\Utilities\SerialTrafficIndicatorState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\BackendTrafficState.cs" Link="Core\Utilities\BackendTrafficState.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Core\Utilities\SerialPortDisplay.cs" Link="Core\Utilities\SerialPortDisplay.cs" />
@@ -83,6 +86,12 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\NetworkTimeService.cs" Link="Infrastructure\NetworkTimeService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SerialTrafficTap.cs" Link="Infrastructure\SerialTrafficTap.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\TrafficFileLogger.cs" Link="Infrastructure\TrafficFileLogger.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ILogSink.cs" Link="Core\Interfaces\ILogSink.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\FileLogSink.cs" Link="Infrastructure\FileLogSink.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\LogFileCleaner.cs" Link="Infrastructure\LogFileCleaner.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\LogFileReader.cs" Link="Infrastructure\LogFileReader.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\LogExporter.cs" Link="Infrastructure\LogExporter.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendObjectMappingEditorViewModel.cs" Link="UI\ViewModels\BackendObjectMappingEditorViewModel.cs" />
@@ -92,6 +101,7 @@
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ScanDialogViewModel.cs" Link="UI\ViewModels\ScanDialogViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\OperatingHoursSyncViewModel.cs" Link="UI\ViewModels\OperatingHoursSyncViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\LogViewerViewModel.cs" Link="UI\ViewModels\LogViewerViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\Helpers\LocalizedStrings.cs" Link="UI\Helpers\LocalizedStrings.cs" />
   </ItemGroup>
 </Project>

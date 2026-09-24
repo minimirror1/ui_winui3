@@ -5,6 +5,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Utilities;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter.UI.ViewModels;
@@ -29,6 +30,8 @@ namespace AnimatronicsControlCenter
             var settingsService = Services.GetRequiredService<ISettingsService>();
             settingsService.Load();
             
+            StartTrafficLog(settingsService);
+
             // 인터넷 시간 동기화: 즉시 1회 + 1시간 주기 재동기화 (실패 시 PC 시계 폴백)
             Services.GetRequiredService<INetworkTimeService>().Start(TimeSpan.FromHours(1));
 
@@ -63,6 +66,23 @@ namespace AnimatronicsControlCenter
             {
                 StartBackendServices();
             }
+        }
+
+        /// 오래된 기록을 먼저 치우고, 설정대로 기록을 켠다.
+        /// 구독은 시작 직후에 걸어야 그 사이에 난 문제도 남는다.
+        private void StartTrafficLog(ISettingsService settingsService)
+        {
+            string folder = LogFilePolicy.FolderFor(settingsService.AppSettingsFilePath);
+            LogFileCleaner.Clean(
+                folder,
+                DateOnly.FromDateTime(DateTime.Now),
+                LogFilePolicy.DefaultRetentionDays,
+                LogFilePolicy.DefaultMaxTotalBytes);
+
+            var logger = Services.GetRequiredService<TrafficFileLogger>();
+            logger.IsEnabled = settingsService.IsTrafficLogEnabled;
+            logger.IncludeRaw = settingsService.IsTrafficLogRawIncluded;
+            logger.Subscribe(Services.GetRequiredService<ISerialTrafficTap>());
         }
 
         private static Task<XamlRoot> WaitForXamlRootAsync(FrameworkElement root)
@@ -109,6 +129,7 @@ namespace AnimatronicsControlCenter
             services.AddTransient<ReleaseNotesWindow>();
             services.AddTransient<ServerMonitorPage>();
             services.AddTransient<OperatingHoursSyncPage>();
+            services.AddTransient<LogViewerPage>();
             
             // Core Services
             // XBeeService must be registered before SerialService since SerialService depends on it
@@ -116,6 +137,13 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<XBeeService>();
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
+            // 통신 기록 파일. 설정 파일 옆 Logs 폴더에 날짜별로 쌓는다.
+            services.AddSingleton<TrafficFileLogger>(provider => new TrafficFileLogger(
+                LogFilePolicy.FolderFor(provider.GetRequiredService<ISettingsService>().AppSettingsFilePath),
+                new TrafficFileLoggerOptions(
+                    LogFilePolicy.DefaultMaxFileBytes,
+                    QueueCapacity: 10_000,
+                    IncludeRaw: false)));
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<INetworkTimeService, NetworkTimeService>();
             services.AddSingleton<IBackendApiKeyStore, BackendApiKeyStore>();
@@ -147,6 +175,7 @@ namespace AnimatronicsControlCenter
             services.AddTransient<ServerMonitorViewModel>();
             services.AddTransient<OperatingHoursSyncViewModel>();
             services.AddTransient<ReleaseNotesViewModel>();
+            services.AddTransient<LogViewerViewModel>();
 
             // Window Hosts
             services.AddSingleton<SerialMonitorWindowHost>();
