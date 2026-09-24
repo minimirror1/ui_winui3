@@ -351,3 +351,6 @@ references/
 
 
 
+
+# 시각화 도구가 만든 문서 (atlas, recaps)
+.visual/
