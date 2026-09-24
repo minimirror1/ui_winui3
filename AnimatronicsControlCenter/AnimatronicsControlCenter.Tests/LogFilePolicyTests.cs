@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using AnimatronicsControlCenter.Core.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -80,6 +81,22 @@ namespace AnimatronicsControlCenter.Tests
             var expired = LogFilePolicy.SelectExpired(new[] { "app-settings.json" }, today, 100);
 
             CollectionAssert.AreEqual(Array.Empty<string>(), expired.ToArray());
+        }
+
+        [TestMethod]
+        public void FolderFor_PutsLogsBesideTheSettingsFile()
+        {
+            string folder = LogFilePolicy.FolderFor(Path.Combine("C:", "data", "app-settings.json"));
+
+            Assert.AreEqual(Path.Combine("C:", "data", "Logs"), folder);
+        }
+
+        [TestMethod]
+        public void FolderFor_PathWithoutDirectory_FallsBackToPlainFolderName()
+        {
+            string folder = LogFilePolicy.FolderFor("app-settings.json");
+
+            Assert.AreEqual("Logs", folder);
         }
 
         [TestMethod]

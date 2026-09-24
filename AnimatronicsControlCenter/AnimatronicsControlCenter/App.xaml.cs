@@ -5,6 +5,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Utilities;
 using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.Helpers;
 using AnimatronicsControlCenter.UI.ViewModels;
@@ -29,6 +30,10 @@ namespace AnimatronicsControlCenter
             var settingsService = Services.GetRequiredService<ISettingsService>();
             settingsService.Load();
             
+            // 통신 기록: 켜지는 즉시 구독해야 시작 직후에 난 문제도 남는다.
+            Services.GetRequiredService<TrafficFileLogger>().Subscribe(
+                Services.GetRequiredService<ISerialTrafficTap>());
+
             // 인터넷 시간 동기화: 즉시 1회 + 1시간 주기 재동기화 (실패 시 PC 시계 폴백)
             Services.GetRequiredService<INetworkTimeService>().Start(TimeSpan.FromHours(1));
 
@@ -116,6 +121,13 @@ namespace AnimatronicsControlCenter
             services.AddSingleton<XBeeService>();
             services.AddSingleton<ISerialService, SerialService>();
             services.AddSingleton<ISerialTrafficTap, SerialTrafficTap>();
+            // 통신 기록 파일. 설정 파일 옆 Logs 폴더에 날짜별로 쌓는다.
+            services.AddSingleton<TrafficFileLogger>(provider => new TrafficFileLogger(
+                LogFilePolicy.FolderFor(provider.GetRequiredService<ISettingsService>().AppSettingsFilePath),
+                new TrafficFileLoggerOptions(
+                    LogFilePolicy.DefaultMaxFileBytes,
+                    QueueCapacity: 10_000,
+                    IncludeRaw: false)));
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<INetworkTimeService, NetworkTimeService>();
             services.AddSingleton<IBackendApiKeyStore, BackendApiKeyStore>();

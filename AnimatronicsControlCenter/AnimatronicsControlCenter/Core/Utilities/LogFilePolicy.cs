@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 
 namespace AnimatronicsControlCenter.Core.Utilities;
 
@@ -89,6 +90,20 @@ public static class LogFilePolicy
 
         return (date, 0);
     }
+
+    /// 기록은 설정 파일이 있는 폴더 옆 Logs 에 모은다. 설정 파일을 찾는 경로 규칙을 그대로 따른다.
+    public static string FolderFor(string settingsFilePath)
+    {
+        string? directory = Path.GetDirectoryName(settingsFilePath);
+        return string.IsNullOrWhiteSpace(directory)
+            ? FolderName
+            : Path.Combine(directory, FolderName);
+    }
+
+    public const string FolderName = "Logs";
+    public const int DefaultRetentionDays = 100;
+    public const long DefaultMaxFileBytes = 50L * 1024 * 1024;
+    public const long DefaultMaxTotalBytes = 3L * 1024 * 1024 * 1024;
 
     private const int DatePrefixLength = 10;
 }
