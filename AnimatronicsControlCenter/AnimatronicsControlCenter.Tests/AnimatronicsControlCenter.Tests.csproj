@@ -86,6 +86,9 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SettingsService.cs" Link="Infrastructure\SettingsService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\NetworkTimeService.cs" Link="Infrastructure\NetworkTimeService.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\SerialTrafficTap.cs" Link="Infrastructure\SerialTrafficTap.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\TrafficFileLogger.cs" Link="Infrastructure\TrafficFileLogger.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Core\Interfaces\ILogSink.cs" Link="Core\Interfaces\ILogSink.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\FileLogSink.cs" Link="Infrastructure\FileLogSink.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendObjectMappingEditorViewModel.cs" Link="UI\ViewModels\BackendObjectMappingEditorViewModel.cs" />
