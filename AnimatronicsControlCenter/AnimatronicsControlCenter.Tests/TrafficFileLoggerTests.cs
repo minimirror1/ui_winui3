@@ -149,6 +149,38 @@ namespace AnimatronicsControlCenter.Tests
             StringAssert.Contains(File.ReadAllText(Path.Combine(temp.Path, today)), ",TX,3,Ping,");
         }
 
+        [TestMethod]
+        public void Record_WhileDisabled_WritesNothing()
+        {
+            using var temp = new TempFolder();
+
+            using (var logger = new TrafficFileLogger(temp.Path, Options()))
+            {
+                logger.IsEnabled = false;
+                logger.Record(Entry(At));
+            }
+
+            Assert.IsFalse(
+                File.Exists(Path.Combine(temp.Path, "2026-09-24.csv")),
+                "꺼져 있으면 파일이 생기지 않아야 한다");
+        }
+
+        [TestMethod]
+        public void Record_WithRawTurnedOn_KeepsTheHexInTheRow()
+        {
+            using var temp = new TempFolder();
+
+            using (var logger = new TrafficFileLogger(temp.Path, Options()))
+            {
+                logger.IncludeRaw = true;
+                logger.Record(Entry(At));
+            }
+
+            StringAssert.Contains(
+                File.ReadAllText(Path.Combine(temp.Path, "2026-09-24.csv")),
+                "00 03 01 00 00");
+        }
+
         /// 나간 줄을 모아두는 가짜 출력. 첫 줄에서 한 번 멈춰 대기줄이 차게 한다.
         private sealed class RecordingSink : ILogSink
         {

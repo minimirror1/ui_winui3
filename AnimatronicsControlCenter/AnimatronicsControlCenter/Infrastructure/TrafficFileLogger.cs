@@ -14,7 +14,6 @@ public sealed record TrafficFileLoggerOptions(long MaxFileBytes, int QueueCapaci
 public sealed class TrafficFileLogger : IDisposable
 {
     private readonly ILogSink _sink;
-    private readonly TrafficFileLoggerOptions _options;
     private readonly BlockingCollection<SerialTrafficEntry> _queue;
     private readonly Thread _writer;
 
@@ -22,6 +21,8 @@ public sealed class TrafficFileLogger : IDisposable
     // 기록 스레드가 앞의 것을 가져가 0으로 만들기 때문에, 하나로 합치면 총계를 읽을 수 없다.
     private int _pendingDrops;
     private int _totalDrops;
+    private volatile bool _enabled = true;
+    private volatile bool _includeRaw;
 
     public TrafficFileLogger(string directory, TrafficFileLoggerOptions options)
         : this(new FileLogSink(directory, options.MaxFileBytes), options)
@@ -31,12 +32,27 @@ public sealed class TrafficFileLogger : IDisposable
     public TrafficFileLogger(ILogSink sink, TrafficFileLoggerOptions options)
     {
         _sink = sink;
-        _options = options;
         _queue = new BlockingCollection<SerialTrafficEntry>(
             new ConcurrentQueue<SerialTrafficEntry>(), Math.Max(1, options.QueueCapacity));
 
+        _includeRaw = options.IncludeRaw;
+
         _writer = new Thread(WriteLoop) { IsBackground = true, Name = "traffic-file-log" };
         _writer.Start();
+    }
+
+    /// 기록을 남길지. 끄면 대기줄에 넣지도 않는다.
+    public bool IsEnabled
+    {
+        get => _enabled;
+        set => _enabled = value;
+    }
+
+    /// 패킷 원문(hex)까지 남길지. 기본은 꺼짐이고, 켜면 줄 길이가 배로 늘어난다.
+    public bool IncludeRaw
+    {
+        get => _includeRaw;
+        set => _includeRaw = value;
     }
 
     /// 살아있는 동안 버린 줄의 총 수. 대기줄이 찼을 때만 늘어난다.
@@ -56,7 +72,7 @@ public sealed class TrafficFileLogger : IDisposable
     /// 통신 스레드에서 불린다. 담아두기만 하고 즉시 돌아온다.
     public void Record(SerialTrafficEntry entry)
     {
-        if (entry == null) return;
+        if (entry == null || !_enabled) return;
 
         // 기다리지 않는다. 자리가 없으면 버린다 - 통신을 세우느니 기록 몇 줄을 잃는 쪽이 맞다.
         if (!_queue.TryAdd(entry))
@@ -104,6 +120,6 @@ public sealed class TrafficFileLogger : IDisposable
             _sink.Write(date, $"# 대기줄이 차서 {dropped}줄 버림");
         }
 
-        _sink.Write(date, LogCsvLine.Format(LogRowBuilder.FromEntry(entry, _options.IncludeRaw)));
+        _sink.Write(date, LogCsvLine.Format(LogRowBuilder.FromEntry(entry, _includeRaw)));
     }
 }

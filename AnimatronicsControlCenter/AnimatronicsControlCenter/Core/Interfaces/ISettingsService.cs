@@ -13,6 +13,8 @@ namespace AnimatronicsControlCenter.Core.Interfaces
         string Language { get; set; }
         double ResponseTimeoutSeconds { get; set; }
         bool IsPeriodicPingEnabled { get; set; }
+        bool IsTrafficLogEnabled { get; set; }
+        bool IsTrafficLogRawIncluded { get; set; }
         double PingIntervalSeconds { get; set; }
         string PingCountryCode { get; set; }
         int PingUtcOffsetMinutes { get; set; }

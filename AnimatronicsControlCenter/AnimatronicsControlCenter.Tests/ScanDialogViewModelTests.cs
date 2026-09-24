@@ -38,6 +38,8 @@ public class ScanDialogViewModelTests
         public string Language { get; set; } = "ko-KR";
         public double ResponseTimeoutSeconds { get; set; } = 2.0;
         public bool IsPeriodicPingEnabled { get; set; } = true;
+        public bool IsTrafficLogEnabled { get; set; } = true;
+        public bool IsTrafficLogRawIncluded { get; set; }
         public double PingIntervalSeconds { get; set; } = 5;
         public string PingCountryCode { get; set; } = "KR";
         public int PingUtcOffsetMinutes { get; set; } = 540;
