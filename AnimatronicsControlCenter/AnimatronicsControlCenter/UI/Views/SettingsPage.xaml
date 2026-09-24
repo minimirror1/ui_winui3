@@ -290,6 +290,57 @@
                         Style="{StaticResource AccentButtonStyle}"/>
             </tk:SettingsCard>
 
+            <tk:SettingsExpander Header="{x:Bind ViewModel.Strings.Get('TrafficLog_Header.Header', ViewModel.Strings.Code), Mode=OneWay}"
+                                 IsExpanded="False">
+                <tk:SettingsExpander.HeaderIcon>
+                    <FontIcon Glyph="&#xE81C;"/>
+                </tk:SettingsExpander.HeaderIcon>
+                <tk:SettingsExpander.Description>
+                    <TextBlock Text="{x:Bind ViewModel.Strings.Get('TrafficLog_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"/>
+                </tk:SettingsExpander.Description>
+
+                <tk:SettingsExpander.Items>
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('TrafficLog_Enabled_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <tk:SettingsCard.Description>
+                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('TrafficLog_Enabled_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"/>
+                        </tk:SettingsCard.Description>
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.IsTrafficLogEnabled, Mode=TwoWay}"/>
+                    </tk:SettingsCard>
+
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('TrafficLog_Open_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <Button x:Name="OpenLogViewerButton"
+                                Content="{x:Bind ViewModel.Strings.Get('TrafficLog_Open_Button', ViewModel.Strings.Code), Mode=OneWay}"
+                                Click="OnOpenLogViewerClicked"/>
+                    </tk:SettingsCard>
+
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('TrafficLog_Folder_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <Button x:Name="OpenLogFolderButton"
+                                Content="{x:Bind ViewModel.Strings.Get('TrafficLog_Folder_Button', ViewModel.Strings.Code), Mode=OneWay}"
+                                Click="OnOpenLogFolderClicked"/>
+                    </tk:SettingsCard>
+
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('TrafficLog_Export_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <tk:SettingsCard.Description>
+                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('TrafficLog_Export_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"/>
+                        </tk:SettingsCard.Description>
+                        <Button x:Name="ExportLogButton"
+                                Content="{x:Bind ViewModel.Strings.Get('TrafficLog_Export_Button', ViewModel.Strings.Code), Mode=OneWay}"
+                                Click="OnExportLogClicked"/>
+                    </tk:SettingsCard>
+
+                    <tk:SettingsCard Header="{x:Bind ViewModel.Strings.Get('TrafficLog_Raw_Header.Header', ViewModel.Strings.Code), Mode=OneWay}">
+                        <tk:SettingsCard.Description>
+                            <TextBlock Text="{x:Bind ViewModel.Strings.Get('TrafficLog_Raw_Desc.Text', ViewModel.Strings.Code), Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"/>
+                        </tk:SettingsCard.Description>
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.IsTrafficLogRawIncluded, Mode=TwoWay}"/>
+                    </tk:SettingsCard>
+                </tk:SettingsExpander.Items>
+            </tk:SettingsExpander>
+
         </StackPanel>
     </ScrollViewer>
 

@@ -91,6 +91,7 @@
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\FileLogSink.cs" Link="Infrastructure\FileLogSink.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\LogFileCleaner.cs" Link="Infrastructure\LogFileCleaner.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\LogFileReader.cs" Link="Infrastructure\LogFileReader.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\Infrastructure\LogExporter.cs" Link="Infrastructure\LogExporter.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\ComRawTrafficTap.cs" Link="Infrastructure\ComRawTrafficTap.cs" />
     <Compile Include="..\AnimatronicsControlCenter\Infrastructure\VirtualDeviceManager.cs" Link="Infrastructure\VirtualDeviceManager.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\BackendObjectMappingEditorViewModel.cs" Link="UI\ViewModels\BackendObjectMappingEditorViewModel.cs" />
@@ -100,6 +101,7 @@
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ServerMonitorViewModel.cs" Link="UI\ViewModels\ServerMonitorViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\ScanDialogViewModel.cs" Link="UI\ViewModels\ScanDialogViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\OperatingHoursSyncViewModel.cs" Link="UI\ViewModels\OperatingHoursSyncViewModel.cs" />
+    <Compile Include="..\AnimatronicsControlCenter\UI\ViewModels\LogViewerViewModel.cs" Link="UI\ViewModels\LogViewerViewModel.cs" />
     <Compile Include="..\AnimatronicsControlCenter\UI\Helpers\LocalizedStrings.cs" Link="UI\Helpers\LocalizedStrings.cs" />
   </ItemGroup>
 </Project>

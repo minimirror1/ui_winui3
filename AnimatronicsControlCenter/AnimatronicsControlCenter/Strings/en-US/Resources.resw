@@ -445,4 +445,88 @@
   <data name="ScanDialog_Close" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="TrafficLog_Header.Header" xml:space="preserve">
+    <value>Traffic log</value>
+  </data>
+  <data name="TrafficLog_Desc.Text" xml:space="preserve">
+    <value>Keeps what the app exchanged with devices in a CSV file per day, so a problem at a store can be read back later.</value>
+  </data>
+  <data name="TrafficLog_Enabled_Header.Header" xml:space="preserve">
+    <value>Keep a log</value>
+  </data>
+  <data name="TrafficLog_Enabled_Desc.Text" xml:space="preserve">
+    <value>Kept for 100 days; oldest files are removed once the folder passes 3 GB.</value>
+  </data>
+  <data name="TrafficLog_Raw_Header.Header" xml:space="preserve">
+    <value>Include raw bytes</value>
+  </data>
+  <data name="TrafficLog_Raw_Desc.Text" xml:space="preserve">
+    <value>Also keeps the raw packet. This doubles the size, so turn it on only while chasing a problem.</value>
+  </data>
+  <data name="TrafficLog_Open_Header.Header" xml:space="preserve">
+    <value>View the log</value>
+  </data>
+  <data name="TrafficLog_Open_Button" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="TrafficLog_Folder_Header.Header" xml:space="preserve">
+    <value>Open the log folder</value>
+  </data>
+  <data name="TrafficLog_Folder_Button" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="TrafficLog_Export_Header.Header" xml:space="preserve">
+    <value>Save as CSV</value>
+  </data>
+  <data name="TrafficLog_Export_Desc.Text" xml:space="preserve">
+    <value>Joins the kept records into a single file.</value>
+  </data>
+  <data name="TrafficLog_Export_Button" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="LogViewer_Title.Text" xml:space="preserve">
+    <value>Traffic log</value>
+  </data>
+  <data name="LogViewer_Date.Header" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="LogViewer_Device.Header" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="LogViewer_DevicePlaceholder.PlaceholderText" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="LogViewer_Result.Header" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="LogViewer_ResultAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="LogViewer_Refresh_Button" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="LogViewer_Col_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="LogViewer_Col_Direction" xml:space="preserve">
+    <value>Dir</value>
+  </data>
+  <data name="LogViewer_Col_Device" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="LogViewer_Col_Command" xml:space="preserve">
+    <value>Command</value>
+  </data>
+  <data name="LogViewer_Col_Result" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="LogViewer_Col_Elapsed" xml:space="preserve">
+    <value>Elapsed (ms)</value>
+  </data>
+  <data name="LogViewer_Truncated.Text" xml:space="preserve">
+    <value>Too many to show. Narrow it down by date, device or result.</value>
+  </data>
+  <data name="LogViewer_Empty.Text" xml:space="preserve">
+    <value>No records kept for that day.</value>
+  </data>
 </root>

@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using AnimatronicsControlCenter.Core.Interfaces;
+using AnimatronicsControlCenter.Core.Utilities;
+using AnimatronicsControlCenter.Infrastructure;
 using AnimatronicsControlCenter.UI.ViewModels;
 using System;
 using System.Diagnostics;
@@ -67,6 +69,48 @@ namespace AnimatronicsControlCenter.UI.Views
             catch
             {
             }
+        }
+
+        private void OnOpenLogViewerClicked(object sender, RoutedEventArgs e)
+        {
+            Frame?.Navigate(typeof(LogViewerPage));
+        }
+
+        private void OnOpenLogFolderClicked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string folder = LogFolderPath();
+                Directory.CreateDirectory(folder);
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{folder}\"") { UseShellExecute = false });
+            }
+            catch
+            {
+            }
+        }
+
+        /// 보관 중인 기록을 파일 하나로 합쳐 로그 폴더에 두고, 탐색기에서 그 파일을 선택해 보여 준다.
+        private void OnExportLogClicked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string folder = LogFolderPath();
+                Directory.CreateDirectory(folder);
+
+                string target = Path.Combine(folder, $"export-{DateTime.Now:yyyyMMdd-HHmmss}.csv");
+                LogExporter.Export(folder, target);
+
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{target}\"") { UseShellExecute = false });
+            }
+            catch
+            {
+            }
+        }
+
+        private static string LogFolderPath()
+        {
+            var settingsService = App.Current.Services.GetRequiredService<ISettingsService>();
+            return LogFilePolicy.FolderFor(settingsService.AppSettingsFilePath);
         }
 
         private void OnOpenAppSettingsFolderClicked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

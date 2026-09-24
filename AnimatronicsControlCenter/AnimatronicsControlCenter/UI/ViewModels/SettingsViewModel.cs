@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Microsoft.Extensions.DependencyInjection;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnimatronicsControlCenter.Core.Interfaces;
 using AnimatronicsControlCenter.Core.Protocol;
@@ -125,6 +126,12 @@ namespace AnimatronicsControlCenter.UI.ViewModels
         [NotifyPropertyChangedFor(nameof(PingPreviewText))]
         [NotifyPropertyChangedFor(nameof(PingPayloadPreviewText))]
         private bool isPeriodicPingEnabled;
+
+        [ObservableProperty]
+        private bool isTrafficLogEnabled = true;
+
+        [ObservableProperty]
+        private bool isTrafficLogRawIncluded;
 
         [ObservableProperty]
         private double pingIntervalSeconds;
@@ -281,6 +288,8 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             IsLastPortAutoConnectEnabled = _settingsService.IsLastPortAutoConnectEnabled;
             ResponseTimeoutSeconds = _settingsService.ResponseTimeoutSeconds;
             IsPeriodicPingEnabled = _settingsService.IsPeriodicPingEnabled;
+            IsTrafficLogEnabled = _settingsService.IsTrafficLogEnabled;
+            IsTrafficLogRawIncluded = _settingsService.IsTrafficLogRawIncluded;
             PingIntervalSeconds = _settingsService.PingIntervalSeconds;
             PingCountryCode = _settingsService.PingCountryCode;
             PingUtcOffsetMinutes = _settingsService.PingUtcOffsetMinutes;
@@ -387,6 +396,22 @@ namespace AnimatronicsControlCenter.UI.ViewModels
             if (!_isInitialized) return;
             _settingsService.IsPeriodicPingEnabled = value;
             _settingsService.Save();
+        }
+
+        partial void OnIsTrafficLogEnabledChanged(bool value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.IsTrafficLogEnabled = value;
+            _settingsService.Save();
+            App.Current.Services.GetRequiredService<TrafficFileLogger>().IsEnabled = value;
+        }
+
+        partial void OnIsTrafficLogRawIncludedChanged(bool value)
+        {
+            if (!_isInitialized) return;
+            _settingsService.IsTrafficLogRawIncluded = value;
+            _settingsService.Save();
+            App.Current.Services.GetRequiredService<TrafficFileLogger>().IncludeRaw = value;
         }
 
         partial void OnPingIntervalSecondsChanged(double value)
