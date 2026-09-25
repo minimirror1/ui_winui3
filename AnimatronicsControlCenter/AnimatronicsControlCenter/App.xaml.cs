@@ -23,6 +23,42 @@ namespace AnimatronicsControlCenter
         {
             this.InitializeComponent();
             Services = ConfigureServices();
+
+            // 앱이 아무 흔적 없이 종료되면 무엇이 터졌는지 알 길이 없다. 파일로 남긴다.
+            UnhandledException += OnUnhandledException;
+        }
+
+        private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            try
+            {
+                string folder = LogFilePolicy.FolderFor(
+                    Services.GetRequiredService<ISettingsService>().AppSettingsFilePath);
+                System.IO.Directory.CreateDirectory(folder);
+
+                string path = System.IO.Path.Combine(
+                    folder, $"crash-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
+
+                var text = new System.Text.StringBuilder();
+                text.AppendLine($"시각: {DateTimeOffset.Now:O}");
+                text.AppendLine($"메시지: {e.Message}");
+                text.AppendLine();
+
+                for (Exception? ex = e.Exception; ex != null; ex = ex.InnerException)
+                {
+                    text.AppendLine($"--- {ex.GetType().FullName} ---");
+                    text.AppendLine($"HResult: 0x{ex.HResult:X8}");
+                    text.AppendLine(ex.Message);
+                    text.AppendLine(ex.StackTrace);
+                    text.AppendLine();
+                }
+
+                System.IO.File.WriteAllText(path, text.ToString(), new System.Text.UTF8Encoding(true));
+            }
+            catch
+            {
+                // 기록에 실패해도 원래 예외를 가리지 않는다.
+            }
         }
 
         protected override async void OnLaunched(LaunchActivatedEventArgs args)

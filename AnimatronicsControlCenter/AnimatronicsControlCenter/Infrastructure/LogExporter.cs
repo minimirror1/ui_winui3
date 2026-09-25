@@ -19,7 +19,8 @@ public static class LogExporter
 
         foreach (string path in OrderedLogFiles(directory))
         {
-            foreach (string line in File.ReadLines(path))
+            // 기록기가 열어 둔 파일이라 공유 읽기로 연다.
+            foreach (string line in LogFileReader.ReadLinesShared(path))
             {
                 // 머리글은 합친 파일 맨 위에 한 번만 둔다. 구멍 표시는 그대로 살린다.
                 if (line.Length == 0 || line == LogCsvLine.Header) continue;

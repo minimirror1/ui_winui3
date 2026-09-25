@@ -41,7 +41,7 @@ public static class LogFileReader
         foreach (string path in FilesFor(directory, date))
         {
             // 한 줄씩 흘려 읽는다. 통째로 올리면 하루치 17만 줄이 그대로 메모리에 남는다.
-            foreach (string line in File.ReadLines(path))
+            foreach (string line in ReadLinesShared(path))
             {
                 if (line.Length == 0 || line[0] == '#') continue;
 
@@ -61,6 +61,21 @@ public static class LogFileReader
         }
 
         return new LogReadResult(rows, false);
+    }
+
+    /// 기록 파일은 앱이 도는 내내 기록기가 열어 둔 채 쓰고 있다.
+    /// 쓰기 공유를 허용해서 열지 않으면 "다른 프로세스가 사용 중" 으로 읽기가 실패한다.
+    public static IEnumerable<string> ReadLinesShared(string path)
+    {
+        using var stream = new FileStream(
+            path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
+
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            yield return line;
+        }
     }
 
     /// 같은 날짜의 파일을 번호 순으로 돌려준다. 하루가 여러 개로 쪼개져 있어도 시각 순서가 유지된다.
