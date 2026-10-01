@@ -79,3 +79,16 @@ When merging:
 - Tag releases on `master` using version tags such as `v1.2.0`.
 
 The test: `master` should always be deployable, and every non-master branch should have a clear reason to exist.
+
+## Cursor Cloud specific instructions
+
+This repo is a single product, **Animatronics Control Center**, a **Windows-only WinUI 3 (.NET 8) desktop app** under `AnimatronicsControlCenter/`. The Cloud Agent VM is **Linux**, so the app itself cannot be built or run here:
+
+- The main app (`AnimatronicsControlCenter/AnimatronicsControlCenter/AnimatronicsControlCenter.csproj`) targets `net8.0-windows10.0.19041.0` + WinUI 3 + MSIX. Building it on Linux fails with `NETSDK1100` (and it cannot run headless regardless). Build/run/debug the GUI app on Windows (Visual Studio 2022 or `dotnet run -p:Platform=x64`).
+- What **does** work on Linux is the cross-platform test project `AnimatronicsControlCenter/AnimatronicsControlCenter.Tests/AnimatronicsControlCenter.Tests.csproj` (targets plain `net8.0`). It link-compiles the app's Core/Infrastructure/ViewModel source files (protocol, backend DTOs, `VirtualDeviceManager`, operating-hours sync, etc.) without the WinUI shell, so it covers core logic.
+
+On Linux, work against the test project directly, not the solution (`dotnet build`/`dotnet test` on the `.sln` will fail on the WinUI project):
+- Build: `dotnet build AnimatronicsControlCenter/AnimatronicsControlCenter.Tests/AnimatronicsControlCenter.Tests.csproj`
+- Test: `dotnet test AnimatronicsControlCenter/AnimatronicsControlCenter.Tests/AnimatronicsControlCenter.Tests.csproj` (269 tests, all pass; filter with `--filter`).
+
+There is **no lint tooling** configured (no `.editorconfig`, analyzers, or `dotnet format` config); quality is enforced via the MSTest suite. There is no dev-server / `npm run dev` equivalent. Backend and serial hardware are external and not needed for the test suite (HTTP is mocked; `VirtualDeviceManager` simulates devices in-process).
